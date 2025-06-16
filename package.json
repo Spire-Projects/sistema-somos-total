@@ -1,0 +1,22 @@
+{
+  "name": "monorepoapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:electron": "electron electron/main.ts",
+    "dev:backend": "cd backend && tsx index.ts",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:electron\" \"npm run dev:backend\"",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^36.4.0",
+    "tsx": "^4.20.3"
+  }
+}
