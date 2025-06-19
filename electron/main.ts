@@ -57,8 +57,11 @@ async function startBackend(): Promise<void> {
 }
 
 async function startFrontend(): Promise<string> {
-  if (isDev) {
-    // En desarrollo, usar Vite dev server
+  // En producción (empaquetado), siempre servir archivos estáticos
+  const isProduction = app.isPackaged || process.env.NODE_ENV === 'production';
+  
+  if (!isProduction && isDev) {
+    // Solo en desarrollo no empaquetado, usar Vite dev server
     const frontendPath = join(__dirname, '..', 'frontend');
     
     try {
@@ -80,7 +83,7 @@ async function startFrontend(): Promise<string> {
       throw error;
     }
   } else {
-    // En producción, servir archivos estáticos
+    // En producción o empaquetado, servir archivos estáticos
     const frontendDistPath = join(__dirname, '..', 'frontend', 'dist');
     
     const staticApp = express();
