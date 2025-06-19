@@ -5,6 +5,7 @@ import PouchdbAdapterLeveldb from 'pouchdb-adapter-leveldb';
 import PouchDBFind from 'pouchdb-find';
 import { config } from '../config/config.js';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../models/user.model.js';
 
 // Definir interfaces para tipar los datos
 interface Product {
@@ -17,6 +18,11 @@ interface Product {
   category?: string;
   createdAt: number;
   updatedAt: number;
+}
+
+interface UserDoc extends User {
+  _id: string;
+  _rev?: string;
 }
 
 interface PouchError {
@@ -36,7 +42,8 @@ PouchDB.plugin(PouchDBFind);
 
 // Definir las colecciones/bases de datos
 const collections = {
-  products: new PouchDB(path.join(config.dbPath, 'products'), { adapter: 'leveldb' })
+  products: new PouchDB(path.join(config.dbPath, 'products'), { adapter: 'leveldb' }),
+  users: new PouchDB(path.join(config.dbPath, 'users'), { adapter: 'leveldb' })
 };
 
 // Configuración de la base de datos
@@ -47,6 +54,10 @@ export async function setupDatabase() {
     // Crear índices para optimizar consultas
     await collections.products.createIndex({
       index: { fields: ['name', 'category', 'updatedAt'] }
+    });
+    
+    await collections.users.createIndex({
+      index: { fields: ['email', 'role', 'active'] }
     });
     
     console.log('Bases de datos e índices creados exitosamente');
@@ -147,6 +158,123 @@ export const dbHelpers = {
         regex.test(product.name) || 
         (product.category && regex.test(product.category))
       );
+    }
+  },
+
+  // Usuarios
+  users: {
+    // Obtener todos los usuarios
+    async getAll(): Promise<User[]> {
+      const result = await collections.users.allDocs({
+        include_docs: true
+      });
+      return result.rows.map(row => {
+        const doc = row.doc as UserDoc;
+        const { _id, _rev, ...user } = doc;
+        return user;
+      });
+    },
+
+    // Obtener usuarios con paginación
+    async getAllPaginated(page: number = 1, size: number = 10): Promise<{ users: User[], total: number, totalPages: number, page: number, size: number }> {
+      const allUsers = await this.getAll();
+      const total = allUsers.length;
+      const totalPages = Math.ceil(total / size);
+      const offset = (page - 1) * size;
+      const users = allUsers.slice(offset, offset + size);
+
+      return {
+        users,
+        total,
+        totalPages,
+        page,
+        size
+      };
+    },
+
+    // Obtener un usuario por ID
+    async getById(id: string): Promise<User | null> {
+      try {
+        const doc = await collections.users.get(id) as UserDoc;
+        const { _id, _rev, ...user } = doc;
+        return user;
+      } catch (error) {
+        const err = error as PouchError;
+        if (err.name === 'not_found') {
+          return null;
+        }
+        throw error;
+      }
+    },
+
+    // Obtener un usuario por email
+    async getByEmail(email: string): Promise<User | null> {
+      try {
+        const result = await collections.users.find({
+          selector: { email: email }
+        });
+        
+        if (result.docs.length > 0) {
+          const doc = result.docs[0] as UserDoc;
+          const { _id, _rev, ...user } = doc;
+          return user;
+        }
+        return null;
+      } catch (error) {
+        console.error('Error al buscar usuario por email:', error);
+        return null;
+      }
+    },
+
+    // Crear un nuevo usuario
+    async create(userData: User): Promise<User> {
+      const userDoc: UserDoc = {
+        _id: userData.id,
+        ...userData
+      };
+      
+      const response = await collections.users.put(userDoc);
+      return userData;
+    },
+
+    // Actualizar un usuario existente
+    async update(id: string, userData: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<User> {
+      try {
+        const userDoc = await collections.users.get(id) as UserDoc;
+        const updatedUserDoc: UserDoc = {
+          ...userDoc,
+          ...userData
+        };
+        
+        const response = await collections.users.put(updatedUserDoc);
+        const { _id, _rev, ...user } = updatedUserDoc;
+        return user;
+      } catch (error) {
+        const err = error as PouchError;
+        if (err.name === 'not_found') {
+          throw new Error('Usuario no encontrado');
+        }
+        throw error;
+      }
+    },
+
+    // Eliminar un usuario (desactivar)
+    async delete(id: string): Promise<{ id: string, success: boolean }> {
+      try {
+        const userDoc = await collections.users.get(id) as UserDoc & PouchDB.Core.IdMeta & PouchDB.Core.GetMeta;
+        if (userDoc._rev) {
+          await collections.users.remove(userDoc);
+          return { id, success: true };
+        } else {
+          throw new Error('Usuario no tiene revisión');
+        }
+      } catch (error) {
+        const err = error as PouchError;
+        if (err.name === 'not_found') {
+          throw new Error('Usuario no encontrado');
+        }
+        throw error;
+      }
     }
   }
 };

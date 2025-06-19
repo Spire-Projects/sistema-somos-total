@@ -3,9 +3,13 @@ import cors from 'cors';
 import morgan from 'morgan';
 import { setupDatabase } from './db/database.js';
 import { productRoutes } from './routes/product.routes.js';
+import { userRoutes } from './routes/user.routes.js';
 import { config } from './config/config.js';
+import { initializeDefaultData } from './utils/init-data.utils.js';
 // Inicializar la base de datos
 const collections = await setupDatabase();
+// Inicializar datos por defecto
+await initializeDefaultData();
 // Crear la aplicación Express
 const app = express();
 // Configurar middlewares
@@ -14,6 +18,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 // Configurar las rutas
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
 // Ruta de bienvenida
 app.get('/', (req, res) => {
     res.json({
