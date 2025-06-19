@@ -1,23 +1,42 @@
 import express from 'express';
 import cors from 'cors';
-import exampleRoutes from './routes/example.routes';
-import authRoutes from './routes/auth.routes';
-import userRoutes from './routes/user.routes';
+import morgan from 'morgan';
+import { setupDatabase } from './db/database.js';
+import { productRoutes } from './routes/product.routes.js';
+import { config } from './config/config.js';
 
+// Inicializar la base de datos
+const collections = await setupDatabase();
+
+// Crear la aplicación Express
 const app = express();
+
+// Configurar middlewares
 app.use(cors());
+app.use(morgan('dev'));
 app.use(express.json());
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/users', userRoutes);
-app.use('/example', exampleRoutes);
+// Configurar las rutas
+app.use('/api/products', productRoutes);
 
-app.get('/', (_req, res) => {
-  res.json({ message: 'API funcionando correctamente' });
+// Ruta de bienvenida
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Bienvenido a la API de FarmaApp',
+    version: '1.0.0',
+    status: 'online'
+  });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en puerto ${PORT}`);
+// Iniciar el servidor
+app.listen(config.port, () => {
+  console.log(`Servidor corriendo en http://localhost:${config.port}`);
 });
+
+// Manejar cierre de la aplicación
+process.on('SIGINT', async () => {
+  console.log('Cerrando aplicación...');
+  process.exit(0);
+});
+
+export { app, collections };
