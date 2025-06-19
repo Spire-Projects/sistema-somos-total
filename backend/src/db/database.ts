@@ -46,6 +46,46 @@ const collections = {
   users: new PouchDB(path.join(config.dbPath, 'users'), { adapter: 'leveldb' })
 };
 
+// Variable para rastrear el estado de las conexiones
+let databasesClosed = false;
+
+// Función para cerrar todas las conexiones de base de datos
+export async function closeDatabase() {
+  if (databasesClosed) {
+    console.log('Las bases de datos ya están cerradas');
+    return;
+  }
+
+  try {
+    console.log('Cerrando conexiones de base de datos...');
+    
+    // Cerrar products database
+    try {
+      await collections.products.close();
+      console.log('Base de datos de productos cerrada');
+    } catch (error: any) {
+      if (!error.message?.includes('database is closed')) {
+        console.warn('Error al cerrar base de datos de productos:', error.message);
+      }
+    }
+    
+    // Cerrar users database
+    try {
+      await collections.users.close();
+      console.log('Base de datos de usuarios cerrada');
+    } catch (error: any) {
+      if (!error.message?.includes('database is closed')) {
+        console.warn('Error al cerrar base de datos de usuarios:', error.message);
+      }
+    }
+    
+    databasesClosed = true;
+    console.log('Conexiones de base de datos cerradas correctamente');
+  } catch (error) {
+    console.error('Error general al cerrar base de datos:', error);
+  }
+}
+
 // Configuración de la base de datos
 export async function setupDatabase() {
   console.log(`Inicializando base de datos en: ${config.dbPath}`);

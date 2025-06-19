@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import { setupDatabase, dbHelpers } from './db/database.js';
+import { setupDatabase, dbHelpers, closeDatabase } from './db/database.js';
 import { productRoutes } from './routes/product.routes.js';
 import { config } from './config/config.js';
 import { hashPassword, verifyPassword, generateToken } from './utils/auth.utils.js';
@@ -191,14 +191,43 @@ app.get('/', (req, res) => {
 });
 
 // Iniciar el servidor
-app.listen(config.port, () => {
+const server = app.listen(config.port, () => {
   console.log(`Servidor corriendo en http://localhost:${config.port}`);
 });
 
-// Manejar cierre de la aplicación
-process.on('SIGINT', async () => {
-  console.log('Cerrando aplicación...');
-  process.exit(0);
-});
+// Variable para controlar si ya se está cerrando
+let isShuttingDown = false;
+
+// Función para manejar el cierre limpio
+async function gracefulShutdown(signal: string) {
+  if (isShuttingDown) {
+    console.log('Ya se está cerrando la aplicación...');
+    return;
+  }
+  
+  isShuttingDown = true;
+  console.log(`Recibida señal ${signal}. Cerrando aplicación gracefully...`);
+  
+  // Cerrar el servidor HTTP
+  server.close(async () => {
+    console.log('Servidor HTTP cerrado');
+    
+    // Cerrar conexiones de base de datos
+    await closeDatabase();
+    
+    console.log('Aplicación cerrada correctamente');
+    process.exit(0);
+  });
+  
+  // Forzar cierre después de 10 segundos si no se cierra naturalmente
+  setTimeout(() => {
+    console.error('Forzando cierre de la aplicación...');
+    process.exit(1);
+  }, 10000);
+}
+
+// Manejar señales de cierre
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 export { app, collections };
