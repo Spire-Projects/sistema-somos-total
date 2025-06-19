@@ -1,22 +1,62 @@
 {
   "name": "monorepoapp",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "main": "dist-electron/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:electron": "electron electron/main.ts",
-    "dev:backend": "cd backend && tsx index.ts",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:electron\" \"npm run dev:backend\"",
-    "build:frontend": "cd frontend && npm run build"
+    "dev:backend": "cd backend && npm run dev",
+    "dev:electron": "cross-env NODE_ENV=development electron --inspect=5858 dist-electron/main.js",
+    "dev:electron:watch": "tsc -p electron/tsconfig.json --watch",
+    "dev": "concurrently \"npm run dev:electron:watch\" \"wait-on dist-electron/main.js && npm run dev:electron\"",
+    "dev:full": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron:watch\" \"wait-on dist-electron/main.js && npm run dev:electron\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "build": "npm run build:frontend && npm run build:backend && npm run build:electron",
+    "package": "npm run build && electron-builder",
+    "start": "electron .",
+    "clean": "rm -rf dist-electron frontend/dist backend/dist",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
   },
-  "keywords": [],
+  "keywords": [
+    "electron",
+    "express",
+    "react",
+    "vite",
+    "rxdb",
+    "leveldb"
+  ],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Electron application with Express backend and React frontend",
+  "dependencies": {
+    "express": "^5.1.0",
+    "vite": "^6.3.5"
+  },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.10.2",
     "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "electron": "^36.4.0",
-    "tsx": "^4.20.3"
+    "electron-builder": "^24.13.1",
+    "tsx": "^4.20.3",
+    "typescript": "~5.8.3",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.farmaapp.monorepo",
+    "productName": "FarmaApp",
+    "files": [
+      "dist-electron/**/*",
+      "frontend/dist/**/*",
+      "backend/dist/**/*",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    }
   }
 }
