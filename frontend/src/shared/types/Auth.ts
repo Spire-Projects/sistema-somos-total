@@ -1,16 +1,17 @@
 import type { User, UserRole } from './User';
+import type { AuthUser } from '../db/models/user.model';
 
 // Register
 export interface RegisterRequest {
   fullName: string;
   email: string;
   password: string;
-  role: UserRole;
+  role?: UserRole;
 }
 
 export interface RegisterResponse {
-  message: string;
-  user: User;
+  user: AuthUser;
+  token: string;
 }
 
 // Login
@@ -20,7 +21,6 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  message: string;
+  user: AuthUser;
   token: string;
-  user: User;
 }

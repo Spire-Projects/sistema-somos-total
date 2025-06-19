@@ -1,45 +1,222 @@
-import axios from 'axios';
-import type { User } from '../types/User';
+import { config } from '../config/config';
+import { localUserDB } from '../db/database';
+import { firestoreUserDB } from '../db/firestore';
+import type {
+  UserDocument,
+  CreateUserData,
+  UpdateUserData,
+  LoginCredentials,
+  AuthUser
+} from '../db/models/user.model';
+import {
+  hashPassword,
+  verifyPassword,
+  generateToken,
+  userToAuthUser,
+  isValidEmail,
+  isValidPassword,
+  storeToken,
+  removeStoredToken
+} from '../utils/auth.utils';
 
-const API_URL = 'http://localhost:3001/api/users';
+// Selector de base de datos según el modo
+const getUserDB = () => {
+  return config.APP_MODE === 'local' ? localUserDB : firestoreUserDB;
+};
 
 export const UserService = {
-  async getProfile(token: string): Promise<User | null> {
+  // Registrar un nuevo usuario
+  async register(data: CreateUserData): Promise<{ success: boolean; user?: AuthUser; token?: string; error?: string }> {
     try {
-      const response = await axios.get<User>(`${API_URL}/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      return response.data;
+      // Validaciones
+      if (!isValidEmail(data.email)) {
+        return { success: false, error: 'Email inválido' };
+      }
+
+      const passwordValidation = isValidPassword(data.password);
+      if (!passwordValidation.valid) {
+        return { success: false, error: passwordValidation.message };
+      }
+
+      // Verificar si el usuario ya existe
+      const db = getUserDB();
+      const existingUser = await db.findByEmail(data.email);
+      if (existingUser) {
+        return { success: false, error: 'Ya existe un usuario con este email' };
+      }
+
+      // Hash de la contraseña
+      const passwordHash = await hashPassword(data.password);
+
+      // Crear el usuario
+      const userData: Omit<UserDocument, 'id'> = {
+        fullName: data.fullName,
+        email: data.email,
+        passwordHash,
+        role: data.role,
+        active: true,
+        createdAt: new Date().toISOString()
+      };
+
+      const newUser = await db.create(userData);
+      const authUser = userToAuthUser(newUser);
+      const token = await generateToken(authUser);
+
+      // Almacenar token
+      storeToken(token);
+
+      return { success: true, user: authUser, token };
     } catch (error) {
-      return null;
+      console.error('Error registrando usuario:', error);
+      return { success: false, error: 'Error interno del servidor' };
     }
   },
 
-  async getAllUsers(token: string): Promise<User[] | null> {
+  // Iniciar sesión
+  async login(data: LoginCredentials): Promise<{ success: boolean; user?: AuthUser; token?: string; error?: string }> {
     try {
-      const response = await axios.get<User[]>(`${API_URL}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      // Validaciones
+      if (!isValidEmail(data.email)) {
+        return { success: false, error: 'Email inválido' };
+      }
+
+      // Buscar usuario
+      const db = getUserDB();
+      const user = await db.findByEmail(data.email);
+      if (!user) {
+        return { success: false, error: 'Credenciales inválidas' };
+      }
+
+      // Verificar si el usuario está activo
+      if (!user.active) {
+        return { success: false, error: 'Usuario inactivo' };
+      }
+
+      // Verificar contraseña
+      const isValidPassword = await verifyPassword(data.password, user.passwordHash);
+      if (!isValidPassword) {
+        return { success: false, error: 'Credenciales inválidas' };
+      }
+
+      // Actualizar última sesión
+      await db.update(user.id, {
+        lastSession: new Date().toISOString()
       });
-      return response.data;
+
+      const authUser = userToAuthUser(user);
+      const token = await generateToken(authUser);
+
+      // Almacenar token
+      storeToken(token);
+
+      return { success: true, user: authUser, token };
     } catch (error) {
-      return null;
+      console.error('Error en login:', error);
+      return { success: false, error: 'Error interno del servidor' };
     }
   },
 
-  async updateProfile(token: string, userData: Partial<User>): Promise<User | null> {
+  // Cerrar sesión
+  async logout(): Promise<void> {
+    removeStoredToken();
+  },
+
+  // Obtener todos los usuarios (solo para admin)
+  async getAllUsers(): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
     try {
-      const response = await axios.put<User>(`${API_URL}/profile`, userData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      return response.data;
+      const db = getUserDB();
+      const users = await db.findAll();
+      const authUsers = users.map(userToAuthUser);
+      
+      return { success: true, users: authUsers };
     } catch (error) {
-      return null;
+      console.error('Error obteniendo usuarios:', error);
+      return { success: false, error: 'Error obteniendo usuarios' };
+    }
+  },
+
+  // Obtener usuario por ID
+  async getUserById(id: string): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    try {
+      const db = getUserDB();
+      const user = await db.findById(id);
+      
+      if (!user) {
+        return { success: false, error: 'Usuario no encontrado' };
+      }
+
+      return { success: true, user: userToAuthUser(user) };
+    } catch (error) {
+      console.error('Error obteniendo usuario:', error);
+      return { success: false, error: 'Error obteniendo usuario' };
+    }
+  },
+
+  // Actualizar usuario
+  async updateUser(id: string, data: UpdateUserData): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    try {
+      const db = getUserDB();
+      const updatedUser = await db.update(id, data);
+      
+      if (!updatedUser) {
+        return { success: false, error: 'Usuario no encontrado' };
+      }
+
+      return { success: true, user: userToAuthUser(updatedUser) };
+    } catch (error) {
+      console.error('Error actualizando usuario:', error);
+      return { success: false, error: 'Error actualizando usuario' };
+    }
+  },
+
+  // Desactivar usuario
+  async deactivateUser(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const db = getUserDB();
+      const result = await db.update(id, { active: false });
+      
+      if (!result) {
+        return { success: false, error: 'Usuario no encontrado' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error desactivando usuario:', error);
+      return { success: false, error: 'Error desactivando usuario' };
+    }
+  },
+
+  // Obtener usuarios por rol
+  async getUsersByRole(role: string): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
+    try {
+      const db = getUserDB();
+      const users = await db.findByRole(role);
+      const authUsers = users.map(userToAuthUser);
+      
+      return { success: true, users: authUsers };
+    } catch (error) {
+      console.error('Error obteniendo usuarios por rol:', error);
+      return { success: false, error: 'Error obteniendo usuarios' };
+    }
+  },
+
+  // Sincronizar datos locales a Firestore (solo en modo local)
+  async syncToFirestore(): Promise<{ success: boolean; error?: string }> {
+    if (config.APP_MODE !== 'local') {
+      return { success: false, error: 'Sincronización solo disponible en modo local' };
+    }
+
+    try {
+      // Obtener todos los usuarios locales
+      const localUsers = await localUserDB.findAll();
+      
+      // Sincronizar a Firestore
+      await firestoreUserDB.syncFromLocal(localUsers);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error sincronizando a Firestore:', error);
+      return { success: false, error: 'Error sincronizando datos' };
     }
   }
 };

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
-import { AuthService } from '../../../shared/services/AuthService';
+import { UserService } from '../../../shared/services/UserService';
 import { useAppDispatch, useAppSelector  } from '../../../shared/store/hooks';
 import { loginSuccess } from '../../../shared/store/authSlice';
-import type { LoginRequest } from '../../../shared/types/Auth';
+import type { LoginCredentials } from '../../../shared/db/models/user.model';
 
 export const LoginPage = () => {
-  const [formData, setFormData] = useState<LoginRequest>({
+  const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: '',
   });
@@ -26,15 +26,15 @@ export const LoginPage = () => {
     setIsLoading(true);
     setError(null);
 
-    const response = await AuthService.login(formData);
+    const response = await UserService.login(formData);
 
-    if (response) {
+    if (response.success && response.user && response.token) {
       dispatch(loginSuccess({
         user: response.user,
         token: response.token,
       }));
     } else {
-      setError('Credenciales inválidas. Por favor, inténtalo de nuevo.');
+      setError(response.error || 'Credenciales inválidas. Por favor, inténtalo de nuevo.');
     }
 
     setIsLoading(false);
