@@ -60,6 +60,7 @@ export function userToAuthUser(user: UserDocument): AuthUser {
     email: user.email,
     role: user.role,
     active: user.active,
+    createdAt: user.createdAt,
     lastSession: user.lastSession
   };
 }

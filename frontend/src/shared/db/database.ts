@@ -1,17 +1,31 @@
 import { createRxDatabase, addRxPlugin } from 'rxdb';
 import type { RxDatabase, RxCollection } from 'rxdb';
-import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { userSchema } from './models/user.model';
 import type { UserDocument } from './models/user.model';
 import { config } from '../config/config';
 
-// Solo agregar plugins en desarrollo
-if (import.meta.env.DEV) {
-  addRxPlugin(RxDBDevModePlugin);
-}
-addRxPlugin(RxDBQueryBuilderPlugin);
+// Configurar plugins según entorno
+const setupRxDBPlugins = async () => {
+  // Plugins básicos siempre necesarios
+  addRxPlugin(RxDBQueryBuilderPlugin);
+  addRxPlugin(RxDBUpdatePlugin);
+  
+  if (import.meta.env.DEV) {
+    // Solo en desarrollo: cargar dev-mode para debugging
+    const { RxDBDevModePlugin, disableWarnings } = await import('rxdb/plugins/dev-mode');
+    addRxPlugin(RxDBDevModePlugin);
+    
+    // Deshabilitar solo las advertencias molestas, mantener validaciones
+    disableWarnings();
+    
+    console.log('🛠️ RxDB Dev-Mode activado para desarrollo');
+  } else {
+    console.log('🚀 RxDB en modo producción - máximo performance');
+  }
+};
 
 // Tipos para las colecciones
 export interface DatabaseCollections {
@@ -27,7 +41,12 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
   }
 
   try {
-    console.log('Inicializando base de datos RxDB con IndexedDB...');
+    console.log('🔄 Configurando RxDB...');
+    
+    // Configurar plugins antes de crear la DB
+    await setupRxDBPlugins();
+    
+    console.log('📱 Inicializando base de datos RxDB con IndexedDB...');
     
     // Crear la base de datos
     const db = await createRxDatabase<DatabaseCollections>({

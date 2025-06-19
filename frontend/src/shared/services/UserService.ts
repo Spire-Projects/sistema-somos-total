@@ -75,6 +75,8 @@ export const UserService = {
   // Iniciar sesión
   async login(data: LoginCredentials): Promise<{ success: boolean; user?: AuthUser; token?: string; error?: string }> {
     try {
+      console.log('🔐 Iniciando login para:', data.email);
+      
       // Validaciones
       if (!isValidEmail(data.email)) {
         return { success: false, error: 'Email inválido' };
@@ -82,10 +84,15 @@ export const UserService = {
 
       // Buscar usuario
       const db = getUserDB();
+      console.log('📊 Usando base de datos:', config.APP_MODE === 'local' ? 'RxDB/IndexedDB' : 'Firestore');
+      
       const user = await db.findByEmail(data.email);
       if (!user) {
+        console.log('❌ Usuario no encontrado:', data.email);
         return { success: false, error: 'Credenciales inválidas' };
       }
+
+      console.log('✅ Usuario encontrado:', user.fullName);
 
       // Verificar si el usuario está activo
       if (!user.active) {
@@ -95,13 +102,18 @@ export const UserService = {
       // Verificar contraseña
       const isValidPassword = await verifyPassword(data.password, user.passwordHash);
       if (!isValidPassword) {
+        console.log('❌ Contraseña incorrecta para:', data.email);
         return { success: false, error: 'Credenciales inválidas' };
       }
+
+      console.log('✅ Contraseña válida, actualizando última sesión...');
 
       // Actualizar última sesión
       await db.update(user.id, {
         lastSession: new Date().toISOString()
       });
+
+      console.log('✅ Sesión actualizada, generando token...');
 
       const authUser = userToAuthUser(user);
       const token = await generateToken(authUser);
@@ -109,9 +121,10 @@ export const UserService = {
       // Almacenar token
       storeToken(token);
 
+      console.log('✅ Login exitoso para:', user.fullName);
       return { success: true, user: authUser, token };
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error('❌ Error en login:', error);
       return { success: false, error: 'Error interno del servidor' };
     }
   },

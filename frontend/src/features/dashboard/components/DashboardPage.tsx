@@ -1,4 +1,5 @@
 import { useAppSelector } from "../../../shared/store/hooks";
+import { Link } from "react-router";
 
 export const DashboardPage = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -30,6 +31,12 @@ export const DashboardPage = () => {
               <button className="w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
                 Nueva Venta
               </button>
+              <Link 
+                to="/users" 
+                className="block w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors"
+              >
+                Gestión de Usuarios
+              </Link>
               <button className="w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
                 Reportes
               </button>

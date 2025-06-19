@@ -90,5 +90,6 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   active: boolean;
+  createdAt?: string;
   lastSession?: string;
 }

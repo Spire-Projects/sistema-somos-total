@@ -56,6 +56,15 @@ export const LoginPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Credenciales de prueba */}
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
+            <h4 className="font-medium mb-1">Credenciales de prueba:</h4>
+            <div className="text-sm space-y-1">
+              <p><strong>Email:</strong> admin@farmaapp.com</p>
+              <p><strong>Contraseña:</strong> admin123</p>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -69,6 +78,7 @@ export const LoginPage = () => {
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="usuario@ejemplo.com"
+              autoComplete='email'
             />
           </div>
 
@@ -83,6 +93,7 @@ export const LoginPage = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              autoComplete="current-password"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="••••••••"
             />
