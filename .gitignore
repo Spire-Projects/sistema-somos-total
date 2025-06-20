@@ -1,1 +1,37 @@
-./release
+###########################
+# Node modules
+###########################
+node_modules/
+frontend/node_modules/
+electron/node_modules/
+
+###########################
+# Package lock files
+###########################
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+
+###########################
+# Build outputs
+###########################
+release/
+dist-electron/
+frontend/dist/
+
+###########################
+# IDE/editor config
+###########################
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+###########################
+# Env files
+###########################
+.env*
+frontend/.env*
