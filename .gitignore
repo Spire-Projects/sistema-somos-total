@@ -6,6 +6,8 @@ frontend/node_modules/
 electron/node_modules/
 
 ###########################
+
+###########################
 # Package lock files
 ###########################
 package-lock.json
@@ -14,6 +16,7 @@ pnpm-lock.yaml
 frontend/package-lock.json
 frontend/yarn.lock
 frontend/pnpm-lock.yaml
+electron/package-lock.json
 
 ###########################
 # Build outputs
