@@ -1,4 +1,4 @@
-import type { User, UserRole } from './User';
+import type { UserRole } from './User';
 import type { AuthUser } from '../db/models/user.model';
 
 // Register

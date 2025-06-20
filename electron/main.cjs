@@ -1,20 +1,16 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-// Para ES modules compatibility
-const __dirname = __filename ? dirname(__filename) : process.cwd();
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { join } = require('path');
 
 // Variables para los procesos
-let mainWindow: BrowserWindow | null = null;
+let mainWindow = null;
 
 // Configuración
 const isDev = process.env.NODE_ENV === 'development';
 
-function getFrontendUrl(): string {
+function getFrontendUrl() {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:5173';
+    return 'http://localhost:5174';
   }
   
   // En producción, usar archivos estáticos desde file://
@@ -22,7 +18,7 @@ function getFrontendUrl(): string {
   return `file://${frontendDistPath}`;
 }
 
-function createWindow(): void {
+function createWindow() {
   // Crear la ventana principal
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -32,7 +28,7 @@ function createWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: join(__dirname, 'preload.js'),
+      preload: join(__dirname, 'preload.cjs'),
       webSecurity: true
     },
     show: false, // No mostrar hasta que esté listo
@@ -76,12 +72,12 @@ function createWindow(): void {
   mainWindow.loadURL(frontendUrl);
 }
 
-async function initializeApp(): Promise<void> {
+async function initializeApp() {
   try {
     console.log('🚀 Inicializando FarmaApp...');
     
     if (isDev && !app.isPackaged) {
-      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5173');
+      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5174');
       console.log('💡 Asegúrate de ejecutar "npm run dev:frontend" en otra terminal');
     } else {
       console.log('📦 Modo producción: Usando archivos compilados');

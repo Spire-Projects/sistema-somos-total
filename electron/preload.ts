@@ -4,7 +4,7 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 const electronAPI = {
   // Información de la aplicación
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
-  getBackendStatus: () => ipcRenderer.invoke('get-backend-status'),
+  getAppInfo: () => ipcRenderer.invoke('get-app-info'),
   
   // Eventos del sistema (opcional)
   onAppUpdate: (callback: (event: IpcRendererEvent, ...args: any[]) => void) => {
@@ -12,19 +12,29 @@ const electronAPI = {
     return () => ipcRenderer.removeListener('app-update-available', callback);
   },
   
-  // Notificaciones (opcional)
-  showNotification: (title: string, message: string) => {
-    return ipcRenderer.invoke('show-notification', { title, message });
+  // Utilidades del sistema
+  platform: process.platform,
+  versions: {
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
+    node: process.versions.node
   }
 };
+
+// Tipos para TypeScript
+declare global {
+  interface Window {
+    electronAPI: typeof electronAPI;
+  }
+}
 
 // Exponer la API al contexto del renderer
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
 
 // Para desarrollo - log de la versión
 window.addEventListener('DOMContentLoaded', () => {
-  console.log('Electron Preload Script loaded');
-  console.log('Electron version:', process.versions.electron);
-  console.log('Chrome version:', process.versions.chrome);
-  console.log('Node version:', process.versions.node);
+  console.log('🚀 FarmaApp Electron Preload Script loaded');
+  console.log('📦 Electron version:', process.versions.electron);
+  console.log('🌐 Chrome version:', process.versions.chrome);
+  console.log('📱 Platform:', process.platform);
 });

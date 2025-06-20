@@ -2,35 +2,39 @@
   "name": "monorepoapp",
   "version": "1.0.0",
   "type": "module",
-  "main": "dist-electron/main.js",
+  "main": "electron/main.cjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:electron": "cross-env NODE_ENV=development electron --inspect=5858 dist-electron/main.js",
+    "dev:electron": "cross-env NODE_ENV=development electron --inspect=5858 electron/main.cjs",
     "dev:electron:watch": "tsc -p electron/tsconfig.json --watch",
-    "dev": "concurrently \"npm run dev:electron:watch\" \"wait-on dist-electron/main.js && npm run dev:electron\"",
-    "dev:full": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:electron:watch\" \"wait-on dist-electron/main.js && npm run dev:electron\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
     "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm run build",
-    "build:electron": "tsc -p electron/tsconfig.json",
-    "build": "npm run build:frontend && npm run build:backend && npm run build:electron",
+    "build:electron": "echo 'Electron ya está en JavaScript'",
+    "build": "npm run build:frontend",
     "package": "npm run build && electron-builder",
+    "package:win": "npm run build && electron-builder --win",
+    "package:linux": "npm run build && electron-builder --linux", 
+    "package:mac": "npm run build && electron-builder --mac",
+    "dist": "npm run package",
+    "dist:win": "npm run package:win",
     "start": "electron .",
-    "clean": "rm -rf dist-electron frontend/dist backend/dist",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    "clean": "rm -rf dist-electron frontend/dist release",
+    "install:all": "npm install && cd frontend && npm install",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "electron",
-    "express",
     "react",
     "vite",
     "rxdb",
-    "leveldb"
+    "farmaapp",
+    "farmacia",
+    "pharmacy"
   ],
-  "author": "",
+  "author": "FarmaApp Team",
   "license": "ISC",
-  "description": "Electron application with Express backend and React frontend",
+  "description": "Sistema de gestión farmacéutica con Electron, React y RxDB",
   "dependencies": {
     "express": "^5.1.0",
     "vite": "^6.3.5"
@@ -49,87 +53,64 @@
   "build": {
     "appId": "com.farmaapp.monorepo",
     "productName": "FarmaApp",
-    "copyright": "Copyright © 2025 FarmaApp",
-    "files": [
-      "dist-electron/**/*",
-      "frontend/dist/**/*",
-      "backend/dist/**/*",
-      "node_modules/**/*",
-      "!node_modules/.cache",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/.bin",
-      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
-      "!.editorconfig",
-      "!**/._*",
-      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
-      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
-      "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
-    ],
     "directories": {
       "output": "release"
     },
+    "files": [
+      "electron/main.cjs",
+      "electron/preload.cjs",
+      "frontend/dist/**/*",
+      "node_modules/**/*",
+      "!node_modules/**/test/**/*",
+      "!node_modules/**/*.md"
+    ],
     "extraResources": [],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64", "ia32"]
         },
         {
           "target": "portable",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
-      "publisherName": "FarmaApp",
-      "requestedExecutionLevel": "asInvoker"
+      "requestedExecutionLevel": "asInvoker",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
+      "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "FarmaApp"
     },
-    "portable": {
-      "artifactName": "FarmaApp-Portable.exe"
-    },
     "linux": {
       "target": [
         {
           "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         },
         {
           "target": "deb",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
-      "category": "Office"
+      "category": "Office",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "mac": {
       "target": [
         {
           "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ],
-      "category": "public.app-category.business"
-    }
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.44.0"
+      "category": "public.app-category.business",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "publish": null
   }
 }
