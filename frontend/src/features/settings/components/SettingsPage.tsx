@@ -13,6 +13,29 @@ import type {
   PharmaceuticalFormDoc, 
   Manufacturer 
 } from '../../../shared/types/Medication';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../../shared/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../shared/components/ui/table";
+import { Badge } from "../../../shared/components/ui/badge";
+import { Skeleton } from "../../../shared/components/ui/skeleton";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../../shared/components/ui/tabs";
 
 export const SettingsPage = () => {
   const [activeIngredients, setActiveIngredients] = useState<ActiveIngredient[]>([]);
@@ -63,10 +86,25 @@ export const SettingsPage = () => {
   if (loading) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Configuración</h1>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-600">Cargando datos...</p>
-        </div>
+        <h1 className="text-xl font-bold text-gray-900 mb-6">Configuración</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Cargando datos</CardTitle>
+            <CardDescription>Espere mientras se cargan los datos del sistema</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-[300px]" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-4 w-[300px]" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -74,11 +112,11 @@ export const SettingsPage = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Configuración del Sistema</h1>
+        <h1 className="!text-xl font-bold text-gray-900">Configuración del Sistema</h1>
         <Button 
           onClick={handleInitializeData} 
           disabled={initializing}
-          className="bg-blue-600 hover:bg-blue-700"
+          variant="default"
         >
           {initializing ? 'Inicializando...' : 'Recargar Datos Iniciales'}
         </Button>
@@ -86,193 +124,205 @@ export const SettingsPage = () => {
 
       {/* Resumen de datos */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-          <h3 className="font-semibold text-gray-900">Ingredientes Activos</h3>
-          <p className="text-2xl font-bold text-blue-600">{activeIngredients.length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-          <h3 className="font-semibold text-gray-900">Categorías</h3>
-          <p className="text-2xl font-bold text-green-600">{categories.length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-          <h3 className="font-semibold text-gray-900">Formas Farmacéuticas</h3>
-          <p className="text-2xl font-bold text-purple-600">{pharmaceuticalForms.length}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
-          <h3 className="font-semibold text-gray-900">Fabricantes</h3>
-          <p className="text-2xl font-bold text-orange-600">{manufacturers.length}</p>
-        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Ingredientes Activos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{activeIngredients.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Categorías</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{categories.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Formas Farmacéuticas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{pharmaceuticalForms.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Fabricantes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{manufacturers.length}</div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Ingredientes Activos */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">🧪 Ingredientes Activos ({activeIngredients.length})</h2>
-        </div>
-        <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Alias
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Creado
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {activeIngredients.map((ingredient) => (
-                  <tr key={ingredient.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {ingredient.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {ingredient.aliases?.join(', ') || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {ingredient.createdAt ? new Date(ingredient.createdAt).toLocaleDateString() : '-'}
-                    </td>
-                  </tr>
+      {/* Contenido en pestañas */}
+      <Tabs defaultValue="ingredients" className="w-full">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsTrigger value="ingredients">🧪 Ingredientes</TabsTrigger>
+          <TabsTrigger value="categories">🏷️ Categorías</TabsTrigger>
+          <TabsTrigger value="forms">💊 Formas Farm.</TabsTrigger>
+          <TabsTrigger value="manufacturers">🏭 Fabricantes</TabsTrigger>
+        </TabsList>
+        
+        {/* Pestaña de Ingredientes Activos */}
+        <TabsContent value="ingredients" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>🧪 Ingredientes Activos ({activeIngredients.length})</CardTitle>
+              <CardDescription>Principios activos registrados en el sistema</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Alias</TableHead>
+                    <TableHead>Creado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeIngredients.map((ingredient) => (
+                    <TableRow key={ingredient.id}>
+                      <TableCell className="font-medium">{ingredient.name}</TableCell>
+                      <TableCell>{ingredient.aliases?.join(', ') || '-'}</TableCell>
+                      <TableCell>
+                        {ingredient.createdAt ? new Date(ingredient.createdAt).toLocaleDateString() : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Pestaña de Categorías */}
+        <TabsContent value="categories" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>🏷️ Categorías de Medicamentos ({categories.length})</CardTitle>
+              <CardDescription>Categorías para clasificar los medicamentos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((category) => (
+                  <Card key={category.id}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">{category.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600">{category.description}</p>
+                      {category.createdAt && (
+                        <p className="text-xs text-gray-400 mt-2">
+                          Creado: {new Date(category.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Categorías */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">🏷️ Categorías de Medicamentos ({categories.length})</h2>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((category) => (
-              <div key={category.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <h3 className="font-semibold text-gray-900 mb-2">{category.name}</h3>
-                <p className="text-sm text-gray-600">{category.description}</p>
-                {category.createdAt && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    Creado: {new Date(category.createdAt).toLocaleDateString()}
-                  </p>
-                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Formas Farmacéuticas */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">💊 Formas Farmacéuticas ({pharmaceuticalForms.length})</h2>
-        </div>
-        <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Alias
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Descripción
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {pharmaceuticalForms.map((form) => (
-                  <tr key={form.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {form.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {form.aliases?.join(', ') || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                      {form.description || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        form.isDeleted 
-                          ? 'bg-red-100 text-red-800' 
-                          : form.sincronized 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {form.isDeleted ? 'Eliminado' : form.sincronized ? 'Sincronizado' : 'Local'}
-                      </span>
-                    </td>
-                  </tr>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Pestaña de Formas Farmacéuticas */}
+        <TabsContent value="forms" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>💊 Formas Farmacéuticas ({pharmaceuticalForms.length})</CardTitle>
+              <CardDescription>Presentaciones disponibles para los medicamentos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Alias</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Estado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pharmaceuticalForms.map((form) => (
+                    <TableRow key={form.id}>
+                      <TableCell className="font-medium">{form.name}</TableCell>
+                      <TableCell>{form.aliases?.join(', ') || '-'}</TableCell>
+                      <TableCell className="max-w-xs truncate">{form.description || '-'}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={form.isDeleted ? "destructive" : form.sincronized ? "default" : "secondary"}
+                        >
+                          {form.isDeleted ? 'Eliminado' : form.sincronized ? 'Sincronizado' : 'Local'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Pestaña de Fabricantes */}
+        <TabsContent value="manufacturers" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>🏭 Fabricantes ({manufacturers.length})</CardTitle>
+              <CardDescription>Laboratorios y fabricantes registrados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {manufacturers.map((manufacturer) => (
+                  <Card key={manufacturer.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-base">{manufacturer.name}</CardTitle>
+                        <Badge
+                          variant={manufacturer.isDeleted ? "destructive" : manufacturer.sincronized ? "default" : "secondary"}
+                        >
+                          {manufacturer.isDeleted ? 'Eliminado' : manufacturer.sincronized ? 'Sincronizado' : 'Local'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {manufacturer.country && (
+                        <p className="text-sm text-gray-600 mb-1">📍 {manufacturer.country}</p>
+                      )}
+                      
+                      {manufacturer.contactEmail && (
+                        <p className="text-sm text-gray-600 mb-1">📧 {manufacturer.contactEmail}</p>
+                      )}
+                      
+                      {manufacturer.website && (
+                        <a 
+                          href={manufacturer.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline mb-1 block"
+                        >
+                          🌐 {manufacturer.website}
+                        </a>
+                      )}
+                      
+                      {manufacturer.createdAt && (
+                        <p className="text-xs text-gray-400 mt-2">
+                          Creado: {new Date(manufacturer.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Fabricantes */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">🏭 Fabricantes ({manufacturers.length})</h2>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {manufacturers.map((manufacturer) => (
-              <div key={manufacturer.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-gray-900">{manufacturer.name}</h3>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    manufacturer.isDeleted 
-                      ? 'bg-red-100 text-red-800' 
-                      : manufacturer.sincronized 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {manufacturer.isDeleted ? 'Eliminado' : manufacturer.sincronized ? 'Sincronizado' : 'Local'}
-                  </span>
-                </div>
-                
-                {manufacturer.country && (
-                  <p className="text-sm text-gray-600 mb-1">📍 {manufacturer.country}</p>
-                )}
-                
-                {manufacturer.contactEmail && (
-                  <p className="text-sm text-gray-600 mb-1">📧 {manufacturer.contactEmail}</p>
-                )}
-                
-                {manufacturer.website && (
-                  <a 
-                    href={manufacturer.website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline mb-1 block"
-                  >
-                    🌐 {manufacturer.website}
-                  </a>
-                )}
-                
-                {manufacturer.createdAt && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    Creado: {new Date(manufacturer.createdAt).toLocaleDateString()}
-                  </p>
-                )}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
