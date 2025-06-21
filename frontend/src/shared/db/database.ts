@@ -5,6 +5,18 @@ import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { userSchema } from './models/user.model';
 import type { UserDocument } from './models/user.model';
+import { activeIngredientSchema } from './models/activeIngredient.model';
+import { medicationCategorySchema } from './models/medicationCategory.model';
+import { pharmaceuticalFormSchema } from './models/pharmaceuticalForm.model';
+import { manufacturerSchema } from './models/manufacturer.model';
+import { medicationSchema } from './models/medication.model';
+import type { 
+  ActiveIngredient, 
+  MedicationCategory, 
+  PharmaceuticalFormDoc, 
+  Manufacturer,
+  Medication
+} from '../types/Medication';
 import { config } from '../config/config';
 
 // Configurar plugins según entorno
@@ -30,6 +42,11 @@ const setupRxDBPlugins = async () => {
 // Tipos para las colecciones
 export interface DatabaseCollections {
   users: RxCollection<UserDocument>;
+  activeIngredients: RxCollection<ActiveIngredient>;
+  medicationCategories: RxCollection<MedicationCategory>;
+  pharmaceuticalForms: RxCollection<PharmaceuticalFormDoc>;
+  manufacturers: RxCollection<Manufacturer>;
+  medications: RxCollection<Medication>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -57,10 +74,25 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
 
     console.log('Base de datos creada, agregando colecciones...');
 
-    // Agregar colección de usuarios
+    // Agregar todas las colecciones
     await db.addCollections({
       users: {
         schema: userSchema
+      },
+      activeIngredients: {
+        schema: activeIngredientSchema
+      },
+      medicationCategories: {
+        schema: medicationCategorySchema
+      },
+      pharmaceuticalForms: {
+        schema: pharmaceuticalFormSchema
+      },
+      manufacturers: {
+        schema: manufacturerSchema
+      },
+      medications: {
+        schema: medicationSchema
       }
     });
 

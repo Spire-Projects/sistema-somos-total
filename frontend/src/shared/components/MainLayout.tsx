@@ -1,5 +1,6 @@
 import { Outlet, Navigate } from 'react-router';
 import { Header } from './Header';
+import { Sidebar } from './Sidebar';
 import { useAppSelector } from '../store/hooks';
 
 export const MainLayout = () => {
@@ -10,11 +11,19 @@ export const MainLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <Outlet />
-      </main>
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar />
+      
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-auto px-6 py-6">
+          <div className="h-full">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
