@@ -13,27 +13,33 @@ export const manufacturerSchema: RxJsonSchema<Manufacturer> = {
       maxLength: 100
     },
     name: {
-      type: 'string'
+      type: 'string',
+      maxLength: 200
     },
     country: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     website: {
-      type: 'string'
+      type: 'string',
+      maxLength: 300
     },
     contactEmail: {
-      type: 'string'
+      type: 'string',
+      maxLength: 150
     },
     createdAt: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     createdBy: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     sincronized: {
       type: 'boolean'
     },
-    deleted: {
+    isDeleted: {
       type: 'boolean'
     }
   },
@@ -48,11 +54,8 @@ export class LocalManufacturerDB {
   private collection?: ManufacturerCollection;
 
   async init(db: RxDatabase): Promise<void> {
-    this.collection = await db.addCollections({
-      manufacturers: {
-        schema: manufacturerSchema
-      }
-    }).then(collections => collections.manufacturers);
+    // La colección ya fue creada en initDatabase, solo obtenemos la referencia
+    this.collection = db.collections.manufacturers as ManufacturerCollection;
   }
 
   async create(data: Omit<Manufacturer, 'id'> & { id: string }): Promise<Manufacturer> {
@@ -73,7 +76,7 @@ export class LocalManufacturerDB {
     if (!this.collection) throw new Error('Manufacturer collection not initialized');
     
     const docs = await this.collection.find({
-      selector: { deleted: { $ne: true } }
+      selector: { isDeleted: { $ne: true } }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer);
   }
@@ -84,7 +87,7 @@ export class LocalManufacturerDB {
     const doc = await this.collection.findOne({
       selector: { 
         name: { $eq: name },
-        deleted: { $ne: true }
+        isDeleted: { $ne: true }
       }
     }).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer : null;
@@ -115,7 +118,7 @@ export class LocalManufacturerDB {
     // Soft delete
     await doc.update({
       $set: {
-        deleted: true,
+        isDeleted: true,
         updatedAt: new Date().toISOString()
       }
     });
@@ -128,7 +131,7 @@ export class LocalManufacturerDB {
     const docs = await this.collection.find({
       selector: {
         $and: [
-          { deleted: { $ne: true } },
+          { isDeleted: { $ne: true } },
           {
             $or: [
               { name: { $regex: query, $options: 'i' } },

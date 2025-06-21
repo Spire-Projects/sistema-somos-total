@@ -6,15 +6,15 @@ import { config } from '../../config/config';
 const medicationBatchSchema = {
   type: 'object',
   properties: {
-    batchId: { type: 'string' },
-    expirationDate: { type: 'string' },
+    batchId: { type: 'string', maxLength: 100 },
+    expirationDate: { type: 'string', maxLength: 50 },
     quantity: { type: 'number' },
     purchasePrice: { type: 'number' },
     sellingPrice: { type: 'number' },
-    purchaseDate: { type: 'string' },
-    supplier: { type: 'string' },
-    createdAt: { type: 'string' },
-    createdBy: { type: 'string' }
+    purchaseDate: { type: 'string', maxLength: 50 },
+    supplier: { type: 'string', maxLength: 200 },
+    createdAt: { type: 'string', maxLength: 50 },
+    createdBy: { type: 'string', maxLength: 100 }
   },
   required: ['batchId', 'expirationDate', 'quantity', 'purchasePrice', 'sellingPrice']
 };
@@ -30,34 +30,43 @@ export const medicationSchema: RxJsonSchema<Medication> = {
       maxLength: 100
     },
     tradeName: {
-      type: 'string'
+      type: 'string',
+      maxLength: 300
     },
     genericName: {
-      type: 'string'
+      type: 'string',
+      maxLength: 300
     },
     activeIngredientIds: {
       type: 'array',
       items: {
-        type: 'string'
+        type: 'string',
+        maxLength: 100
       }
     },
     pharmaceuticalFormId: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     concentration: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     presentation: {
-      type: 'string'
+      type: 'string',
+      maxLength: 200
     },
     manufacturerId: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     categoryId: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     barcode: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     batches: {
       type: 'array',
@@ -67,31 +76,38 @@ export const medicationSchema: RxJsonSchema<Medication> = {
       type: 'number'
     },
     description: {
-      type: 'string'
+      type: 'string',
+      maxLength: 1000
     },
     indications: {
-      type: 'string'
+      type: 'string',
+      maxLength: 1000
     },
     warnings: {
-      type: 'string'
+      type: 'string',
+      maxLength: 1000
     },
     sincronized: {
       type: 'boolean'
     },
-    deleted: {
+    isDeleted: {
       type: 'boolean'
     },
     createdAt: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     createdBy: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     updatedAt: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     updatedBy: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     }
   },
   required: ['id', 'tradeName', 'genericName', 'activeIngredientIds', 'pharmaceuticalFormId', 'concentration', 'presentation', 'manufacturerId', 'categoryId', 'batches', 'totalStock'],
@@ -105,11 +121,8 @@ export class LocalMedicationDB {
   private collection?: MedicationCollection;
 
   async init(db: RxDatabase): Promise<void> {
-    this.collection = await db.addCollections({
-      medications: {
-        schema: medicationSchema
-      }
-    }).then(collections => collections.medications);
+    // La colección ya fue creada en initDatabase, solo obtenemos la referencia
+    this.collection = db.collections.medications as MedicationCollection;
   }
 
   async create(data: Omit<Medication, 'id'> & { id: string }): Promise<Medication> {
@@ -130,7 +143,7 @@ export class LocalMedicationDB {
     if (!this.collection) throw new Error('Medication collection not initialized');
     
     const docs = await this.collection.find({
-      selector: { deleted: { $ne: true } }
+      selector: { isDeleted: { $ne: true } }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Medication);
   }
@@ -141,7 +154,7 @@ export class LocalMedicationDB {
     const doc = await this.collection.findOne({
       selector: { 
         tradeName: { $eq: tradeName },
-        deleted: { $ne: true }
+        isDeleted: { $ne: true }
       }
     }).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as Medication : null;
@@ -153,7 +166,7 @@ export class LocalMedicationDB {
     const doc = await this.collection.findOne({
       selector: { 
         barcode: { $eq: barcode },
-        deleted: { $ne: true }
+        isDeleted: { $ne: true }
       }
     }).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as Medication : null;
@@ -165,7 +178,7 @@ export class LocalMedicationDB {
     const docs = await this.collection.find({
       selector: { 
         categoryId: { $eq: categoryId },
-        deleted: { $ne: true }
+        isDeleted: { $ne: true }
       }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Medication);
@@ -177,7 +190,7 @@ export class LocalMedicationDB {
     const docs = await this.collection.find({
       selector: { 
         manufacturerId: { $eq: manufacturerId },
-        deleted: { $ne: true }
+        isDeleted: { $ne: true }
       }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Medication);
@@ -208,7 +221,7 @@ export class LocalMedicationDB {
     // Soft delete
     await doc.update({
       $set: {
-        deleted: true,
+        isDeleted: true,
         updatedAt: new Date().toISOString()
       }
     });
@@ -221,7 +234,7 @@ export class LocalMedicationDB {
     const docs = await this.collection.find({
       selector: {
         $and: [
-          { deleted: { $ne: true } },
+          { isDeleted: { $ne: true } },
           {
             $or: [
               { tradeName: { $regex: query, $options: 'i' } },

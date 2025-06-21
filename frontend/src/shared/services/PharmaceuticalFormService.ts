@@ -23,7 +23,7 @@ export const createPharmaceuticalForm = async (data: CreatePharmaceuticalFormDat
     createdAt: new Date().toISOString(),
     createdBy: data.createdBy,
     sincronized: false,
-    deleted: false
+    isDeleted: false
   };
   
   return await db.create(newForm);

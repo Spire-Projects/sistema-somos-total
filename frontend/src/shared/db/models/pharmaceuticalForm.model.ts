@@ -13,27 +13,32 @@ export const pharmaceuticalFormSchema: RxJsonSchema<PharmaceuticalFormDoc> = {
       maxLength: 100
     },
     name: {
-      type: 'string'
+      type: 'string',
+      maxLength: 200
     },
     aliases: {
       type: 'array',
       items: {
-        type: 'string'
+        type: 'string',
+        maxLength: 200
       }
     },
     description: {
-      type: 'string'
+      type: 'string',
+      maxLength: 500
     },
     createdAt: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     createdBy: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     },
     sincronized: {
       type: 'boolean'
     },
-    deleted: {
+    isDeleted: {
       type: 'boolean'
     }
   },
@@ -48,11 +53,8 @@ export class LocalPharmaceuticalFormDB {
   private collection?: PharmaceuticalFormCollection;
 
   async init(db: RxDatabase): Promise<void> {
-    this.collection = await db.addCollections({
-      pharmaceuticalForms: {
-        schema: pharmaceuticalFormSchema
-      }
-    }).then(collections => collections.pharmaceuticalForms);
+    // La colección ya fue creada en initDatabase, solo obtenemos la referencia
+    this.collection = db.collections.pharmaceutical_forms as PharmaceuticalFormCollection;
   }
 
   async create(data: Omit<PharmaceuticalFormDoc, 'id'> & { id: string }): Promise<PharmaceuticalFormDoc> {
@@ -73,7 +75,7 @@ export class LocalPharmaceuticalFormDB {
     if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
     
     const docs = await this.collection.find({
-      selector: { deleted: { $ne: true } }
+      selector: { isDeleted: { $ne: true } }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as PharmaceuticalFormDoc);
   }
@@ -84,7 +86,7 @@ export class LocalPharmaceuticalFormDB {
     const doc = await this.collection.findOne({
       selector: { 
         name: { $eq: name },
-        deleted: { $ne: true }
+        isDeleted: { $ne: true }
       }
     }).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as PharmaceuticalFormDoc : null;
@@ -115,7 +117,7 @@ export class LocalPharmaceuticalFormDB {
     // Soft delete
     await doc.update({
       $set: {
-        deleted: true,
+        isDeleted: true,
         updatedAt: new Date().toISOString()
       }
     });
@@ -128,7 +130,7 @@ export class LocalPharmaceuticalFormDB {
     const docs = await this.collection.find({
       selector: {
         $and: [
-          { deleted: { $ne: true } },
+          { isDeleted: { $ne: true } },
           {
             $or: [
               { name: { $regex: query, $options: 'i' } },

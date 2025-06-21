@@ -13,19 +13,23 @@ export const activeIngredientSchema: RxJsonSchema<ActiveIngredient> = {
       maxLength: 100
     },
     name: {
-      type: 'string'
+      type: 'string',
+      maxLength: 200
     },
     aliases: {
       type: 'array',
       items: {
-        type: 'string'
+        type: 'string',
+        maxLength: 200
       }
     },
     createdAt: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     createdBy: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     }
   },
   required: ['id', 'name'],
@@ -39,11 +43,8 @@ export class LocalActiveIngredientDB {
   private collection?: ActiveIngredientCollection;
 
   async init(db: RxDatabase): Promise<void> {
-    this.collection = await db.addCollections({
-      activeIngredients: {
-        schema: activeIngredientSchema
-      }
-    }).then(collections => collections.activeIngredients);
+    // La colección ya fue creada en initDatabase, solo obtenemos la referencia
+    this.collection = db.collections.active_ingredients as ActiveIngredientCollection;
   }
 
   async create(data: Omit<ActiveIngredient, 'id'> & { id: string }): Promise<ActiveIngredient> {

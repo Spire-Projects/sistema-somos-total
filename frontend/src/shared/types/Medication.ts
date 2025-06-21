@@ -15,7 +15,7 @@ export interface Medication {
   indications?: string; // e.g., "Headache, Fever"
   warnings?: string; // e.g., "Do not exceed recommended dose"
   sincronized?: boolean; // indicates if the medication is synchronized with the server
-  deleted?: boolean; // indicates if the medication is deleted
+  isDeleted?: boolean; // indicates if the medication is deleted
   createdAt?: string; // e.g., "2023-10-01T12:00:00Z"
   createdBy?: string; // e.g., "user123" - ID of the user who created this medication
   updatedAt?: string; // e.g., "2023-10-01T12:00:00Z" - last update timestamp
@@ -58,7 +58,7 @@ export interface PharmaceuticalFormDoc {
   createdAt?: string; // e.g., "2023-10-01T12:00:00Z"
   createdBy?: string; // e.g., "user123" - ID of the user who created this form
   sincronized?: boolean; // indicates if the pharmaceutical form is synchronized with the server
-  deleted?: boolean; // indicates if the pharmaceutical form is deleted
+  isDeleted?: boolean; // indicates if the pharmaceutical form is deleted
 }
 
 export interface Manufacturer {
@@ -70,5 +70,5 @@ export interface Manufacturer {
   createdAt?: string; // e.g., "2023-10-01T12:00:00Z"
   createdBy?: string; // e.g., "user123" - ID of the user who created this manufacturer
   sincronized?: boolean; // indicates if the manufacturer is synchronized with the server
-  deleted?: boolean; // indicates if the manufacturer is deleted
+  isDeleted?: boolean; // indicates if the manufacturer is deleted
 }

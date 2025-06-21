@@ -13,16 +13,20 @@ export const medicationCategorySchema: RxJsonSchema<MedicationCategory> = {
       maxLength: 100
     },
     name: {
-      type: 'string'
+      type: 'string',
+      maxLength: 200
     },
     description: {
-      type: 'string'
+      type: 'string',
+      maxLength: 500
     },
     createdAt: {
-      type: 'string'
+      type: 'string',
+      maxLength: 50
     },
     createdBy: {
-      type: 'string'
+      type: 'string',
+      maxLength: 100
     }
   },
   required: ['id', 'name'],
@@ -36,11 +40,8 @@ export class LocalMedicationCategoryDB {
   private collection?: MedicationCategoryCollection;
 
   async init(db: RxDatabase): Promise<void> {
-    this.collection = await db.addCollections({
-      medicationCategories: {
-        schema: medicationCategorySchema
-      }
-    }).then(collections => collections.medicationCategories);
+    // La colección ya fue creada en initDatabase, solo obtenemos la referencia
+    this.collection = db.collections.medication_categories as MedicationCategoryCollection;
   }
 
   async create(data: Omit<MedicationCategory, 'id'> & { id: string }): Promise<MedicationCategory> {

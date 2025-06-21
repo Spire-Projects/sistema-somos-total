@@ -40,7 +40,7 @@ export const createMedication = async (data: CreateMedicationData): Promise<Medi
     indications: data.indications,
     warnings: data.warnings,
     sincronized: false,
-    deleted: false,
+    isDeleted: false,
     createdAt: new Date().toISOString(),
     createdBy: data.createdBy
   };

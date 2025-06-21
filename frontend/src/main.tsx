@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router";
 import { Provider } from "react-redux";
 import { store } from "./shared/store/store";
 import { initSecurity } from "./shared/config/security";
+import { initDatabaseAndModels } from "./shared/db/database";
 import { checkAndInitializeData } from "./shared/utils/init-data.utils";
 
 // Mostrar información de configuración en desarrollo
@@ -40,10 +41,28 @@ if (import.meta.env.DEV) {
   };
 }
 
-// Inicializar datos por defecto (usuario admin)
-checkAndInitializeData().catch(error => {
-  console.error('Error inicializando datos:', error);
-});
+// Inicializar base de datos y datos por defecto
+async function initializeApp() {
+  try {
+    // 1. Inicializar la base de datos y modelos
+    console.log('🔄 Inicializando aplicación...');
+    await initDatabaseAndModels();
+    
+    // 2. Inicializar datos por defecto (usuario admin y datos de catálogo)
+    await checkAndInitializeData();
+    
+    console.log('✅ Aplicación inicializada correctamente');
+  } catch (error) {
+    console.error('❌ Error inicializando aplicación:', error);
+    // En desarrollo, continuar aunque falle la inicialización
+    if (import.meta.env.PROD) {
+      throw error;
+    }
+  }
+}
+
+// Inicializar la aplicación
+initializeApp();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
