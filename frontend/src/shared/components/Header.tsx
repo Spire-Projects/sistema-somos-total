@@ -1,5 +1,6 @@
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { logout } from '../store/authSlice';
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { logout } from "../store/authSlice";
+import logo from "../../assets/logo.png";
 
 export const Header = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -12,8 +13,11 @@ export const Header = () => {
   return (
     <header className="bg-blue-600 text-white px-6 py-4 shadow-md">
       <div className="flex justify-between items-center max-w-7xl mx-auto">
-        <h1 className="text-xl font-bold">FarmaApp</h1>
-        
+        <div className="flex items-center gap-3">
+          <img src={logo} alt="FarmaApp Logo" className="h-8 w-8 rounded" />
+          <h1 className="text-xl font-bold">FarmaApp</h1>
+        </div>
+
         {user && (
           <div className="flex items-center gap-4">
             <div className="text-sm">
