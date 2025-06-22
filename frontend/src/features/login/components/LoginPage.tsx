@@ -1,7 +1,19 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+
+import { Button } from '../../../shared/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../../shared/components/ui/card';
+import { Input } from '../../../shared/components/ui/input';
+import { Label } from '../../../shared/components/ui/label';
 import { UserService } from '../../../shared/services/UserService';
-import { useAppDispatch, useAppSelector  } from '../../../shared/store/hooks';
+import { useAppDispatch, useAppSelector } from '../../../shared/store/hooks';
 import { loginSuccess } from '../../../shared/store/authSlice';
 import type { LoginCredentials } from '../../../shared/db/models/user.model';
 
@@ -12,6 +24,7 @@ export const LoginPage = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
@@ -29,12 +42,16 @@ export const LoginPage = () => {
     const response = await UserService.login(formData);
 
     if (response.success && response.user && response.token) {
-      dispatch(loginSuccess({
-        user: response.user,
-        token: response.token,
-      }));
+      dispatch(
+        loginSuccess({
+          user: response.user,
+          token: response.token,
+        })
+      );
     } else {
-      setError(response.error || 'Credenciales inválidas. Por favor, inténtalo de nuevo.');
+      setError(
+        response.error || 'Credenciales inválidas. Por favor, inténtalo de nuevo.'
+      );
     }
 
     setIsLoading(false);
@@ -47,73 +64,83 @@ export const LoginPage = () => {
     });
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">FarmaApp</h1>
-          <p className="text-gray-600 mt-2">Iniciar Sesión</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Credenciales de prueba */}
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
-            <h4 className="font-medium mb-1">Credenciales de prueba:</h4>
-            <div className="text-sm space-y-1">
-              <p><strong>Email:</strong> admin@farmaapp.com</p>
-              <p><strong>Contraseña:</strong> admin123</p>
+      <Card className="mx-auto max-w-sm w-full">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">FarmaApp</CardTitle>
+          <CardDescription>Iniciar Sesión</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Credenciales de prueba */}
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md mb-4 text-sm">
+              <h4 className="font-medium mb-1">Credenciales de prueba:</h4>
+              <div className="space-y-1">
+                <p><strong>Email:</strong> admin@farmaapp.com</p>
+                <p><strong>Contraseña:</strong> admin123</p>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="usuario@ejemplo.com"
-              autoComplete='email'
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              autoComplete="current-password"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded">
-              {error}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="usuario@ejemplo.com"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                autoComplete="email"
+                disabled={isLoading}
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-gray-500"
+                  onClick={togglePasswordVisibility}
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </Button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative" role="alert">
+                <span className="block sm:inline">{error}</span>
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
