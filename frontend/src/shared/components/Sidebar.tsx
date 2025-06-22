@@ -1,18 +1,19 @@
-import { cn } from '../../lib/utils';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  ShoppingBag, 
-  Users, 
-  FileText, 
+import { cn } from "../../lib/utils";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  ShoppingBag,
+  Users,
+  FileText,
   Settings,
-  LogOut
-} from 'lucide-react';
-import { NavLink, useLocation } from 'react-router';
-import { useAppDispatch } from '../store/hooks';
-import { logout } from '../store/authSlice';
-import { Button } from './ui/button';
+  LogOut,
+} from "lucide-react";
+import { NavLink, useLocation } from "react-router";
+import { useAppDispatch } from "../store/hooks";
+import { logout } from "../store/authSlice";
+import { Button } from "./ui/button";
+import logo from "../../assets/logo.png"
 
 interface SidebarProps {
   className?: string;
@@ -20,53 +21,53 @@ interface SidebarProps {
 
 const menuItems = [
   {
-    title: 'Dashboard',
+    title: "Dashboard",
     icon: LayoutDashboard,
-    href: '/dashboard',
-    color: 'text-green-600'
+    href: "/dashboard",
+    color: "text-green-600",
   },
   {
-    title: 'Inventario',
+    title: "Inventario",
     icon: Package,
-    href: '/inventory',
-    color: 'text-blue-600'
+    href: "/inventory",
+    color: "text-blue-600",
   },
   {
-    title: 'Ventas',
+    title: "Ventas",
     icon: ShoppingCart,
-    href: '/sales',
-    color: 'text-purple-600'
+    href: "/sales",
+    color: "text-purple-600",
   },
   {
-    title: 'Compras',
+    title: "Compras",
     icon: ShoppingBag,
-    href: '/purchases',
-    color: 'text-orange-600'
+    href: "/purchases",
+    color: "text-orange-600",
   },
   {
-    title: 'Clientes',
+    title: "Clientes",
     icon: Users,
-    href: '/clients',
-    color: 'text-pink-600'
+    href: "/clients",
+    color: "text-pink-600",
   },
   {
-    title: 'Reportes',
+    title: "Reportes",
     icon: FileText,
-    href: '/reports',
-    color: 'text-indigo-600'
+    href: "/reports",
+    color: "text-indigo-600",
   },
   {
-    title: 'Usuarios',
+    title: "Usuarios",
     icon: Users,
-    href: '/users',
-    color: 'text-cyan-600'
+    href: "/users",
+    color: "text-cyan-600",
   },
   {
-    title: 'Configuración',
+    title: "Configuración",
     icon: Settings,
-    href: '/settings',
-    color: 'text-gray-600'
-  }
+    href: "/settings",
+    color: "text-gray-600",
+  },
 ];
 
 export const Sidebar = ({ className }: SidebarProps) => {
@@ -78,17 +79,16 @@ export const Sidebar = ({ className }: SidebarProps) => {
   };
 
   return (
-    <div className={cn(
-      "flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-sm",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-sm",
+        className
+      )}
+    >
       {/* Logo */}
-      <div className="flex h-16 items-center px-6 border-b border-gray-200">
+      <div className="flex h-20 items-center px-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600 shadow-sm">
-            <span className="text-lg font-bold text-white">F</span>
-          </div>
-          <span className="text-xl font-bold text-green-700">FarmaPlus</span>
+          <img src={logo} alt="Logo" className="h-16 p-1 w-auto object-contain" />
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
-          
+
           return (
             <NavLink
               key={item.href}
@@ -109,15 +109,13 @@ export const Sidebar = ({ className }: SidebarProps) => {
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 ml-4"
               )}
             >
-              <Icon 
+              <Icon
                 className={cn(
                   "mr-3 h-5 w-5 flex-shrink-0",
                   isActive ? "text-green-600" : item.color
-                )} 
+                )}
               />
-              <p className='text-gray-600'>
-              {item.title}
-              </p>
+              <p className="text-gray-600">{item.title}</p>
             </NavLink>
           );
         })}
@@ -125,7 +123,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
 
       {/* User Section */}
       <div className="border-t border-gray-200 p-3">
-        <Button 
+        <Button
           onClick={handleLogout}
           variant="ghost"
           size="sm"
