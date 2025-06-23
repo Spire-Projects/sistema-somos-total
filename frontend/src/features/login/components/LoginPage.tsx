@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import logoImage from '../../../assets/logo.png';
 
 import { Button } from '../../../shared/components/ui/button';
 import {
@@ -8,7 +9,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '../../../shared/components/ui/card';
 import { Input } from '../../../shared/components/ui/input';
 import { Label } from '../../../shared/components/ui/label';
@@ -72,7 +72,9 @@ export const LoginPage = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">FarmaApp</CardTitle>
+          <div className="flex justify-center mb-2">
+            <img src={logoImage} alt="FarmaApp Logo" className="h-16 w-auto" />
+          </div>
           <CardDescription>Iniciar Sesión</CardDescription>
         </CardHeader>
         <CardContent>
@@ -134,7 +136,7 @@ export const LoginPage = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-red-300" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>

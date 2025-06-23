@@ -84,12 +84,3 @@ export interface LoginCredentials {
 }
 
 // Usuario autenticado (sin datos sensibles)
-export interface AuthUser {
-  id: string;
-  fullName: string;
-  email: string;
-  role: UserRole;
-  active: boolean;
-  createdAt?: string;
-  lastSession?: string;
-}

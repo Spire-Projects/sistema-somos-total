@@ -1,19 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserService } from '../../../shared/services/UserService';
 import { initDatabase } from '../../../shared/db/database';
-import type { AuthUser } from '../../../shared/db/models/user.model';
+import type { AuthUser } from '@/shared/types/User';
 import { config } from '../../../shared/config/config';
+import { UserSearchAndFilters, type UserFilter } from './UserSearchAndFilters';
+import { UserTable } from './UserTable';
+import { UserPagination } from './UserPagination';
+import { UserDialog } from './UserDialog';
 
 export const UserManager: React.FC = () => {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [newUser, setNewUser] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    role: 'cashier' as 'admin' | 'cashier'
-  });
+  const [statusMessage, setStatusMessage] = useState('');
+  
+  // Estados para búsqueda y filtros
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<UserFilter>('all');
+  
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
+  
+  // Estados para selección
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  
+  // Estados para diálogo
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
+  const [editingUser, setEditingUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -28,161 +42,196 @@ export const UserManager: React.FC = () => {
       const result = await UserService.getAllUsers();
       if (result.success && result.users) {
         setUsers(result.users);
-        setMessage(`Cargados ${result.users.length} usuarios desde ${config.APP_MODE === 'local' ? 'RxDB/IndexedDB' : 'Firestore'}`);
+        setStatusMessage(`Cargados ${result.users.length} usuarios desde ${config.APP_MODE === 'local' ? 'RxDB/IndexedDB' : 'Firestore'}`);
       } else {
-        setMessage(result.error || 'Error cargando usuarios');
+        setStatusMessage(result.error || 'Error cargando usuarios');
       }
     } catch (error) {
       console.error('Error:', error);
-      setMessage('Error inicializando la aplicación');
+      setStatusMessage('Error inicializando la aplicación');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const result = await UserService.register(newUser);
-      if (result.success) {
-        setMessage('Usuario registrado exitosamente');
-        setNewUser({ fullName: '', email: '', password: '', role: 'cashier' });
-        await loadUsers();
-      } else {
-        setMessage(result.error || 'Error registrando usuario');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setMessage('Error registrando usuario');
-    } finally {
-      setLoading(false);
+  // Filtrar usuarios basado en búsqueda y filtros
+  const filteredUsers = useMemo(() => {
+    let filtered = users;
+
+    // Aplicar filtro de búsqueda
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.fullName.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query)
+      );
+    }
+
+    // Aplicar filtro de rol
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === activeFilter);
+    }
+
+    return filtered;
+  }, [users, searchQuery, activeFilter]);
+
+  // Calcular usuarios para la página actual
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentPage, usersPerPage]);
+
+  // Calcular contadores para los filtros
+  const userCounts = useMemo(() => {
+    const counts = {
+      all: users.length,
+      admin: users.filter(u => u.role === 'admin').length,
+      cashier: users.filter(u => u.role === 'cashier').length,
+      warehouse: 0, // Placeholder para futuros roles
+      vendor: 0,
+      accounting: 0
+    };
+    return counts;
+  }, [users]);
+
+  // Manejar cambio de página
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedUsers([]); // Limpiar selección al cambiar página
+  };
+
+  // Manejar cambio de filtro
+  const handleFilterChange = (filter: UserFilter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1); // Resetear a la primera página
+    setSelectedUsers([]); // Limpiar selección
+  };
+
+  // Manejar búsqueda
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Resetear a la primera página
+    setSelectedUsers([]); // Limpiar selección
+  };
+
+  // Manejar selección de usuarios
+  const handleSelectUser = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(paginatedUsers.map(user => user.id));
+    } else {
+      setSelectedUsers([]);
     }
   };
 
-  const handleSync = async () => {
-    if (config.APP_MODE !== 'local') {
-      setMessage('Sincronización solo disponible en modo local');
-      return;
-    }
+  // Manejar diálogos
+  const handleNewUser = () => {
+    setDialogMode('create');
+    setEditingUser(null);
+    setDialogOpen(true);
+  };
 
-    setLoading(true);
-    try {
-      const result = await UserService.syncToFirestore();
-      if (result.success) {
-        setMessage('Sincronización a Firestore completada');
-      } else {
-        setMessage(result.error || 'Error en sincronización');
+  const handleEditUser = (user: AuthUser) => {
+    setDialogMode('edit');
+    setEditingUser(user);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteUser = async (user: AuthUser) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar al usuario ${user.fullName}?`)) {
+      try {
+        const result = await UserService.deactivateUser(user.id);
+        if (result.success) {
+          setStatusMessage(`Usuario ${user.fullName} desactivado exitosamente`);
+          await loadUsers();
+        } else {
+          setStatusMessage(result.error || 'Error desactivando usuario');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setStatusMessage('Error desactivando usuario');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      setMessage('Error en sincronización');
-    } finally {
-      setLoading(false);
     }
   };
+
+  const handleDialogSuccess = () => {
+    loadUsers();
+  };
+
+  // Calcular información de paginación
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const startIndex = (currentPage - 1) * usersPerPage;
+  const endIndex = Math.min(startIndex + usersPerPage, filteredUsers.length);
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2>Gestión de Usuarios</h2>
-      
-      {/* Info del modo */}
-      <div style={{ 
-        background: config.APP_MODE === 'local' ? '#e3f2fd' : '#fff3e0', 
-        padding: '10px', 
-        borderRadius: '4px', 
-        marginBottom: '20px' 
-      }}>
-        <strong>Modo actual:</strong> {config.APP_MODE} 
-        ({config.APP_MODE === 'local' ? 'RxDB/IndexedDB + Backup a Firestore' : 'Solo Firestore'})
+    <div className="container mx-auto p-4 max-w-7xl">
+
+      {/* Búsqueda y filtros */}
+      <div className="mb-6">
+        <UserSearchAndFilters
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+          onNewUser={handleNewUser}
+          userCounts={userCounts}
+        />
       </div>
 
-      {/* Mensaje */}
-      {message && (
-        <div style={{ 
-          background: '#f5f5f5', 
-          padding: '10px', 
-          borderRadius: '4px', 
-          marginBottom: '20px' 
-        }}>
-          {message}
-        </div>
-      )}
-
-      {/* Formulario de registro */}
-      <form onSubmit={handleRegister} style={{ marginBottom: '30px' }}>
-        <h3>Registrar nuevo usuario</h3>
-        <div style={{ display: 'grid', gap: '10px', maxWidth: '400px' }}>
-          <input
-            type="text"
-            placeholder="Nombre completo"
-            value={newUser.fullName}
-            onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={newUser.password}
-            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-            required
-          />
-          <select
-            value={newUser.role}
-            onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'cashier' })}
-          >
-            <option value="cashier">Cajero</option>
-            <option value="admin">Administrador</option>
-          </select>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Registrando...' : 'Registrar Usuario'}
-          </button>
-        </div>
-      </form>
-
-      {/* Botones de acción */}
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={loadUsers} disabled={loading} style={{ marginRight: '10px' }}>
-          {loading ? 'Cargando...' : 'Recargar Usuarios'}
-        </button>
+      {/* Tabla de usuarios */}
+      <div className="mb-4">
+        <UserTable
+          users={paginatedUsers}
+          selectedUsers={selectedUsers}
+          onSelectUser={handleSelectUser}
+          onSelectAll={handleSelectAll}
+          onEditUser={handleEditUser}
+          onDeleteUser={handleDeleteUser}
+          loading={loading}
+        />
         
-        {config.APP_MODE === 'local' && (
-          <button onClick={handleSync} disabled={loading}>
-            {loading ? 'Sincronizando...' : 'Sincronizar a Firestore'}
-          </button>
+        {/* Mensaje de estado para fines de desarrollo */}
+        {statusMessage && (
+          <div className="mt-2 text-sm text-gray-600 italic">
+            {statusMessage}
+          </div>
         )}
       </div>
 
-      {/* Lista de usuarios */}
-      <h3>Usuarios ({users.length})</h3>
-      <div style={{ display: 'grid', gap: '10px' }}>
-        {users.map((user) => (
-          <div
-            key={user.id}
-            style={{
-              border: '1px solid #ddd',
-              padding: '10px',
-              borderRadius: '4px',
-              background: user.active ? '#f9f9f9' : '#ffebee'
-            }}
-          >
-            <div><strong>{user.fullName}</strong> ({user.role})</div>
-            <div>{user.email}</div>
-            <div>Estado: {user.active ? 'Activo' : 'Inactivo'}</div>
-            {user.lastSession && (
-              <div>Última sesión: {new Date(user.lastSession).toLocaleString()}</div>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* Paginación */}
+      {filteredUsers.length > 0 && (
+        <UserPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalUsers={filteredUsers.length}
+          usersPerPage={usersPerPage}
+          onPageChange={handlePageChange}
+          onUsersPerPageChange={(newUsersPerPage) => {
+            setUsersPerPage(newUsersPerPage);
+            setCurrentPage(1);
+          }}
+          startIndex={startIndex}
+          endIndex={endIndex}
+        />
+      )}
+
+      {/* Diálogo de crear/editar usuario */}
+      <UserDialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSuccess={handleDialogSuccess}
+        user={editingUser}
+        mode={dialogMode}
+      />
     </div>
   );
 };

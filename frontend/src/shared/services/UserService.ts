@@ -6,7 +6,6 @@ import type {
   CreateUserData,
   UpdateUserData,
   LoginCredentials,
-  AuthUser
 } from '../db/models/user.model';
 import {
   hashPassword,
@@ -18,6 +17,7 @@ import {
   storeToken,
   removeStoredToken
 } from '../utils/auth.utils';
+import type { AuthUser } from '../types/User';
 
 // Selector de base de datos según el modo
 const getUserDB = () => {
@@ -210,6 +210,44 @@ export const UserService = {
     } catch (error) {
       console.error('Error obteniendo usuarios por rol:', error);
       return { success: false, error: 'Error obteniendo usuarios' };
+    }
+  },
+
+  // Buscar usuarios por texto (coincidencia parcial en email, nombre o rol)
+  async searchUsers(searchText: string): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
+    try {
+      if (!searchText || searchText.trim() === '') {
+        return await this.getAllUsers();
+      }
+
+      // Normalizar texto de búsqueda
+      const normalizedText = searchText.trim().toLowerCase();
+      
+      // Obtener la base de datos apropiada
+      const db = getUserDB();
+      
+      // Usar el método especializado de búsqueda si estamos en modo local
+      let filteredUsers;
+      if (config.APP_MODE === 'local' && 'findByText' in db) {
+        // Si la base de datos tiene un método findByText, usarlo directamente
+        filteredUsers = await db.findByText(normalizedText);
+      } else {
+        // Si no, usamos el enfoque genérico (compatible con Firestore)
+        const allUsers = await db.findAll();
+        filteredUsers = allUsers.filter(user => 
+          user.email.toLowerCase().includes(normalizedText) ||
+          user.fullName.toLowerCase().includes(normalizedText) ||
+          user.role.toLowerCase().includes(normalizedText)
+        );
+      }
+      
+      const authUsers = filteredUsers.map(userToAuthUser);
+      console.log(`🔍 Búsqueda de usuarios: "${searchText}" - ${authUsers.length} resultados`);
+      
+      return { success: true, users: authUsers };
+    } catch (error) {
+      console.error('❌ Error buscando usuarios:', error);
+      return { success: false, error: 'Error al buscar usuarios' };
     }
   },
 

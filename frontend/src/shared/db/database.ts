@@ -257,15 +257,31 @@ export const localUserDB = {
     
     return users.map(user => user.toJSON());
   },
-
-  // Buscar usuarios activos
-  async findActive(): Promise<UserDocument[]> {
-    const db = await initDatabase();
-    const users = await db.users.find({
-      selector: { active: true }
-    }).exec();
+  
+  // Búsqueda avanzada por texto (aprovechando capacidades de RxDB)
+  async findByText(searchText: string): Promise<UserDocument[]> {
+    if (!searchText || searchText.trim() === '') {
+      return this.findAll();
+    }
     
-    return users.map(user => user.toJSON());
+    const db = await initDatabase();
+    const normalizedText = searchText.trim().toLowerCase();
+    
+    // Obtenemos todos los usuarios y filtramos en memoria
+    // Esta es una solución más compatible que funcionará siempre
+    const allUsers = await db.users.find().exec();
+    
+    // Filtramos usuarios que coincidan con el texto en cualquier campo
+    const filteredUsers = allUsers.filter(user => {
+      const userJson = user.toJSON();
+      return (
+        userJson.email.toLowerCase().includes(normalizedText) ||
+        userJson.fullName.toLowerCase().includes(normalizedText) ||
+        userJson.role.toLowerCase().includes(normalizedText)
+      );
+    });
+    
+    return filteredUsers.map(user => user.toJSON());
   },
 
   // Obtener estadísticas de la base de datos
