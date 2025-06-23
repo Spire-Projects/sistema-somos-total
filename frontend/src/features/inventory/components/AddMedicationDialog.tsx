@@ -10,13 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../../shared/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../shared/components/ui/select";
 import { Plus } from "lucide-react";
 import {
   createMedication,
@@ -29,6 +22,11 @@ import {
   createManufacturer,
   updateMedicationCategory,
   deleteMedicationCategory,
+  updateManufacturer,
+  deleteManufacturer,
+  createPharmaceuticalForm,
+  updatePharmaceuticalForm,
+  deletePharmaceuticalForm,
 } from "../../../shared/services";
 import type {
   MedicationCategory,
@@ -268,14 +266,12 @@ export const AddMedicationDialog = ({
                 onCreate={async (name) =>
                   await createMedicationCategory({ name, createdBy: "admin" })
                 }
-                onEdit={async (id, name) => {
-                  const x = await updateMedicationCategory(id, {
+                onEdit={async (id, name) =>
+                  await updateMedicationCategory(id, {
                     name,
                     updatedBy: "admin",
-                  });
-                  console.log(x, name)
-                  return x
-                }}
+                  })
+                }
                 onDelete={async (id) => {
                   await deleteMedicationCategory(id);
                 }}
@@ -296,51 +292,53 @@ export const AddMedicationDialog = ({
             </div>
           </div>
 
-          {/* Proveedor y formulario farmacéutico */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
               <AsyncCreatableSelect
                 label="Proveedor"
                 value={formData.manufacturerId}
                 options={manufacturers}
+                setOptions={setManufacturers}
                 onChange={(value) => handleInputChange("manufacturerId", value)}
-                onCreate={async (name) => {
-                  try {
-                    const newManufacturer = await createManufacturer({
-                      name,
-                      createdBy: "admin",
-                    });
-                    setManufacturers((prev) => ({ ...prev }));
-
-                    return newManufacturer;
-                  } catch (err) {
-                    alert("No se puede crear la categoría, intenta de nuevo");
-                    throw err;
-                  }
+                onCreate={async (name) =>
+                  await createManufacturer({ name, createdBy: "admin" })
+                }
+                onEdit={async (id, name) =>
+                  await updateManufacturer(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deleteManufacturer(id);
                 }}
               />
             </div>
             <div className="space-y-2">
+              <AsyncCreatableSelect
+                label="Forma Farmacéutica"
+                value={formData.pharmaceuticalFormId}
+                options={pharmaceuticalForms}
+                setOptions={setPharmaceuticalForms}
+                onChange={(value) =>
+                  handleInputChange("pharmaceuticalFormId", value)
+                }
+                onCreate={async (name) =>
+                  await createPharmaceuticalForm({ name, createdBy: "admin" })
+                }
+                onEdit={async (id, name) =>
+                  await updatePharmaceuticalForm(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deletePharmaceuticalForm(id);
+                }}
+              />
               <label className="text-sm font-medium text-gray-700">
                 Forma Farmacéutica
               </label>
-              <Select
-                value={formData.pharmaceuticalFormId}
-                onValueChange={(value) =>
-                  handleInputChange("pharmaceuticalFormId", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar forma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pharmaceuticalForms.map((form) => (
-                    <SelectItem key={form.id} value={form.id}>
-                      {form.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
