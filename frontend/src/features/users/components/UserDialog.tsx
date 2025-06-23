@@ -116,7 +116,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
 
   const roleOptions = [
     { value: 'admin', label: 'Administrador' },
-    { value: 'cashier', label: 'Farmacéutico' }
+    { value: 'cashier', label: 'Caja' }
   ];
 
   return (
@@ -227,7 +227,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2">
             <Button
               type="button"
               variant="outline"
@@ -239,7 +239,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700"
+              variant="default"
             >
               {loading ? 'Procesando...' : (mode === 'create' ? 'Crear Usuario' : 'Guardar Cambios')}
             </Button>

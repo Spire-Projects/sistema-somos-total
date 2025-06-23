@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { Input } from '../../../shared/components/ui/input';
 import { Button } from '../../../shared/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components/ui/select';
@@ -53,34 +53,27 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Barra de búsqueda y acciones principales */}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Campo de búsqueda */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Buscar por nombre, correo, rol..."
+            placeholder="Buscar por nombre o correo"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
-
-        {/* Botones de acción */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:w-auto w-full">
           <Button
             onClick={onNewUser}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            variant="default"
+            className="sm:w-auto w-full"
           >
             <Plus className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Nuevo Usuario</span>
             <span className="sm:hidden">Nuevo</span>
           </Button>
-          
-          {/* Botón de filtros para móvil - opcional */}
-          <Button variant="outline" className="sm:hidden">
-            <Filter className="w-4 h-4" />
-          </Button>
+        
         </div>
       </div>
 
@@ -94,7 +87,7 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
               className={cn(
                 "px-4 py-2 text-sm rounded-full border border-gray-300 transition-all whitespace-nowrap flex items-center",
                 activeFilter === option.value
-                  ? "bg-green-500 text-white border-green-500 font-medium"
+                  ? "bg-primary text-primary-foreground border-primary font-medium"
                   : "bg-white text-gray-700 hover:bg-gray-50"
               )}
             >
@@ -107,7 +100,7 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
                 <span className={cn(
                   "ml-1.5 text-xs px-1.5 py-0.5 rounded-full inline-flex items-center justify-center min-w-[20px]",
                   activeFilter === option.value
-                    ? "bg-white text-green-700"
+                    ? "bg-primary-foreground text-primary"
                     : "bg-gray-200 text-gray-700"
                 )}>
                   {option.count}
@@ -119,9 +112,9 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
       </div>
 
       {/* Select para filtros en móvil */}
-      <div className={isMobile ? "block" : "hidden"}>
+      <div className={isMobile ? "block w-full" : "hidden"}>
         <Select value={activeFilter} onValueChange={(value) => onFilterChange(value as UserFilter)}>
-          <SelectTrigger className="bg-white">
+          <SelectTrigger className="bg-white w-full">
             <SelectValue placeholder="Seleccionar filtro" />
           </SelectTrigger>
           <SelectContent>

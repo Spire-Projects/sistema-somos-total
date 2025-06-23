@@ -106,7 +106,7 @@ export const UserPagination: React.FC<UserPaginationProps> = ({
                 onClick={() => onPageChange(page)}
                 className={`h-8 w-8 ${
                   page === currentPage 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                    ? 'bg-primary  text-white' 
                     : ''
                 }`}
               >

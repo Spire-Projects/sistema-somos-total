@@ -199,12 +199,14 @@ export const UserManager: React.FC = () => {
           loading={loading}
         />
         
-        {/* Mensaje de estado para fines de desarrollo */}
+        {/* Mensaje de estado para fines de desarrollo 
+        TODO: activar cuando se necesite
         {statusMessage && (
           <div className="mt-2 text-sm text-gray-600 italic">
             {statusMessage}
           </div>
         )}
+          */}
       </div>
 
       {/* Paginación */}

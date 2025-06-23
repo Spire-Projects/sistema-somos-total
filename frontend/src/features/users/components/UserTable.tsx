@@ -21,7 +21,7 @@ interface UserTableProps {
 const getRoleBadgeVariant = (role: string) => {
   switch (role) {
     case 'admin':
-      return 'destructive';
+      return 'default';
     case 'cashier':
       return 'secondary';
     default:
@@ -34,7 +34,7 @@ const getRoleLabel = (role: string) => {
     case 'admin':
       return 'Administrador';
     case 'cashier':
-      return 'Farmacéutico';
+      return 'Caja';
     default:
       return role;
   }
@@ -77,13 +77,7 @@ export const UserTable: React.FC<UserTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={allSelected}
-                  onCheckedChange={onSelectAll}
-                  aria-label="Seleccionar todos"
-                />
-              </TableHead>
+              
               <TableHead>USUARIO</TableHead>
               <TableHead>ROL</TableHead>
               <TableHead>CORREO</TableHead>
@@ -96,23 +90,11 @@ export const UserTable: React.FC<UserTableProps> = ({
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedUsers.includes(user.id)}
-                    onCheckedChange={() => onSelectUser(user.id)}
-                    aria-label={`Seleccionar ${user.fullName}`}
-                  />
-                </TableCell>
+                
                 <TableCell>
                   <div className="flex items-center space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-gray-100 text-gray-600 text-sm">
-                        {getInitials(user.fullName)}
-                      </AvatarFallback>
-                    </Avatar>
                     <div>
                       <div className="font-medium">{user.fullName}</div>
-                      <div className="text-sm text-gray-500">@{user.fullName.toLowerCase().replace(/\s+/g, '.')}</div>
                     </div>
                   </div>
                 </TableCell>
@@ -139,13 +121,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <Key className="h-4 w-4" />
-                    </Button>
+                  
                     <Button
                       variant="ghost"
                       size="icon"
@@ -164,28 +140,12 @@ export const UserTable: React.FC<UserTableProps> = ({
 
       {/* Vista de tarjetas para móvil */}
       <div className="md:hidden">
-        <div className="p-4 border-b bg-gray-50">
-          <Checkbox
-            checked={allSelected}
-            onCheckedChange={onSelectAll}
-            className="mr-2"
-          />
-          <span className="text-sm font-medium">Seleccionar todos</span>
-        </div>
+        
         <div className="divide-y">
           {users.map((user) => (
             <div key={user.id} className="p-4">
               <div className="flex items-start space-x-3">
-                <Checkbox
-                  checked={selectedUsers.includes(user.id)}
-                  onCheckedChange={() => onSelectUser(user.id)}
-                  className="mt-1"
-                />
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-gray-100 text-gray-600">
-                    {getInitials(user.fullName)}
-                  </AvatarFallback>
-                </Avatar>
+                
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div>
@@ -210,13 +170,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Key className="h-4 w-4" />
-                      </Button>
+                     
                       <Button
                         variant="ghost"
                         size="icon"
