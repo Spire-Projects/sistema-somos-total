@@ -33,12 +33,19 @@ import type {
   PharmaceuticalFormDoc,
   Manufacturer,
   ActiveIngredient,
+  GenericNameDoc,
 } from "../../../shared/types/Medication";
 import type {
   CreateMedicationData,
   CreateMedicationBatchData,
 } from "../../../shared/types/MedicationCrud";
 import { AsyncCreatableSelect } from "@/shared/components/AsyncCreatableSelect";
+import {
+  createGenericName,
+  deleteGenericName,
+  findAllGenericNames,
+  updateGenericName,
+} from "@/shared/services/GenericNameService";
 
 interface AddMedicationDialogProps {
   onMedicationAdded?: () => void;
@@ -81,6 +88,7 @@ export const AddMedicationDialog = ({
   const [activeIngredients, setActiveIngredients] = useState<
     ActiveIngredient[]
   >([]);
+  const [genericNames, setGenericNames] = useState<GenericNameDoc[]>([]);
 
   const [formData, setFormData] = useState<MedicationFormData>({
     tradeName: "",
@@ -114,20 +122,27 @@ export const AddMedicationDialog = ({
 
   const loadCatalogs = async () => {
     try {
-      const [categoriesRes, formsRes, manufacturersRes, ingredientsRes] =
-        await Promise.all([
-          findAllMedicationCategories(),
-          findAllPharmaceuticalForms(),
-          findAllManufacturers(),
-          findAllActiveIngredients(),
-        ]);
+      const [
+        categoriesRes,
+        formsRes,
+        manufacturersRes,
+        ingredientsRes,
+        genericNames,
+      ] = await Promise.all([
+        findAllMedicationCategories(),
+        findAllPharmaceuticalForms(),
+        findAllManufacturers(),
+        findAllActiveIngredients(),
+        findAllGenericNames(),
+      ]);
 
       setCategories(categoriesRes);
       setPharmaceuticalForms(formsRes);
       setManufacturers(manufacturersRes);
       setActiveIngredients(ingredientsRes);
+      setGenericNames(genericNames);
     } catch (error) {
-      console.error("Error loading catalogs:", error);
+      alert("Error cargando datos, intenta de nuevo");
     }
   };
 
@@ -257,7 +272,7 @@ export const AddMedicationDialog = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <AsyncCreatableSelect
+              <AsyncCreatableSelect<MedicationCategory>
                 label="Categoría"
                 value={formData.categoryId}
                 options={categories}
@@ -278,16 +293,24 @@ export const AddMedicationDialog = ({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Presentación
-              </label>
-              <Input
-                placeholder="Ej: Tabletas - Caja x 30"
-                value={formData.presentation}
-                onChange={(e) =>
-                  handleInputChange("presentation", e.target.value)
+              <AsyncCreatableSelect<GenericNameDoc>
+                label="Nombre Genérico"
+                value={formData.genericName}
+                options={genericNames}
+                setOptions={setGenericNames}
+                onChange={(value) => handleInputChange("genericName", value)}
+                onCreate={async (name) =>
+                  await createGenericName({ name, createdBy: "admin" })
                 }
-                required
+                onEdit={async (id, name) =>
+                  await updateGenericName(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deleteGenericName(id);
+                }}
               />
             </div>
           </div>
@@ -377,14 +400,15 @@ export const AddMedicationDialog = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Nombre genérico
+                Presentación
               </label>
               <Input
-                placeholder="Nombre genérico"
-                value={formData.genericName}
+                placeholder="Ej: Tabletas - Caja x 30"
+                value={formData.presentation}
                 onChange={(e) =>
-                  handleInputChange("genericName", e.target.value)
+                  handleInputChange("presentation", e.target.value)
                 }
+                required
               />
             </div>
             <div className="space-y-2">

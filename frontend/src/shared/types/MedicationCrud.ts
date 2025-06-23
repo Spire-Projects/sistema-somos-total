@@ -106,3 +106,17 @@ export interface UpdateMedicationBatchData {
   supplier?: string;
   updatedBy?: string;
 }
+
+export interface CreateGenericNameData {
+  name: string;
+  aliases?: string[];
+  description?: string;
+  createdBy: string;
+}
+
+export interface UpdateGenericNameData {
+  name?: string;
+  aliases?: string[];
+  description?: string;
+  updatedBy?: string;
+}

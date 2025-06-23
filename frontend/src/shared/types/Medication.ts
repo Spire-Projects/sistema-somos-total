@@ -72,3 +72,16 @@ export interface Manufacturer {
   sincronized?: boolean; // indicates if the manufacturer is synchronized with the server
   isDeleted?: boolean; // indicates if the manufacturer is deleted
 }
+
+export interface GenericNameDoc { // same than category
+  id: string;
+  name: string;
+  aliases?: string[];
+  description?: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  sincronized: boolean;
+  isDeleted: boolean;
+}

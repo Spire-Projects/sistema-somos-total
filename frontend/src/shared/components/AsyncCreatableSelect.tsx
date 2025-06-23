@@ -16,23 +16,26 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/shared/components/ui/dialog";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
-type Option = { id: string; name: string };
-
-interface Props {
-  label: string;
-  value: string;
-  options: Option[];
-  onChange: (id: string) => void;
-  onCreate: (name: string) => Promise<Option>;
-  onEdit?: (id: string, name: string) => Promise<Option | null>;
-  onDelete?: (id: string) => Promise<void>;
-  setOptions?: (fn: (prev: Option[]) => Option[]) => void;
+interface BaseOption {
+  id: string;
+  name: string;
 }
 
-export const AsyncCreatableSelect = ({
+interface Props<T extends BaseOption> {
+  label: string;
+  value: string;
+  options: T[];
+  onChange: (id: string) => void;
+  onCreate: (name: string) => Promise<T>;
+  onEdit?: (id: string, name: string) => Promise<T | null>;
+  onDelete?: (id: string) => Promise<void>;
+  setOptions?: React.Dispatch<React.SetStateAction<T[]>>;
+}
+
+export function AsyncCreatableSelect<T extends BaseOption>({
   label,
   value,
   options,
@@ -41,7 +44,7 @@ export const AsyncCreatableSelect = ({
   onEdit,
   onDelete,
   setOptions,
-}: Props) => {
+}: Props<T>) {
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -59,7 +62,7 @@ export const AsyncCreatableSelect = ({
       setSearch("");
       setCreating(false);
     } catch (err) {
-      alert("No se pudo crear la categoría. Intenta de nuevo.");
+      alert("No se pudo crear. Intenta de nuevo.");
       console.error(err);
     }
   };
@@ -74,7 +77,7 @@ export const AsyncCreatableSelect = ({
         )
       );
     } catch (err) {
-      alert("No se pudo editar la categoría.");
+      alert("No se pudo editar.");
       console.error(err);
     }
   };
@@ -85,7 +88,7 @@ export const AsyncCreatableSelect = ({
       await onDelete(id);
       setOptions((prev) => prev.filter((opt) => opt.id !== id));
     } catch (err) {
-      alert("No se pudo eliminar la categoría.");
+      alert("No se pudo eliminar.");
       console.error(err);
     }
   };
@@ -94,7 +97,7 @@ export const AsyncCreatableSelect = ({
     <div className="space-y-2">
       <label className="text-sm font-medium text-gray-700">{label}</label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger className="w-full">
           <SelectValue placeholder={`Seleccionar ${label.toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
@@ -110,7 +113,7 @@ export const AsyncCreatableSelect = ({
               key={option.id}
               className="flex items-center justify-between px-2 py-1 hover:bg-accent rounded-sm"
             >
-              <SelectItem value={option.id} className="flex-1">
+              <SelectItem value={option.id} className="flex-1 truncate">
                 {option.name}
               </SelectItem>
               <div className="flex gap-1 ml-2">
@@ -140,7 +143,7 @@ export const AsyncCreatableSelect = ({
                   className="w-full text-sm"
                   disabled={creating}
                 >
-                  <Plus /> Crear "{search}"
+                  + Crear "{search}"
                 </Button>
               </div>
             )}
@@ -148,15 +151,15 @@ export const AsyncCreatableSelect = ({
       </Select>
     </div>
   );
-};
+}
 
-const EditDialog = ({
+function EditDialog({
   currentName,
   onConfirm,
 }: {
   currentName: string;
   onConfirm: (newName: string) => void;
-}) => {
+}) {
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -187,7 +190,7 @@ const EditDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar categoría</DialogTitle>
+          <DialogTitle>Editar</DialogTitle>
         </DialogHeader>
         <Input
           ref={inputRef}
@@ -211,17 +214,19 @@ const EditDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
 
-const DeleteDialog = ({
+function DeleteDialog({
   name,
   onConfirm,
 }: {
   name: string;
   onConfirm: () => void;
-}) => {
+}) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
@@ -233,9 +238,7 @@ const DeleteDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            ¿Estás seguro de eliminar la categoría "{name}"?
-          </DialogTitle>
+          <DialogTitle>¿Eliminar "{name}"?</DialogTitle>
         </DialogHeader>
         <DialogFooter>
           <DialogClose asChild>
@@ -250,4 +253,4 @@ const DeleteDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+}
