@@ -27,6 +27,7 @@ export interface CreateManufacturerData {
 }
 
 export interface CreateMedicationData {
+  comercialName: string;
   tradeName: string;
   genericName: string;
   activeIngredientIds: string[];
@@ -104,5 +105,19 @@ export interface UpdateMedicationBatchData {
   sellingPrice?: number;
   purchaseDate?: string;
   supplier?: string;
+  updatedBy?: string;
+}
+
+export interface CreateGenericNameData {
+  name: string;
+  aliases?: string[];
+  description?: string;
+  createdBy: string;
+}
+
+export interface UpdateGenericNameData {
+  name?: string;
+  aliases?: string[];
+  description?: string;
   updatedBy?: string;
 }
