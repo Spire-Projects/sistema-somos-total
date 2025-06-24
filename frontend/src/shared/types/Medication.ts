@@ -1,5 +1,6 @@
 export interface Medication {
   id: string; // unique identifier for the medication
+  comercialName: string; // comercial name from the manufacter
   tradeName: string; // e.g., "Aspirin 500mg"
   genericName: string; // e.g., "Acetylsalicylic Acid"
   activeIngredientIds: string[]; // list of ActiveIngredient IDs
@@ -71,4 +72,17 @@ export interface Manufacturer {
   createdBy?: string; // e.g., "user123" - ID of the user who created this manufacturer
   sincronized?: boolean; // indicates if the manufacturer is synchronized with the server
   isDeleted?: boolean; // indicates if the manufacturer is deleted
+}
+
+export interface GenericNameDoc { // same than category
+  id: string;
+  name: string;
+  aliases?: string[];
+  description?: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  sincronized: boolean;
+  isDeleted: boolean;
 }
