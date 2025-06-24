@@ -9,8 +9,8 @@ export const Header = () => {
   const sectionNames: Record<string, string> = {
     "/dashboard": "Dashboard",
     "/inventory": "Inventario",
-    "/sales": "Ventas",
-    "/purchases": "Compras",
+    "/sales": "Compras",
+    "/purchases": "Ventas",
     "/clients": "Clientes",
     "/reports": "Reportes",
     "/users": "Usuarios",

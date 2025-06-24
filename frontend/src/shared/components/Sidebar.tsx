@@ -33,13 +33,13 @@ const menuItems = [
     color: "text-blue-600",
   },
   {
-    title: "Ventas",
+    title: "Compras",
     icon: ShoppingCart,
     href: "/sales",
     color: "text-purple-600",
   },
   {
-    title: "Compras",
+    title: "Ventas",
     icon: ShoppingBag,
     href: "/purchases",
     color: "text-orange-600",

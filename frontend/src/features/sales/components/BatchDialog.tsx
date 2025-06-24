@@ -177,7 +177,7 @@ export const BatchDialog: React.FC<BatchDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!w-400 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -230,6 +230,13 @@ export const BatchDialog: React.FC<BatchDialogProps> = ({
               )}
             </CardContent>
           </Card>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mb-4"
+            >
+                Agregar Medicamento
+            </Button>
 
           {/* Información del Lote */}
           <Card>
@@ -314,7 +321,7 @@ export const BatchDialog: React.FC<BatchDialogProps> = ({
 
           {/* Precios */}
           <Card>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-4 m-3 space-y-4">
               <h3 className="font-medium flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
                 Precios
@@ -339,7 +346,7 @@ export const BatchDialog: React.FC<BatchDialogProps> = ({
 
                 <div className="space-y-2">
                   <Label>Método de Cálculo</Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
                       type="button"
                       variant={isProfitMode ? 'default' : 'outline'}

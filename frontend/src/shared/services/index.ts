@@ -4,3 +4,4 @@ export * from './MedicationCategoryService';
 export * from './PharmaceuticalFormService';
 export * from './ManufacturerService';
 export * from './MedicationService';
+export * from './BatchService';
