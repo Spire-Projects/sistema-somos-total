@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Button } from '../../../shared/components/ui/button';
-import { Input } from '../../../shared/components/ui/input';
-import { Textarea } from '../../../shared/components/ui/textarea';
-import { Checkbox } from '../../../shared/components/ui/checkbox';
+import { useState, useEffect } from "react";
+import { Button } from "../../../shared/components/ui/button";
+import { Input } from "../../../shared/components/ui/input";
+import { Textarea } from "../../../shared/components/ui/textarea";
+import { Checkbox } from "../../../shared/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -10,14 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../../shared/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../shared/components/ui/select";
-import { Plus, X } from 'lucide-react';
+import { Plus } from "lucide-react";
 import {
   createMedication,
   addMedicationBatch,
@@ -25,20 +18,41 @@ import {
   findAllPharmaceuticalForms,
   findAllManufacturers,
   findAllActiveIngredients,
-} from '../../../shared/services';
-import type { 
-  MedicationCategory, 
-  PharmaceuticalFormDoc, 
-  Manufacturer, 
-  ActiveIngredient 
-} from '../../../shared/types/Medication';
-import type { CreateMedicationData, CreateMedicationBatchData } from '../../../shared/types/MedicationCrud';
+  createMedicationCategory,
+  createManufacturer,
+  updateMedicationCategory,
+  deleteMedicationCategory,
+  updateManufacturer,
+  deleteManufacturer,
+  createPharmaceuticalForm,
+  updatePharmaceuticalForm,
+  deletePharmaceuticalForm,
+} from "../../../shared/services";
+import type {
+  MedicationCategory,
+  PharmaceuticalFormDoc,
+  Manufacturer,
+  ActiveIngredient,
+  GenericNameDoc,
+} from "../../../shared/types/Medication";
+import type {
+  CreateMedicationData,
+  CreateMedicationBatchData,
+} from "../../../shared/types/MedicationCrud";
+import { AsyncCreatableSelect } from "@/shared/components/AsyncCreatableSelect";
+import {
+  createGenericName,
+  deleteGenericName,
+  findAllGenericNames,
+  updateGenericName,
+} from "@/shared/services/GenericNameService";
 
 interface AddMedicationDialogProps {
   onMedicationAdded?: () => void;
 }
 
 interface MedicationFormData {
+  comercialName: string;
   tradeName: string;
   genericName: string;
   categoryId: string;
@@ -62,34 +76,42 @@ interface MedicationFormData {
   requiresPrescription: boolean;
 }
 
-export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogProps) => {
+export const AddMedicationDialog = ({
+  onMedicationAdded,
+}: AddMedicationDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<MedicationCategory[]>([]);
-  const [pharmaceuticalForms, setPharmaceuticalForms] = useState<PharmaceuticalFormDoc[]>([]);
+  const [pharmaceuticalForms, setPharmaceuticalForms] = useState<
+    PharmaceuticalFormDoc[]
+  >([]);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
-  const [activeIngredients, setActiveIngredients] = useState<ActiveIngredient[]>([]);
-  
+  const [activeIngredients, setActiveIngredients] = useState<
+    ActiveIngredient[]
+  >([]);
+  const [genericNames, setGenericNames] = useState<GenericNameDoc[]>([]);
+
   const [formData, setFormData] = useState<MedicationFormData>({
-    tradeName: '',
-    genericName: '',
-    categoryId: '',
-    pharmaceuticalFormId: '',
-    concentration: '',
-    presentation: '',
-    manufacturerId: '',
-    barcode: '',
-    description: '',
-    indications: '',
-    warnings: '',
+    comercialName: "",
+    tradeName: "",
+    genericName: "",
+    categoryId: "",
+    pharmaceuticalFormId: "",
+    concentration: "",
+    presentation: "",
+    manufacturerId: "",
+    barcode: "",
+    description: "",
+    indications: "",
+    warnings: "",
     activeIngredientIds: [],
-    batchId: '',
-    expirationDate: '',
+    batchId: "",
+    expirationDate: "",
     quantity: 0,
     purchasePrice: 0,
     sellingPrice: 0,
-    supplier: '',
-    storageLocation: '',
+    supplier: "",
+    storageLocation: "",
     requiresPrescription: false,
   });
 
@@ -102,35 +124,43 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
 
   const loadCatalogs = async () => {
     try {
-      const [categoriesRes, formsRes, manufacturersRes, ingredientsRes] = await Promise.all([
+      const [
+        categoriesRes,
+        formsRes,
+        manufacturersRes,
+        ingredientsRes,
+        genericNames,
+      ] = await Promise.all([
         findAllMedicationCategories(),
         findAllPharmaceuticalForms(),
         findAllManufacturers(),
         findAllActiveIngredients(),
+        findAllGenericNames(),
       ]);
-      
+
       setCategories(categoriesRes);
       setPharmaceuticalForms(formsRes);
       setManufacturers(manufacturersRes);
       setActiveIngredients(ingredientsRes);
+      setGenericNames(genericNames);
     } catch (error) {
-      console.error('Error loading catalogs:', error);
+      alert("Error cargando datos, intenta de nuevo");
     }
   };
 
   const handleInputChange = (field: keyof MedicationFormData, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleActiveIngredientToggle = (ingredientId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       activeIngredientIds: prev.activeIngredientIds.includes(ingredientId)
-        ? prev.activeIngredientIds.filter(id => id !== ingredientId)
-        : [...prev.activeIngredientIds, ingredientId]
+        ? prev.activeIngredientIds.filter((id) => id !== ingredientId)
+        : [...prev.activeIngredientIds, ingredientId],
     }));
   };
 
@@ -141,6 +171,7 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
     try {
       // Crear el objeto de medicamento con el tipo correcto
       const medicationData: CreateMedicationData = {
+        comercialName: formData.comercialName,
         tradeName: formData.tradeName,
         genericName: formData.genericName,
         activeIngredientIds: formData.activeIngredientIds,
@@ -153,14 +184,18 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
         description: formData.description,
         indications: formData.indications,
         warnings: formData.warnings,
-        createdBy: 'current-user'
+        createdBy: "current-user",
       };
 
       // Crear el medicamento
       const newMedication = await createMedication(medicationData);
 
       // Crear el lote inicial si se proporcionaron datos del lote
-      if (formData.batchId && formData.expirationDate && formData.quantity > 0) {
+      if (
+        formData.batchId &&
+        formData.expirationDate &&
+        formData.quantity > 0
+      ) {
         const batchData: CreateMedicationBatchData = {
           batchId: formData.batchId,
           expirationDate: formData.expirationDate,
@@ -168,41 +203,42 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
           purchasePrice: formData.purchasePrice,
           sellingPrice: formData.sellingPrice,
           purchaseDate: new Date().toISOString(),
-          supplier: formData.supplier || 'Sin especificar',
-          createdBy: 'current-user'
+          supplier: formData.supplier || "Sin especificar",
+          createdBy: "current-user",
         };
 
         await addMedicationBatch(newMedication.id, batchData);
       }
-      
+
       // Resetear formulario
       setFormData({
-        tradeName: '',
-        genericName: '',
-        categoryId: '',
-        pharmaceuticalFormId: '',
-        concentration: '',
-        presentation: '',
-        manufacturerId: '',
-        barcode: '',
-        description: '',
-        indications: '',
-        warnings: '',
+        comercialName: "",
+        tradeName: "",
+        genericName: "",
+        categoryId: "",
+        pharmaceuticalFormId: "",
+        concentration: "",
+        presentation: "",
+        manufacturerId: "",
+        barcode: "",
+        description: "",
+        indications: "",
+        warnings: "",
         activeIngredientIds: [],
-        batchId: '',
-        expirationDate: '',
+        batchId: "",
+        expirationDate: "",
         quantity: 0,
         purchasePrice: 0,
         sellingPrice: 0,
-        supplier: '',
-        storageLocation: '',
+        supplier: "",
+        storageLocation: "",
         requiresPrescription: false,
       });
 
       setOpen(false);
       onMedicationAdded?.();
-    } catch (error) {
-      console.error('Error creating medication:', error);
+    } catch {
+      alert("Hubo un error, intenta de nuevo");
     } finally {
       setLoading(false);
     }
@@ -220,35 +256,32 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Nuevo Producto
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setOpen(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Información básica */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Código</label>
-              <Input
-                placeholder="Código del producto"
-                value={formData.barcode}
-                onChange={(e) => handleInputChange('barcode', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Nombre del Producto</label>
+              <label className="text-sm font-medium text-gray-700">
+                Nombre del Producto
+              </label>
               <Input
                 placeholder="Nombre del producto"
                 value={formData.tradeName}
-                onChange={(e) => handleInputChange('tradeName', e.target.value)}
+                onChange={(e) => handleInputChange("tradeName", e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Nombre del Producto
+              </label>
+              <Input
+                placeholder="Nombre comercial del producto"
+                value={formData.comercialName}
+                onChange={(e) =>
+                  handleInputChange("comercialName", e.target.value)
+                }
                 required
               />
             </div>
@@ -256,133 +289,118 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Categoría</label>
-              <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AsyncCreatableSelect<MedicationCategory>
+                label="Categoría"
+                value={formData.categoryId}
+                options={categories}
+                setOptions={setCategories}
+                onChange={(value) => handleInputChange("categoryId", value)}
+                onCreate={async (name) =>
+                  await createMedicationCategory({ name, createdBy: "admin" })
+                }
+                onEdit={async (id, name) =>
+                  await updateMedicationCategory(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deleteMedicationCategory(id);
+                }}
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Presentación</label>
-              <Input
-                placeholder="Ej: Tabletas - Caja x 30"
-                value={formData.presentation}
-                onChange={(e) => handleInputChange('presentation', e.target.value)}
-                required
+              <AsyncCreatableSelect<GenericNameDoc>
+                label="Nombre Genérico"
+                value={formData.genericName}
+                options={genericNames}
+                setOptions={setGenericNames}
+                onChange={(value) => handleInputChange("genericName", value)}
+                onCreate={async (name) =>
+                  await createGenericName({ name, createdBy: "admin" })
+                }
+                onEdit={async (id, name) =>
+                  await updateGenericName(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deleteGenericName(id);
+                }}
               />
             </div>
           </div>
 
-          {/* Stock y precios */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Stock Inicial</label>
-              <Input
-                type="number"
-                placeholder="Cantidad"
-                value={formData.quantity || ''}
-                onChange={(e) => handleInputChange('quantity', parseInt(e.target.value) || 0)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Precio de Compra ($)</label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.purchasePrice || ''}
-                onChange={(e) => handleInputChange('purchasePrice', parseFloat(e.target.value) || 0)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Precio de Venta ($)</label>
-              <Input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.sellingPrice || ''}
-                onChange={(e) => handleInputChange('sellingPrice', parseFloat(e.target.value) || 0)}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Fechas */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Fecha de Vencimiento</label>
-              <Input
-                type="date"
-                value={formData.expirationDate}
-                onChange={(e) => handleInputChange('expirationDate', e.target.value)}
-                required
+              <AsyncCreatableSelect
+                label="Proveedor"
+                value={formData.manufacturerId}
+                options={manufacturers}
+                setOptions={setManufacturers}
+                onChange={(value) => handleInputChange("manufacturerId", value)}
+                onCreate={async (name) =>
+                  await createManufacturer({ name, createdBy: "admin" })
+                }
+                onEdit={async (id, name) =>
+                  await updateManufacturer(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deleteManufacturer(id);
+                }}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Lote</label>
-              <Input
-                placeholder="Número de lote"
-                value={formData.batchId}
-                onChange={(e) => handleInputChange('batchId', e.target.value)}
-                required
+              <AsyncCreatableSelect
+                label="Forma Farmacéutica"
+                value={formData.pharmaceuticalFormId}
+                options={pharmaceuticalForms}
+                setOptions={setPharmaceuticalForms}
+                onChange={(value) =>
+                  handleInputChange("pharmaceuticalFormId", value)
+                }
+                onCreate={async (name) =>
+                  await createPharmaceuticalForm({ name, createdBy: "admin" })
+                }
+                onEdit={async (id, name) =>
+                  await updatePharmaceuticalForm(id, {
+                    name,
+                    updatedBy: "admin",
+                  })
+                }
+                onDelete={async (id) => {
+                  await deletePharmaceuticalForm(id);
+                }}
               />
-            </div>
-          </div>
-
-          {/* Proveedor y formulario farmacéutico */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Proveedor</label>
-              <Select value={formData.manufacturerId} onValueChange={(value) => handleInputChange('manufacturerId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar proveedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {manufacturers.map((manufacturer) => (
-                    <SelectItem key={manufacturer.id} value={manufacturer.id}>
-                      {manufacturer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Forma Farmacéutica</label>
-              <Select value={formData.pharmaceuticalFormId} onValueChange={(value) => handleInputChange('pharmaceuticalFormId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar forma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {pharmaceuticalForms.map((form) => (
-                    <SelectItem key={form.id} value={form.id}>
-                      {form.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium text-gray-700">
+                Forma Farmacéutica
+              </label>
             </div>
           </div>
 
           {/* Principios activos */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Principios Activos</label>
+            <label className="text-sm font-medium text-gray-700">
+              Principios Activos
+            </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
               {activeIngredients.map((ingredient) => (
-                <div key={ingredient.id} className="flex items-center space-x-2">
+                <div
+                  key={ingredient.id}
+                  className="flex items-center space-x-2"
+                >
                   <Checkbox
                     id={ingredient.id}
-                    checked={formData.activeIngredientIds.includes(ingredient.id)}
-                    onCheckedChange={() => handleActiveIngredientToggle(ingredient.id)}
+                    checked={formData.activeIngredientIds.includes(
+                      ingredient.id
+                    )}
+                    onCheckedChange={() =>
+                      handleActiveIngredientToggle(ingredient.id)
+                    }
                   />
                   <label
                     htmlFor={ingredient.id}
@@ -398,38 +416,53 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
           {/* Campos adicionales */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Nombre genérico</label>
+              <label className="text-sm font-medium text-gray-700">
+                Presentación
+              </label>
               <Input
-                placeholder="Nombre genérico"
-                value={formData.genericName}
-                onChange={(e) => handleInputChange('genericName', e.target.value)}
+                placeholder="Ej: Tabletas - Caja x 30"
+                value={formData.presentation}
+                onChange={(e) =>
+                  handleInputChange("presentation", e.target.value)
+                }
+                required
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Concentración</label>
+              <label className="text-sm font-medium text-gray-700">
+                Concentración
+              </label>
               <Input
                 placeholder="Ej: 500mg"
                 value={formData.concentration}
-                onChange={(e) => handleInputChange('concentration', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("concentration", e.target.value)
+                }
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Ubicación en Almacén</label>
+            <label className="text-sm font-medium text-gray-700">
+              Ubicación en Almacén
+            </label>
             <Input
               placeholder="Ej: Estante A, Nivel 2"
               value={formData.storageLocation}
-              onChange={(e) => handleInputChange('storageLocation', e.target.value)}
+              onChange={(e) =>
+                handleInputChange("storageLocation", e.target.value)
+              }
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Descripción</label>
+            <label className="text-sm font-medium text-gray-700">
+              Descripción
+            </label>
             <Textarea
               placeholder="Descripción del producto"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => handleInputChange("description", e.target.value)}
               rows={3}
             />
           </div>
@@ -439,7 +472,9 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
             <Checkbox
               id="prescription"
               checked={formData.requiresPrescription}
-              onCheckedChange={(checked) => handleInputChange('requiresPrescription', checked)}
+              onCheckedChange={(checked) =>
+                handleInputChange("requiresPrescription", checked)
+              }
             />
             <label
               htmlFor="prescription"
@@ -464,7 +499,7 @@ export const AddMedicationDialog = ({ onMedicationAdded }: AddMedicationDialogPr
               disabled={loading}
               className="w-full sm:w-auto"
             >
-              {loading ? 'Guardando...' : 'Guardar Producto'}
+              {loading ? "Guardando..." : "Guardar Producto"}
             </Button>
           </div>
         </form>

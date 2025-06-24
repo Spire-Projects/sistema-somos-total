@@ -25,6 +25,7 @@ export const createMedication = async (data: CreateMedicationData): Promise<Medi
   
   const newMedication: Medication = {
     id: generateId(),
+    comercialName: data.comercialName,
     tradeName: data.tradeName,
     genericName: data.genericName,
     activeIngredientIds: data.activeIngredientIds,
