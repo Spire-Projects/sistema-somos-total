@@ -5,7 +5,7 @@ import type { AuthUser } from '@/shared/types/User';
 import { config } from '../../../shared/config/config';
 import { UserSearchAndFilters, type UserFilter } from './UserSearchAndFilters';
 import { UserTable } from './UserTable';
-import { UserPagination } from './UserPagination';
+import { DataPagination } from '../../../shared/components/DataPagination';
 import { UserDialog } from './UserDialog';
 
 export const UserManager: React.FC = () => {
@@ -211,18 +211,19 @@ export const UserManager: React.FC = () => {
 
       {/* Paginación */}
       {filteredUsers.length > 0 && (
-        <UserPagination
+        <DataPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalUsers={filteredUsers.length}
-          usersPerPage={usersPerPage}
+          totalItems={filteredUsers.length}
+          itemsPerPage={usersPerPage}
           onPageChange={handlePageChange}
-          onUsersPerPageChange={(newUsersPerPage) => {
+          onItemsPerPageChange={(newUsersPerPage: number) => {
             setUsersPerPage(newUsersPerPage);
             setCurrentPage(1);
           }}
           startIndex={startIndex}
           endIndex={endIndex}
+          itemName="usuarios"
         />
       )}
 
