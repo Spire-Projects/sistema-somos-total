@@ -52,6 +52,7 @@ interface AddMedicationDialogProps {
 }
 
 interface MedicationFormData {
+  comercialName: string;
   tradeName: string;
   genericName: string;
   categoryId: string;
@@ -91,6 +92,7 @@ export const AddMedicationDialog = ({
   const [genericNames, setGenericNames] = useState<GenericNameDoc[]>([]);
 
   const [formData, setFormData] = useState<MedicationFormData>({
+    comercialName: "",
     tradeName: "",
     genericName: "",
     categoryId: "",
@@ -169,6 +171,7 @@ export const AddMedicationDialog = ({
     try {
       // Crear el objeto de medicamento con el tipo correcto
       const medicationData: CreateMedicationData = {
+        comercialName: formData.comercialName,
         tradeName: formData.tradeName,
         genericName: formData.genericName,
         activeIngredientIds: formData.activeIngredientIds,
@@ -209,6 +212,7 @@ export const AddMedicationDialog = ({
 
       // Resetear formulario
       setFormData({
+        comercialName: "",
         tradeName: "",
         genericName: "",
         categoryId: "",
@@ -265,6 +269,19 @@ export const AddMedicationDialog = ({
                 placeholder="Nombre del producto"
                 value={formData.tradeName}
                 onChange={(e) => handleInputChange("tradeName", e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Nombre del Producto
+              </label>
+              <Input
+                placeholder="Nombre comercial del producto"
+                value={formData.comercialName}
+                onChange={(e) =>
+                  handleInputChange("comercialName", e.target.value)
+                }
                 required
               />
             </div>

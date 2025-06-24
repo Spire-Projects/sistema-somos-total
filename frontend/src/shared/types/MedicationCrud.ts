@@ -27,6 +27,7 @@ export interface CreateManufacturerData {
 }
 
 export interface CreateMedicationData {
+  comercialName: string;
   tradeName: string;
   genericName: string;
   activeIngredientIds: string[];

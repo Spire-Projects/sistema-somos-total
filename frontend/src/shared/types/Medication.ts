@@ -1,5 +1,6 @@
 export interface Medication {
   id: string; // unique identifier for the medication
+  comercialName: string; // comercial name from the manufacter
   tradeName: string; // e.g., "Aspirin 500mg"
   genericName: string; // e.g., "Acetylsalicylic Acid"
   activeIngredientIds: string[]; // list of ActiveIngredient IDs
