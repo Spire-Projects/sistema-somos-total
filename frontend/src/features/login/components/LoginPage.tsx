@@ -136,7 +136,7 @@ export const LoginPage = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-red-300" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-secondary" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>

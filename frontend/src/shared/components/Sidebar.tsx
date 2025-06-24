@@ -10,73 +10,96 @@ import {
   LogOut,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-import { useAppDispatch } from "../store/hooks";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { logout } from "../store/authSlice";
 import { Button } from "./ui/button";
 import logo from "../../assets/logo.png"
+import type { UserRole } from "../types/User";
 
 interface SidebarProps {
   className?: string;
 }
 
-const menuItems = [
+interface MenuItem {
+  title: string;
+  icon: any;
+  href: string;
+  color: string;
+  roles?: UserRole[];
+}
+
+const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
     href: "/dashboard",
     color: "text-green-600",
+    roles: ["admin", "cashier"],
   },
   {
     title: "Inventario",
     icon: Package,
     href: "/inventory",
     color: "text-blue-600",
-  },
-  {
-    title: "Compras",
-    icon: ShoppingCart,
-    href: "/sales",
-    color: "text-purple-600",
+    roles: ["admin"],
   },
   {
     title: "Ventas",
     icon: ShoppingBag,
+    href: "/sales",
+    color: "text-purple-600",
+    roles: ["admin", "cashier"],
+  },
+  {
+    title: "Compras",
+    icon: ShoppingCart,
     href: "/purchases",
     color: "text-orange-600",
+    roles: ["admin"],
   },
   {
     title: "Clientes",
     icon: Users,
     href: "/clients",
     color: "text-pink-600",
+    roles: ["admin", "cashier"],
   },
   {
     title: "Reportes",
     icon: FileText,
     href: "/reports",
     color: "text-indigo-600",
+    roles: ["admin"],
   },
   {
     title: "Usuarios",
     icon: Users,
     href: "/users",
     color: "text-cyan-600",
+    roles: ["admin"],
   },
   {
     title: "Configuración",
     icon: Settings,
     href: "/settings",
     color: "text-gray-600",
+    roles: ["admin"],
   },
 ];
 
 export const Sidebar = ({ className }: SidebarProps) => {
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
 
   const handleLogout = () => {
     dispatch(logout());
   };
+
+  // Filtrar elementos del menú según el rol del usuario
+  const visibleMenuItems = menuItems.filter(
+    (item) => !item.roles || (user && item.roles.includes(user.role))
+  );
 
   return (
     <div
@@ -94,7 +117,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
 
