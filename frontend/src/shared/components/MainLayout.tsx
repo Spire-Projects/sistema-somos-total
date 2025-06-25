@@ -2,22 +2,32 @@ import { Outlet, Navigate } from 'react-router';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { useAppSelector } from '../store/hooks';
+import { useState } from 'react';
 
 export const MainLayout = () => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  // En móvil/tablet el sidebar empieza cerrado, en desktop no importa porque siempre está visible
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+      />
       
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
+        <Header onToggleSidebar={toggleSidebar} />
         <main className="flex-1 overflow-auto px-6 py-6">
           <div className="h-full">
             <Outlet />

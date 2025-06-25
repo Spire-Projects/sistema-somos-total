@@ -1,66 +1,25 @@
-import React from 'react';
-import { Edit, Trash2, Key } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../shared/components/ui/table';
 import { Button } from '../../../shared/components/ui/button';
 import { Badge } from '../../../shared/components/ui/badge';
-import { Avatar, AvatarFallback } from '../../../shared/components/ui/avatar';
-import { Checkbox } from '../../../shared/components/ui/checkbox';
 import type { AuthUser } from '../../../shared/types/User';
 import { formatDate, formatDateTime } from '@/shared/utils/date.utils';
+import { getRoleBadgeVariant, getRoleLabel } from '@/shared/utils/role.utils';
 
 interface UserTableProps {
   users: AuthUser[];
-  selectedUsers: string[];
-  onSelectUser: (userId: string) => void;
-  onSelectAll: (checked: boolean) => void;
   onEditUser: (user: AuthUser) => void;
   onDeleteUser: (user: AuthUser) => void;
   loading?: boolean;
 }
 
-const getRoleBadgeVariant = (role: string) => {
-  switch (role) {
-    case 'admin':
-      return 'default';
-    case 'cashier':
-      return 'secondary';
-    default:
-      return 'outline';
-  }
-};
-
-const getRoleLabel = (role: string) => {
-  switch (role) {
-    case 'admin':
-      return 'Administrador';
-    case 'cashier':
-      return 'Caja';
-    default:
-      return role;
-  }
-};
-  
- 
-
-const getInitials = (fullName: string) => {
-  return fullName
-    .split(' ')
-    .map(name => name.charAt(0))
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 export const UserTable: React.FC<UserTableProps> = ({
   users,
-  selectedUsers,
-  onSelectUser,
-  onSelectAll,
   onEditUser,
   onDeleteUser,
   loading = false
 }) => {
-  const allSelected = users.length > 0 && selectedUsers.length === users.length;
 
   if (loading) {
     return (
@@ -72,12 +31,10 @@ export const UserTable: React.FC<UserTableProps> = ({
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      {/* Tabla para desktop */}
       <div className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
-              
               <TableHead>USUARIO</TableHead>
               <TableHead>ROL</TableHead>
               <TableHead>CORREO</TableHead>
