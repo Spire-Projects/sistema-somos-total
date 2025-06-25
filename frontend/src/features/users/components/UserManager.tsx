@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserService } from '../../../shared/services/UserService';
 import type { AuthUser } from '@/shared/types/User';
-import { config } from '../../../shared/config/config';
 import { UserSearchAndFilters, type UserFilter } from './UserSearchAndFilters';
 import { UserTable } from './UserTable';
 import { DataPagination } from '../../../shared/components/DataPagination';
 import { UserDialog } from './UserDialog';
 import CustomDialog from '../../../shared/components/CustomDialog';
+import { useUserActions } from '../hooks/useUserActions';
 
 export const UserManager: React.FC = () => {
-  const [users, setUsers] = useState<AuthUser[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-  
   // Estados para búsqueda y filtros
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<UserFilter>('all');
@@ -21,56 +16,38 @@ export const UserManager: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(10);
 
-  // Estados para diálogo
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
-  const [editingUser, setEditingUser] = useState<AuthUser | null>(null);
-  
-  // Estados para diálogo de confirmación de eliminación
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<AuthUser | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  // Usar el hook personalizado para toda la lógica de gestión de usuarios
+  const {
+    users,
+    loading,
+    dialogOpen,
+    dialogMode,
+    editingUser,
+    deleteDialogOpen,
+    userToDelete,
+    deleteLoading,
+    loadUsers,
+    handleNewUser,
+    handleEditUser,
+    handleDeleteUser,
+    confirmDeleteUser,
+    handleDialogSuccess,
+    closeDialog,
+    cancelDelete,
+    filterUsers,
+    calculateUserCounts
+  } = useUserActions();
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
-  const loadUsers = async () => {
-    setLoading(true);
-    try {
-      const result = await UserService.getAllUsers();
-      if (result.success && result.users) {
-        setUsers(result.users);
-        setStatusMessage(`Cargados ${result.users.length} usuarios desde ${config.APP_MODE === 'local' ? 'RxDB/IndexedDB' : 'Firestore'}`);
-      } else {
-        setStatusMessage(result.error || 'Error cargando usuarios');
-      }
-    } catch (error) {
-      setStatusMessage('Error inicializando la aplicación');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Aplicar filtros
+  const filteredUsers = useMemo(() => 
+    filterUsers(users, searchQuery, activeFilter),
+  [users, searchQuery, activeFilter, filterUsers]);
 
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.fullName.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.role.toLowerCase().includes(query)
-      );
-    }
-
-    if (activeFilter !== 'all') {
-      filtered = filtered.filter(user => user.role === activeFilter);
-    }
-
-    return filtered;
-  }, [users, searchQuery, activeFilter]);
-
+  // Calcular usuarios paginados
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * usersPerPage;
     const endIndex = startIndex + usersPerPage;
@@ -78,17 +55,9 @@ export const UserManager: React.FC = () => {
   }, [filteredUsers, currentPage, usersPerPage]);
 
   // Calcular contadores para los filtros
-  const userCounts = useMemo(() => {
-    const counts = {
-      all: users.length,
-      admin: users.filter(u => u.role === 'admin').length,
-      cashier: users.filter(u => u.role === 'cashier').length,
-      warehouse: 0, // Placeholder para futuros roles
-      vendor: 0,
-      accounting: 0
-    };
-    return counts;
-  }, [users]);
+  const userCounts = useMemo(() => 
+    calculateUserCounts(users),
+  [users, calculateUserCounts]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -102,49 +71,6 @@ export const UserManager: React.FC = () => {
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
-  };
-
-  const handleNewUser = () => {
-    setDialogMode('create');
-    setEditingUser(null);
-    setDialogOpen(true);
-  };
-
-  const handleEditUser = (user: AuthUser) => {
-    setDialogMode('edit');
-    setEditingUser(user);
-    setDialogOpen(true);
-  };
-
-  const handleDeleteUser = (user: AuthUser) => {
-    setUserToDelete(user);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
-    
-    setDeleteLoading(true);
-    try {
-      const result = await UserService.deactivateUser(userToDelete.id);
-      if (result.success) {
-        setStatusMessage(`Usuario ${userToDelete.fullName} desactivado exitosamente`);
-        await loadUsers();
-      } else {
-        setStatusMessage(result.error || 'Error desactivando usuario');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setStatusMessage('Error desactivando usuario');
-    } finally {
-      setDeleteLoading(false);
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
-    }
-  };
-
-  const handleDialogSuccess = () => {
-    loadUsers();
   };
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
@@ -189,7 +115,7 @@ export const UserManager: React.FC = () => {
       )}
       <UserDialog
         isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={closeDialog}
         onSuccess={handleDialogSuccess}
         user={editingUser}
         mode={dialogMode}
@@ -199,14 +125,11 @@ export const UserManager: React.FC = () => {
       <CustomDialog
         isOpen={deleteDialogOpen}
         onConfirm={confirmDeleteUser}
-        onCancel={() => {
-          setDeleteDialogOpen(false);
-          setUserToDelete(null);
-        }}
+        onCancel={cancelDelete}
         textConfirm="Eliminar"
         textCancel="Cancelar"
-        title="Eliminar Usuario"
-        description={userToDelete ? `¿Estás seguro que deseas eliminar al usuario ${userToDelete.fullName}? Esta acción no se puede deshacer.` : ""}
+        title="Eliminar Usuario Permanentemente"
+        description={userToDelete ? `¿Estás seguro que deseas eliminar permanentemente al usuario ${userToDelete.fullName}? Esta acción no se puede deshacer y el registro será eliminado completamente de la base de datos.` : ""}
         loading={deleteLoading}
       />
     </div>

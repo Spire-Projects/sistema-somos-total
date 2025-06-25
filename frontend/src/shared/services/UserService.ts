@@ -199,6 +199,32 @@ export const UserService = {
     }
   },
 
+  // Eliminar usuario completamente (elimina el registro de la base de datos)
+  async deleteUser(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const db = getUserDB();
+      
+      // Verificar que el usuario existe antes de intentar eliminarlo
+      const user = await db.findById(id);
+      if (!user) {
+        return { success: false, error: 'Usuario no encontrado' };
+      }
+
+      // Eliminar el usuario de la base de datos
+      const deleteResult = await db.delete(id);
+      
+      if (!deleteResult) {
+        return { success: false, error: 'No se pudo eliminar el usuario' };
+      }
+
+      console.log(`✅ Usuario ${user.fullName} (${user.email}) eliminado completamente de la base de datos`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error eliminando usuario:', error);
+      return { success: false, error: 'Error eliminando usuario' };
+    }
+  },
+
   // Obtener usuarios por rol
   async getUsersByRole(role: string): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
     try {
