@@ -44,6 +44,7 @@ export interface CreateMedicationData {
 }
 
 export interface CreateMedicationBatchData {
+  medicationId: string; // FK al medicamento
   batchId: string; // User-defined
   expirationDate: string;
   quantity: number;
@@ -99,6 +100,7 @@ export interface UpdateMedicationData {
 }
 
 export interface UpdateMedicationBatchData {
+  batchId?: string;
   expirationDate?: string;
   quantity?: number;
   purchasePrice?: number;

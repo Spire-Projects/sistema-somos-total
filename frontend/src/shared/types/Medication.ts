@@ -10,8 +10,6 @@ export interface Medication {
   manufacturerId: string; // e.g., "PharmaCorp"
   categoryId: string;            // reference to MedicationCategory
   barcode?: string; // optional barcode for scanning
-  batches: MedicationBatch[];  // list of MedicationBatch
-  totalStock: number; // total stock available
   description?: string; // e.g., "Used for pain relief"
   indications?: string; // e.g., "Headache, Fever"
   warnings?: string; // e.g., "Do not exceed recommended dose"
@@ -24,6 +22,8 @@ export interface Medication {
 }
 
 export interface MedicationBatch {
+  id: string; // unique identifier for the batch (auto-generated)
+  medicationId: string; // foreign key to the medication
   batchId: string; // unique identifier for the batch (user-defined)
   expirationDate: string; // e.g., "2025-12-31"
   quantity: number; // e.g., 100
@@ -31,8 +31,12 @@ export interface MedicationBatch {
   sellingPrice: number; // precio de venta al público
   purchaseDate?: string; // fecha de compra/adquisición del lote
   supplier?: string; // proveedor de este lote específico
+  sincronized?: boolean; // indicates if the batch is synchronized with the server
+  isDeleted?: boolean; // indicates if the batch is deleted
   createdAt?: string; // e.g., "2023-10-01T12:00:00Z"
   createdBy?: string; // e.g., "user123" - ID of the user who created this batch
+  updatedAt?: string; // e.g., "2023-10-01T12:00:00Z" - last update timestamp
+  updatedBy?: string; // e.g., "user123" - ID of the user who last updated this batch
 }  
 
 export interface ActiveIngredient {
@@ -85,4 +89,52 @@ export interface GenericNameDoc { // same than category
   updatedBy?: string;
   sincronized: boolean;
   isDeleted: boolean;
+}
+
+// ✅ NUEVAS INTERFACES DE SOPORTE PARA LA SEPARACIÓN DE ENTIDADES
+
+// Interface para datos combinados (usada en la UI cuando necesitamos medicamento + sus batches)
+export interface MedicationWithBatches {
+  medication: Medication;
+  batches: MedicationBatch[];
+  totalStock: number; // calculado dinámicamente
+  batchCount: number; // calculado dinámicamente
+  oldestBatch?: MedicationBatch; // batch más próximo a vencer
+}
+
+// Interface para filtros de batches
+export interface BatchFilters {
+  medicationId?: string;
+  expirationDateFrom?: string;
+  expirationDateTo?: string;
+  purchaseDateFrom?: string;
+  purchaseDateTo?: string;
+  supplier?: string;
+  minQuantity?: number;
+  maxQuantity?: number;
+  minPurchasePrice?: number;
+  maxPurchasePrice?: number;
+  status?: 'valid' | 'expiring' | 'expired'; // basado en fecha de vencimiento
+  createdBy?: string;
+  batchId?: string; // buscar por ID de lote específico
+}
+
+// Interface para respuestas paginadas de batches
+export interface BatchSearchResult {
+  batches: MedicationBatch[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  itemsPerPage: number;
+}
+
+// Interface para estadísticas de batches
+export interface BatchStatistics {
+  totalBatches: number;
+  totalStock: number;
+  batchesExpiringSoon: number; // próximos 30 días
+  batchesExpired: number;
+  averagePurchasePrice: number;
+  averageSellingPrice: number;
+  uniqueSuppliers: number;
 }

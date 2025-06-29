@@ -10,9 +10,6 @@ import type { BatchWithMedication } from '../../../shared/types/Sales';
 
 interface BatchTableProps {
   batches: BatchWithMedication[];
-  selectedBatches: string[];
-  onSelectBatch: (batchId: string) => void;
-  onSelectAll: (checked: boolean) => void;
   onEditBatch: (batch: BatchWithMedication) => void;
   onDeleteBatch: (batch: BatchWithMedication) => void;
   loading: boolean;
@@ -20,16 +17,10 @@ interface BatchTableProps {
 
 export const BatchTable: React.FC<BatchTableProps> = ({
   batches,
-  selectedBatches,
-  onSelectBatch,
-  onSelectAll,
   onEditBatch,
   onDeleteBatch,
   loading
 }) => {
-  // Calcular si todos los lotes están seleccionados
-  const allSelected = batches.length > 0 && selectedBatches.length === batches.length;
-  const someSelected = selectedBatches.length > 0 && selectedBatches.length < batches.length;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-BO', {
@@ -110,12 +101,7 @@ export const BatchTable: React.FC<BatchTableProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={allSelected || someSelected}
-                    onCheckedChange={onSelectAll}
-                  />
-                </TableHead>
+               
                 <TableHead>Medicamento</TableHead>
                 <TableHead>Lote ID</TableHead>
                 <TableHead>Cantidad</TableHead>
@@ -131,7 +117,7 @@ export const BatchTable: React.FC<BatchTableProps> = ({
             </TableHeader>
             <TableBody>
               {batches.map((batch) => {
-                const isSelected = selectedBatches.includes(batch.batchId);
+                
                 const expirationStatus = getExpirationStatus(batch.expirationDate);
                 const margin = batch.sellingPrice > 0 
                   ? (((batch.sellingPrice - batch.purchasePrice) / batch.purchasePrice) * 100)
@@ -140,13 +126,10 @@ export const BatchTable: React.FC<BatchTableProps> = ({
                 return (
                   <TableRow 
                     key={batch.batchId}
-                    className={isSelected ? 'bg-muted/50' : ''}
+                  
                   >
                     <TableCell>
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => onSelectBatch(batch.batchId)}
-                      />
+                     
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">

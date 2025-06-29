@@ -1,6 +1,5 @@
 import { config } from '../config/config';
-import { localUserDB } from '../db/database';
-import { firestoreUserDB } from '../db/firestore';
+import { getUserRepository } from '../db/repositories/user.repository';
 import type {
   UserDocument,
   CreateUserData,
@@ -19,10 +18,8 @@ import {
 } from '../utils/auth.utils';
 import type { AuthUser } from '../types/User';
 
-// Selector de base de datos según el modo
-const getUserDB = () => {
-  return config.APP_MODE === 'local' ? localUserDB : firestoreUserDB;
-};
+// Selector de base de datos según el modo (repositorio)
+const getUserDB = () => getUserRepository();
 
 export const UserService = {
   // Registrar un nuevo usuario
@@ -276,24 +273,4 @@ export const UserService = {
       return { success: false, error: 'Error al buscar usuarios' };
     }
   },
-
-  // Sincronizar datos locales a Firestore (solo en modo local)
-  async syncToFirestore(): Promise<{ success: boolean; error?: string }> {
-    if (config.APP_MODE !== 'local') {
-      return { success: false, error: 'Sincronización solo disponible en modo local' };
-    }
-
-    try {
-      // Obtener todos los usuarios locales
-      const localUsers = await localUserDB.findAll();
-      
-      // Sincronizar a Firestore
-      await firestoreUserDB.syncFromLocal(localUsers);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Error sincronizando a Firestore:', error);
-      return { success: false, error: 'Error sincronizando datos' };
-    }
-  }
 };
