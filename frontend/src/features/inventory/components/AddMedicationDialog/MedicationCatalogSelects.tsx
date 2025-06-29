@@ -1,14 +1,14 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState, useEffect } from "react";
 import type { FieldErrors } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import CreatableSelect from "../../../../shared/components/CreatableSelect";
 import { 
-  searchMedicationCategories,
   createMedicationCategory,
+  findMedicationCategoriesPaginated,
   searchManufacturers,
   createManufacturer,
-  searchPharmaceuticalForms,
-  createPharmaceuticalForm
+  createPharmaceuticalForm,
+  findPharmaceuticalFormsPaginated
 } from "../../../../shared/services";
 
 // Mock functions for missing services
@@ -55,6 +55,12 @@ const MedicationCatalogSelects = memo(({
   errors
 }: MedicationCatalogSelectsProps) => {
 
+  // Estado para las categorías y formas farmacéuticas iniciales
+  const [initialCategories, setInitialCategories] = useState<MedicationCategory[]>([]);
+  const [initialPharmaceuticalForms, setInitialPharmaceuticalForms] = useState<PharmaceuticalFormDoc[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [pharmaceuticalFormsLoading, setPharmaceuticalFormsLoading] = useState(true);
+
   // Use custom hook to load catalog data
   const { selectedValues, loading } = useCatalogData(
     categoryId,
@@ -63,15 +69,58 @@ const MedicationCatalogSelects = memo(({
     pharmaceuticalFormId
   );
 
+  // Cargar categorías iniciales (primeras 10)
+  useEffect(() => {
+    const loadInitialCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const response = await findMedicationCategoriesPaginated(1, 10);
+        setInitialCategories(response.items);
+      } catch (error) {
+        console.error("Error loading initial categories:", error);
+        setInitialCategories([]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    loadInitialCategories();
+  }, []);
+
+  // Cargar formas farmacéuticas iniciales (primeras 10)
+  useEffect(() => {
+    const loadInitialPharmaceuticalForms = async () => {
+      try {
+        setPharmaceuticalFormsLoading(true);
+        const response = await findPharmaceuticalFormsPaginated(1, 10);
+        setInitialPharmaceuticalForms(response.items);
+      } catch (error) {
+        console.error("Error loading initial pharmaceutical forms:", error);
+        setInitialPharmaceuticalForms([]);
+      } finally {
+        setPharmaceuticalFormsLoading(false);
+      }
+    };
+
+    loadInitialPharmaceuticalForms();
+  }, []);
+
   // Optimized search functions with caching
   const searchCategories = useCallback(async (query: string): Promise<MedicationCategory[]> => {
     try {
-      return await searchMedicationCategories(query);
+      if (!query || query.trim() === "") {
+        // Si no hay búsqueda, retornar las categorías iniciales
+        return initialCategories;
+      }
+      
+      // Buscar con paginación para obtener máximo 10 resultados
+      const response = await findMedicationCategoriesPaginated(1, 10, query);
+      return response.items;
     } catch (error) {
       console.error("Error searching categories:", error);
       return [];
     }
-  }, []);
+  }, [initialCategories]);
 
   const searchGeneric = useCallback(async (query: string): Promise<GenericNameDoc[]> => {
     try {
@@ -93,16 +142,36 @@ const MedicationCatalogSelects = memo(({
 
   const searchPharmaceuticalFormsList = useCallback(async (query: string): Promise<PharmaceuticalFormDoc[]> => {
     try {
-      return await searchPharmaceuticalForms(query);
+      if (!query || query.trim() === "") {
+        // Si no hay búsqueda, retornar las formas farmacéuticas iniciales
+        return initialPharmaceuticalForms;
+      }
+      
+      // Buscar con paginación para obtener máximo 10 resultados
+      const response = await findPharmaceuticalFormsPaginated(1, 10, query);
+      return response.items;
     } catch (error) {
       console.error("Error searching pharmaceutical forms:", error);
       return [];
     }
-  }, []);
+  }, [initialPharmaceuticalForms]);
 
   // Create functions
   const handleCreateCategory = useCallback(async (name: string): Promise<MedicationCategory> => {
-    return await createMedicationCategory({ name, createdBy: "current-user" });
+    try {
+      const newCategory = await createMedicationCategory({ 
+        name, 
+        createdBy: "current-user" // TODO: Usar ID del usuario actual
+      });
+      
+      // Actualizar la lista de categorías iniciales con la nueva categoría
+      setInitialCategories(prev => [newCategory, ...prev]);
+      
+      return newCategory;
+    } catch (error) {
+      console.error("Error creating category:", error);
+      throw error;
+    }
   }, []);
 
   const handleCreateGeneric = useCallback(async (name: string): Promise<GenericNameDoc> => {
@@ -114,10 +183,23 @@ const MedicationCatalogSelects = memo(({
   }, []);
 
   const handleCreatePharmaceuticalForm = useCallback(async (name: string): Promise<PharmaceuticalFormDoc> => {
-    return await createPharmaceuticalForm({ name, createdBy: "current-user" });
+    try {
+      const newForm = await createPharmaceuticalForm({ 
+        name, 
+        createdBy: "current-user" // TODO: Usar ID del usuario actual
+      });
+      
+      // Actualizar la lista de formas farmacéuticas iniciales con la nueva forma
+      setInitialPharmaceuticalForms(prev => [newForm, ...prev]);
+      
+      return newForm;
+    } catch (error) {
+      console.error("Error creating pharmaceutical form:", error);
+      throw error;
+    }
   }, []);
 
-  if (loading) {
+  if (loading || categoriesLoading || pharmaceuticalFormsLoading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-center py-8">
@@ -135,7 +217,7 @@ const MedicationCatalogSelects = memo(({
         <div className="space-y-2">
           <CreatableSelect<MedicationCategory>
             label="Categoría"
-            values={[]}
+            values={initialCategories}
             selectedValue={selectedValues.category}
             onChange={(category) => onFieldChange('categoryId', category.id)}
             searchFunction={searchCategories}
@@ -191,7 +273,7 @@ const MedicationCatalogSelects = memo(({
         <div className="space-y-2">
           <CreatableSelect<PharmaceuticalFormDoc>
             label="Forma Farmacéutica"
-            values={[]}
+            values={initialPharmaceuticalForms}
             selectedValue={selectedValues.pharmaceuticalForm}
             onChange={(form) => onFieldChange('pharmaceuticalFormId', form.id)}
             searchFunction={searchPharmaceuticalFormsList}
