@@ -5,18 +5,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../../../shared/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/components/ui/card';
 import { Skeleton } from '../../../shared/components/ui/skeleton';
-import type { Medication, MedicationBatch } from '../../../shared/types/Medication';
+import type { MedicationWithBatches, MedicationBatch } from '../../../shared/types/Medication';
 import type { BatchWithMedication } from '../../../shared/types/Sales';
+import { 
+  formatCurrency, 
+  formatDate, 
+  getBatchStatus, 
+  getBatchStatusText
+} from '../../../shared/services/BatchService';
 
 interface MedicationWithBatchesData {
-  medication: Medication;
+  medication: MedicationWithBatches;
   batchCount: number;
   totalStock: number;
   oldestBatch?: MedicationBatch;
 }
 
 interface MedicationAccordionTableProps {
-  medications: Medication[];
+  medications: MedicationWithBatches[];
   onEditBatch: (batch: BatchWithMedication) => void;
   onDeleteBatch: (batch: BatchWithMedication) => void;
   onCreateBatch: (medicationId: string) => void;
@@ -42,64 +48,48 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
     setExpandedMedications(newExpanded);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-BO', {
-      style: 'currency',
-      currency: 'BOB',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-BO');
-  };
-
   const getExpirationStatus = (expirationDate: string) => {
-    const today = new Date();
-    const expDate = new Date(expirationDate);
-    const diffTime = expDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return { status: 'expired', label: 'Vencido', color: 'destructive' };
-    } else if (diffDays <= 30) {
-      return { status: 'expiring', label: 'Por vencer', color: 'warning' };
-    } else if (diffDays <= 90) {
-      return { status: 'near_expiry', label: 'Próximo a vencer', color: 'secondary' };
-    } else {
-      return { status: 'valid', label: 'Vigente', color: 'default' };
-    }
+    const status = getBatchStatus(expirationDate);
+    const label = getBatchStatusText(status);
+    const color = status === 'expired' ? 'destructive' : 
+                  status === 'expiring' ? 'warning' : 'default';
+    
+    return { status, label, color };
   };
 
-  const getMedicationData = (medication: Medication): MedicationWithBatchesData => {
-    const batchCount = medication.batches.length;
-    const totalStock = medication.totalStock;
-    const oldestBatch = medication.batches.length > 0 
-      ? medication.batches.reduce((oldest, current) => 
-          new Date(current.expirationDate) < new Date(oldest.expirationDate) ? current : oldest
-        )
-      : undefined;
-
+  const getMedicationData = (medicationWithBatches: MedicationWithBatches): MedicationWithBatchesData => {
     return {
-      medication,
-      batchCount,
-      totalStock,
-      oldestBatch
+      medication: medicationWithBatches,
+      batchCount: medicationWithBatches.batchCount,
+      totalStock: medicationWithBatches.totalStock,
+      oldestBatch: medicationWithBatches.oldestBatch
     };
   };
 
-  const handleBatchEdit = (medication: Medication, batch: MedicationBatch) => {
+  const handleBatchEdit = (medicationWithBatches: MedicationWithBatches, batch: MedicationBatch) => {
     const batchWithMedication: BatchWithMedication = {
       ...batch,
-      medication
+      medication: {
+        id: medicationWithBatches.medication.id,
+        tradeName: medicationWithBatches.medication.tradeName,
+        genericName: medicationWithBatches.medication.genericName,
+        concentration: medicationWithBatches.medication.concentration,
+        presentation: medicationWithBatches.medication.presentation,
+      }
     };
     onEditBatch(batchWithMedication);
   };
 
-  const handleBatchDelete = (medication: Medication, batch: MedicationBatch) => {
+  const handleBatchDelete = (medicationWithBatches: MedicationWithBatches, batch: MedicationBatch) => {
     const batchWithMedication: BatchWithMedication = {
       ...batch,
-      medication
+      medication: {
+        id: medicationWithBatches.medication.id,
+        tradeName: medicationWithBatches.medication.tradeName,
+        genericName: medicationWithBatches.medication.genericName,
+        concentration: medicationWithBatches.medication.concentration,
+        presentation: medicationWithBatches.medication.presentation,
+      }
     };
     onDeleteBatch(batchWithMedication);
   };
@@ -166,15 +156,15 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
             <TableBody>
               {medications.map((medication) => {
                 const medicationData = getMedicationData(medication);
-                const isExpanded = expandedMedications.has(medication.id);
+                const isExpanded = expandedMedications.has(medication.medication.id);
                 const oldestBatchStatus = medicationData.oldestBatch 
                   ? getExpirationStatus(medicationData.oldestBatch.expirationDate)
                   : null;
 
                 return (
-                  <React.Fragment key={medication.id}>
+                  <React.Fragment key={medication.medication.id}>
                     {/* Fila principal del medicamento */}
-                    <TableRow className="cursor-pointer hover:bg-gray-50" onClick={() => toggleMedication(medication.id)}>
+                    <TableRow className="cursor-pointer hover:bg-gray-50" onClick={() => toggleMedication(medication.medication.id)}>
                       <TableCell>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           {isExpanded ? (
@@ -186,9 +176,9 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium">{medication.tradeName}</div>
+                          <div className="font-medium">{medication.medication.tradeName}</div>
                           <div className="text-xs text-gray-400">
-                            {medication.concentration} - {medication.presentation}
+                            {medication.medication.concentration} - {medication.medication.presentation}
                           </div>
                         </div>
                       </TableCell>
@@ -226,7 +216,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onCreateBatch(medication.id);
+                            onCreateBatch(medication.medication.id);
                           }}
                         >
                           Agregar Lote
@@ -240,7 +230,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                         <TableCell colSpan={7} className="p-0">
                           <div className="bg-gray-50 p-4 border-t">
                             <h4 className="font-medium mb-3 text-gray-700">
-                              Lotes de {medication.tradeName}
+                              Lotes de {medication.medication.tradeName}
                             </h4>
                             {medication.batches.length > 0 ? (
                               <div className="overflow-x-auto">
@@ -346,23 +336,23 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
           <div className="space-y-4 p-4">
             {medications.map((medication) => {
               const medicationData = getMedicationData(medication);
-              const isExpanded = expandedMedications.has(medication.id);
+              const isExpanded = expandedMedications.has(medication.medication.id);
               const oldestBatchStatus = medicationData.oldestBatch 
                 ? getExpirationStatus(medicationData.oldestBatch.expirationDate)
                 : null;
 
               return (
-                <Card key={medication.id}>
+                <Card key={medication.medication.id}>
                   <CardContent className="p-4">
                     {/* Header del medicamento */}
                     <div 
                       className="flex items-center justify-between cursor-pointer"
-                      onClick={() => toggleMedication(medication.id)}
+                      onClick={() => toggleMedication(medication.medication.id)}
                     >
                       <div className="flex-1">
-                        <h3 className="font-medium text-sm">{medication.tradeName}</h3>
-                        <p className="text-xs text-gray-500">{medication.genericName}</p>
-                        <p className="text-xs text-gray-400">{medication.concentration}</p>
+                        <h3 className="font-medium text-sm">{medication.medication.tradeName}</h3>
+                        <p className="text-xs text-gray-500">{medication.medication.genericName}</p>
+                        <p className="text-xs text-gray-400">{medication.medication.concentration}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="text-right">
@@ -398,7 +388,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onCreateBatch(medication.id);
+                          onCreateBatch(medication.medication.id);
                         }}
                       >
                         + Lote

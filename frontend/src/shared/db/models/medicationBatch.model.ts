@@ -1,7 +1,5 @@
 import type { RxJsonSchema, RxCollection } from 'rxdb';
 import type { MedicationBatch } from '../../types/Medication';
-import { FirestoreMedicationBatchRepository, LocalMedicationBatchRepository, type IMedicationBatchRepository } from '../repositories/medicationBatch.repository';
-import { config } from '@/shared/config/config';
 
 // Esquema RxDB para MedicationBatch como entidad independiente
 export const medicationBatchSchema: RxJsonSchema<MedicationBatch> = {

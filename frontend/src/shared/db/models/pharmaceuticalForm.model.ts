@@ -51,39 +51,52 @@ export type PharmaceuticalFormCollection = RxCollection<PharmaceuticalFormDoc>;
 // Implementación para RxDB local
 export class LocalPharmaceuticalFormDB {
   private collection?: PharmaceuticalFormCollection;
+  private initialized = false;
 
   async init(db: RxDatabase): Promise<void> {
     // La colección ya fue creada en initDatabase, solo obtenemos la referencia
     this.collection = db.collections.pharmaceutical_forms as PharmaceuticalFormCollection;
+    this.initialized = true;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized || !this.collection) {
+      const { getDatabase } = await import('../database');
+      const db = getDatabase();
+      if (!db) {
+        throw new Error('Database not initialized. Please call initDatabase() first.');
+      }
+      await this.init(db as any);
+    }
   }
 
   async create(data: Omit<PharmaceuticalFormDoc, 'id'> & { id: string }): Promise<PharmaceuticalFormDoc> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.insert(data);
+    const doc = await this.collection!.insert(data);
     return JSON.parse(JSON.stringify(doc.toJSON())) as PharmaceuticalFormDoc;
   }
 
   async findById(id: string): Promise<PharmaceuticalFormDoc | null> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as PharmaceuticalFormDoc : null;
   }
 
   async findAll(): Promise<PharmaceuticalFormDoc[]> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const docs = await this.collection.find({
+    const docs = await this.collection!.find({
       selector: { isDeleted: { $ne: true } }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as PharmaceuticalFormDoc);
   }
 
   async findByName(name: string): Promise<PharmaceuticalFormDoc | null> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne({
+    const doc = await this.collection!.findOne({
       selector: { 
         name: { $eq: name },
         isDeleted: { $ne: true }
@@ -93,9 +106,9 @@ export class LocalPharmaceuticalFormDB {
   }
 
   async update(id: string, data: Partial<PharmaceuticalFormDoc>): Promise<PharmaceuticalFormDoc> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     if (!doc) throw new Error('PharmaceuticalForm not found');
     
     await doc.update({
@@ -109,9 +122,9 @@ export class LocalPharmaceuticalFormDB {
   }
 
   async delete(id: string): Promise<boolean> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     if (!doc) return false;
     
     // Soft delete
@@ -125,9 +138,9 @@ export class LocalPharmaceuticalFormDB {
   }
 
   async search(query: string): Promise<PharmaceuticalFormDoc[]> {
-    if (!this.collection) throw new Error('PharmaceuticalForm collection not initialized');
+    await this.ensureInitialized();
     
-    const docs = await this.collection.find({
+    const docs = await this.collection!.find({
       selector: {
         $and: [
           { isDeleted: { $ne: true } },

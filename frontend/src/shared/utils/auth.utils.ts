@@ -1,6 +1,7 @@
 import CryptoJS from 'crypto-js';
 import { SignJWT, jwtVerify } from 'jose';
-import type { AuthUser, UserDocument } from '../db/models/user.model';
+import type {  UserDocument } from '../db/models/user.model';
+import type { AuthUser } from '../types/User';
 
 // Clave secreta para JWT (convertir a Uint8Array)
 const JWT_SECRET = new TextEncoder().encode(

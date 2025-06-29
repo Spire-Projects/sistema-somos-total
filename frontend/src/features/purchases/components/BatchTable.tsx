@@ -2,7 +2,6 @@ import React from 'react';
 import { Edit, Trash2, Package, DollarSign } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../shared/components/ui/table';
-import { Checkbox } from '../../../shared/components/ui/checkbox';
 import { Badge } from '../../../shared/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/components/ui/card';
 import { Skeleton } from '../../../shared/components/ui/skeleton';

@@ -52,39 +52,52 @@ export type ManufacturerCollection = RxCollection<Manufacturer>;
 // Implementación para RxDB local
 export class LocalManufacturerDB {
   private collection?: ManufacturerCollection;
+  private initialized = false;
 
   async init(db: RxDatabase): Promise<void> {
     // La colección ya fue creada en initDatabase, solo obtenemos la referencia
     this.collection = db.collections.manufacturers as ManufacturerCollection;
+    this.initialized = true;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized || !this.collection) {
+      const { getDatabase } = await import('../database');
+      const db = getDatabase();
+      if (!db) {
+        throw new Error('Database not initialized. Please call initDatabase() first.');
+      }
+      await this.init(db as any);
+    }
   }
 
   async create(data: Omit<Manufacturer, 'id'> & { id: string }): Promise<Manufacturer> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.insert(data);
+    const doc = await this.collection!.insert(data);
     return JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer;
   }
 
   async findById(id: string): Promise<Manufacturer | null> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer : null;
   }
 
   async findAll(): Promise<Manufacturer[]> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const docs = await this.collection.find({
+    const docs = await this.collection!.find({
       selector: { isDeleted: { $ne: true } }
     }).exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer);
   }
 
   async findByName(name: string): Promise<Manufacturer | null> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne({
+    const doc = await this.collection!.findOne({
       selector: { 
         name: { $eq: name },
         isDeleted: { $ne: true }
@@ -94,9 +107,9 @@ export class LocalManufacturerDB {
   }
 
   async update(id: string, data: Partial<Manufacturer>): Promise<Manufacturer> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     if (!doc) throw new Error('Manufacturer not found');
     
     await doc.update({
@@ -110,9 +123,9 @@ export class LocalManufacturerDB {
   }
 
   async delete(id: string): Promise<boolean> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     if (!doc) return false;
     
     // Soft delete
@@ -126,9 +139,9 @@ export class LocalManufacturerDB {
   }
 
   async search(query: string): Promise<Manufacturer[]> {
-    if (!this.collection) throw new Error('Manufacturer collection not initialized');
+    await this.ensureInitialized();
     
-    const docs = await this.collection.find({
+    const docs = await this.collection!.find({
       selector: {
         $and: [
           { isDeleted: { $ne: true } },

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { AuthUser } from '@/shared/types/User';
 import { UserSearchAndFilters, type UserFilter } from './UserSearchAndFilters';
 import { UserTable } from './UserTable';
 import { DataPagination } from '../../../shared/components/DataPagination';

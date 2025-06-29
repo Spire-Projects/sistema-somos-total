@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,7 +26,8 @@ import BatchMedicationCard from "./BatchMedicationCard";
 import BatchInfoCard from "./BatchInfoCard";
 import BatchPriceCard from "./BatchPriceCard";
 import BatchDialogFooter from "./BatchDialogFooter";
-import { addMedicationBatch, findMedicationById } from "@/shared/services";
+import { createMedicationBatch, updateMedicationBatch } from "@/shared/services/MedicationBatchService";
+import { findMedicationById } from "@/shared/services/MedicationService";
 
 interface BatchDialogProps {
   isOpen: boolean;
@@ -112,16 +113,32 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
     setLoading(true);
     try {
       console.log("Batch data:", data);
-      await addMedicationBatch(data.medicationId, {
-        batchId: data.batchId,
-        expirationDate: data.expirationDate,
-        quantity: data.quantity,
-        purchasePrice: data.purchasePrice,
-        sellingPrice: data.sellingPrice,
-        purchaseDate: data.purchaseDate,
-        supplier: data.supplier,
-        createdBy: authUser?.id || "current-user",
-      });
+      
+      if (mode === 'create') {
+        await createMedicationBatch({
+          medicationId: data.medicationId,
+          batchId: data.batchId,
+          expirationDate: data.expirationDate,
+          quantity: data.quantity,
+          purchasePrice: data.purchasePrice,
+          sellingPrice: data.sellingPrice,
+          purchaseDate: data.purchaseDate,
+          supplier: data.supplier,
+          createdBy: authUser?.id || "current-user",
+        });
+      } else if (mode === 'edit' && batch) {
+        await updateMedicationBatch(batch.id, {
+          batchId: data.batchId,
+          expirationDate: data.expirationDate,
+          quantity: data.quantity,
+          purchasePrice: data.purchasePrice,
+          sellingPrice: data.sellingPrice,
+          purchaseDate: data.purchaseDate,
+          supplier: data.supplier,
+          updatedBy: authUser?.id || "current-user",
+        });
+      }
+      
       onSuccess();
       onClose();
     } catch (error) {

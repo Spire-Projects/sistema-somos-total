@@ -3,13 +3,14 @@ import { Package, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '../../../shared/components/ui/card';
 import { DataPagination } from '../../../shared/components/DataPagination';
 import { MedicationAccordionTable } from './MedicationAccordionTable';
-import type { Medication } from '../../../shared/types/Medication';
+import type { MedicationWithBatches } from '../../../shared/types/Medication';
 import type { BatchWithMedication } from '../../../shared/types/Sales';
-import { findAllMedicationsPaginated } from '../../../shared/services/MedicationService';
+import { getMedicationsWithBatchesPaginated, deleteMedicationBatch } from '../../../shared/services/MedicationBatchService';
+import { isBatchExpiringSoon } from '../../../shared/services/BatchService';
 import BatchDialog from './BatchDialog/BatchDialog';
 
 export const BatchManager: React.FC = () => {
-  const [medications, setMedications] = useState<Medication[]>([]);
+  const [medications, setMedications] = useState<MedicationWithBatches[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,13 +33,13 @@ export const BatchManager: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await findAllMedicationsPaginated(currentPage, medicationsPerPage);
+      const response = await getMedicationsWithBatchesPaginated(currentPage, medicationsPerPage);
       setMedications(response.items);
       setTotalMedications(response.totalItems);
       setTotalPages(response.totalPages);
     } catch (error) {
-      console.error('Error loading medications:', error);
-      setError('Error cargando los medicamentos');
+      console.error('Error loading medications with batches:', error);
+      setError('Error cargando los medicamentos con lotes');
       setMedications([]);
     } finally {
       setLoading(false);
@@ -71,8 +72,19 @@ export const BatchManager: React.FC = () => {
   };
 
   const handleDeleteBatch = async (batch: BatchWithMedication) => {
-    // TODO: Implementar eliminación de lote
-    console.log('Delete batch:', batch);
+    if (!window.confirm(`¿Estás seguro de eliminar el lote ${batch.batchId}?`)) {
+      return;
+    }
+
+    try {
+      await deleteMedicationBatch(batch.id);
+      console.log('Lote eliminado correctamente:', batch.batchId);
+      // Recargar los datos después de eliminar
+      loadMedications();
+    } catch (error) {
+      console.error('Error eliminando lote:', error);
+      setError('Error eliminando el lote');
+    }
   };
 
   const handleDialogSuccess = () => {
@@ -140,7 +152,7 @@ export const BatchManager: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Lotes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {medications.reduce((total, med) => total + med.batches.length, 0)}
+                  {medications.reduce((total, med) => total + med.batchCount, 0)}
                 </p>
               </div>
               <Package className="h-8 w-8 text-green-600" />
@@ -169,10 +181,8 @@ export const BatchManager: React.FC = () => {
                 <p className="text-sm font-medium text-gray-600">Próximos a Vencer</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {medications.reduce((count, med) => {
-                    const today = new Date();
-                    const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
                     return count + med.batches.filter(batch => 
-                      new Date(batch.expirationDate) <= thirtyDaysFromNow
+                      isBatchExpiringSoon(batch.expirationDate, 30)
                     ).length;
                   }, 0)}
                 </p>

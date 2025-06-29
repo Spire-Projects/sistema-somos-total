@@ -1,9 +1,5 @@
 import type { RxJsonSchema } from 'rxdb';
 import type { Medication } from '../../types/Medication';
-import { config } from '../../config/config';
-import { FirestoreMedicationDB, LocalMedicationDB, type IMedicationRepository } from '../repositories/medication.repository';
-
-
 // Esquema RxDB para Medication
 export const medicationSchema: RxJsonSchema<Medication> = {
   version: 0,

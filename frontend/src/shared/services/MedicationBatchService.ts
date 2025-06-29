@@ -7,6 +7,7 @@ import type {
   BatchStatistics,
   MedicationWithBatches
 } from '../types/Medication';
+import type { BatchWithMedication } from '../types/Sales';
 import type { 
   CreateMedicationBatchData, 
   UpdateMedicationBatchData 
@@ -365,4 +366,98 @@ export const getInventoryBySupplier = async (): Promise<{ supplier: string; batc
     supplier,
     ...data
   }));
+};
+
+/**
+ * Funciones helper adicionales para UI
+ */
+
+/**
+ * Obtener lotes con información completa del medicamento (para UI)
+ */
+export const getBatchWithMedicationInfo = async (batchId: string): Promise<BatchWithMedication | null> => {
+  const db = medicationBatchDb;
+  const medicationDB = medicationDb;
+  
+  const batch = await db.findById(batchId);
+  if (!batch) return null;
+  
+  const medication = await medicationDB.findById(batch.medicationId);
+  if (!medication) return null;
+  
+  return {
+    ...batch,
+    medication: {
+      id: medication.id,
+      tradeName: medication.tradeName,
+      genericName: medication.genericName,
+      concentration: medication.concentration,
+      presentation: medication.presentation,
+    }
+  } as BatchWithMedication;
+};
+
+/**
+ * Crear estadísticas rápidas para dashboard
+ */
+export const getDashboardStatistics = async (): Promise<{
+  totalMedications: number;
+  totalBatches: number;
+  totalStock: number;
+  batchesExpiringSoon: number;
+  batchesExpired: number;
+}> => {
+  const medicationDB = medicationDb;
+  const batchDB = medicationBatchDb;
+  
+  const [medications, statistics, expiringSoon, expired] = await Promise.all([
+    medicationDB.findAll(),
+    batchDB.getStatistics(),
+    findBatchesExpiringInDays(30),
+    findBatchesWithFilters({ expirationDateTo: new Date().toISOString().split('T')[0] }, 1, 1000)
+  ]);
+  
+  return {
+    totalMedications: medications.length,
+    totalBatches: statistics.totalBatches,
+    totalStock: statistics.totalStock,
+    batchesExpiringSoon: expiringSoon.length,
+    batchesExpired: expired.batches.length
+  };
+};
+
+/**
+ * Buscar lotes con información del medicamento para tabla acordeón
+ */
+export const searchBatchesWithMedicationInfo = async (
+  searchTerm: string,
+  page: number = 1,
+  size: number = 10
+): Promise<{
+  batches: BatchWithMedication[];
+  totalItems: number;
+  totalPages: number;
+}> => {
+  // Esta función necesitaría una implementación más compleja en el repositorio
+  // Por ahora es un placeholder
+  const result = await findBatchesWithFilters({}, page, size);
+  
+  const batchesWithMedication: BatchWithMedication[] = [];
+  
+  for (const batch of result.batches) {
+    const batchWithMed = await getBatchWithMedicationInfo(batch.id);
+    if (batchWithMed && (
+      batchWithMed.medication.tradeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      batchWithMed.medication.genericName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      batchWithMed.batchId.toLowerCase().includes(searchTerm.toLowerCase())
+    )) {
+      batchesWithMedication.push(batchWithMed);
+    }
+  }
+  
+  return {
+    batches: batchesWithMedication,
+    totalItems: batchesWithMedication.length,
+    totalPages: Math.ceil(batchesWithMedication.length / size)
+  };
 };

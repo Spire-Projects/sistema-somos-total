@@ -41,46 +41,59 @@ export type ActiveIngredientCollection = RxCollection<ActiveIngredient>;
 // Implementación para RxDB local
 export class LocalActiveIngredientDB {
   private collection?: ActiveIngredientCollection;
+  private initialized = false;
 
   async init(db: RxDatabase): Promise<void> {
     // La colección ya fue creada en initDatabase, solo obtenemos la referencia
     this.collection = db.collections.active_ingredients as ActiveIngredientCollection;
+    this.initialized = true;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized || !this.collection) {
+      const { getDatabase } = await import('../database');
+      const db = getDatabase();
+      if (!db) {
+        throw new Error('Database not initialized. Please call initDatabase() first.');
+      }
+      await this.init(db as any);
+    }
   }
 
   async create(data: Omit<ActiveIngredient, 'id'> & { id: string }): Promise<ActiveIngredient> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.insert(data);
+    const doc = await this.collection!.insert(data);
     return JSON.parse(JSON.stringify(doc.toJSON())) as ActiveIngredient;
   }
 
   async findById(id: string): Promise<ActiveIngredient | null> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as ActiveIngredient : null;
   }
 
   async findAll(): Promise<ActiveIngredient[]> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const docs = await this.collection.find().exec();
+    const docs = await this.collection!.find().exec();
     return docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as ActiveIngredient);
   }
 
   async findByName(name: string): Promise<ActiveIngredient | null> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne({
+    const doc = await this.collection!.findOne({
       selector: { name: { $eq: name } }
     }).exec();
     return doc ? JSON.parse(JSON.stringify(doc.toJSON())) as ActiveIngredient : null;
   }
 
   async update(id: string, data: Partial<ActiveIngredient>): Promise<ActiveIngredient> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     if (!doc) throw new Error('ActiveIngredient not found');
     
     await doc.update({
@@ -94,9 +107,9 @@ export class LocalActiveIngredientDB {
   }
 
   async delete(id: string): Promise<boolean> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const doc = await this.collection.findOne(id).exec();
+    const doc = await this.collection!.findOne(id).exec();
     if (!doc) return false;
     
     await doc.remove();
@@ -104,9 +117,9 @@ export class LocalActiveIngredientDB {
   }
 
   async search(query: string): Promise<ActiveIngredient[]> {
-    if (!this.collection) throw new Error('ActiveIngredient collection not initialized');
+    await this.ensureInitialized();
     
-    const docs = await this.collection.find({
+    const docs = await this.collection!.find({
       selector: {
         $or: [
           { name: { $regex: query, $options: 'i' } },
