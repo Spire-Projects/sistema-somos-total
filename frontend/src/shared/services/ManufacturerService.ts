@@ -3,8 +3,12 @@ import type {
   CreateManufacturerData,
   UpdateManufacturerData,
 } from "../types/MedicationCrud";
-import { getManufacturerDB } from "../db/models/manufacturer.model";
+import type { ItemsResponse } from "../types/UtilTypes";
+import { getManufacturerRepository } from "../db/repositories/manufacturer.repository";
 import { generateId } from "../utils/id.utils";
+
+// Instancia global del repository
+const repository = getManufacturerRepository();
 
 /**
  * Crear un nuevo fabricante
@@ -12,10 +16,8 @@ import { generateId } from "../utils/id.utils";
 export const createManufacturer = async (
   data: CreateManufacturerData
 ): Promise<Manufacturer> => {
-  const db = getManufacturerDB();
-
   // Verificar si ya existe un fabricante con el mismo nombre
-  const existing = await db.findByName(data.name);
+  const existing = await repository.findByName(data.name);
   if (existing) {
     throw new Error(`Manufacturer with name "${data.name}" already exists`);
   }
@@ -32,7 +34,7 @@ export const createManufacturer = async (
     isDeleted: false,
   };
 
-  return await db.create(newManufacturer);
+  return await repository.create(newManufacturer);
 };
 
 /**
@@ -41,16 +43,14 @@ export const createManufacturer = async (
 export const findManufacturerById = async (
   id: string
 ): Promise<Manufacturer | null> => {
-  const db = getManufacturerDB();
-  return await db.findById(id);
+  return await repository.findById(id);
 };
 
 /**
  * Obtener todos los fabricantes
  */
 export const findAllManufacturers = async (): Promise<Manufacturer[]> => {
-  const db = getManufacturerDB();
-  return await db.findAll();
+  return await repository.findAll();
 };
 
 /**
@@ -59,8 +59,7 @@ export const findAllManufacturers = async (): Promise<Manufacturer[]> => {
 export const findManufacturerByName = async (
   name: string
 ): Promise<Manufacturer | null> => {
-  const db = getManufacturerDB();
-  return await db.findByName(name);
+  return await repository.findByName(name);
 };
 
 /**
@@ -70,17 +69,15 @@ export const updateManufacturer = async (
   id: string,
   data: UpdateManufacturerData
 ): Promise<Manufacturer | null> => {
-  const db = getManufacturerDB();
-
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Manufacturer with ID "${id}" not found`);
   }
 
   // Si se está cambiando el nombre, verificar que no exista otro con ese nombre
   if (data.name && data.name !== existing.name) {
-    const nameExists = await db.findByName(data.name);
+    const nameExists = await repository.findByName(data.name);
     if (nameExists) {
       throw new Error(`Manufacturer with name "${data.name}" already exists`);
     }
@@ -92,23 +89,21 @@ export const updateManufacturer = async (
     updatedAt: new Date().toISOString(),
   };
 
-  await db.update(id, updateData);
-  return await db.findById(id);
+  await repository.update(id, updateData);
+  return await repository.findById(id);
 };
 
 /**
  * Eliminar fabricante (soft delete)
  */
 export const deleteManufacturer = async (id: string): Promise<boolean> => {
-  const db = getManufacturerDB();
-
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Manufacturer with ID "${id}" not found`);
   }
 
-  return await db.delete(id);
+  return await repository.delete(id);
 };
 
 /**
@@ -117,6 +112,16 @@ export const deleteManufacturer = async (id: string): Promise<boolean> => {
 export const searchManufacturers = async (
   query: string
 ): Promise<Manufacturer[]> => {
-  const db = getManufacturerDB();
-  return await db.search(query);
+  return await repository.search(query);
+};
+
+/**
+ * Obtener fabricantes paginados con búsqueda opcional
+ */
+export const findManufacturersPaginated = async (
+  page: number,
+  size: number,
+  searchQuery?: string
+): Promise<ItemsResponse<Manufacturer>> => {
+  return await repository.findAllPaginated(page, size, searchQuery);
 };

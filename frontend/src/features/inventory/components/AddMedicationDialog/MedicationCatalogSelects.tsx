@@ -5,8 +5,8 @@ import CreatableSelect from "../../../../shared/components/CreatableSelect";
 import { 
   createMedicationCategory,
   findMedicationCategoriesPaginated,
-  searchManufacturers,
   createManufacturer,
+  findManufacturersPaginated,
   createPharmaceuticalForm,
   findPharmaceuticalFormsPaginated
 } from "../../../../shared/services";
@@ -55,10 +55,12 @@ const MedicationCatalogSelects = memo(({
   errors
 }: MedicationCatalogSelectsProps) => {
 
-  // Estado para las categorías y formas farmacéuticas iniciales
+  // Estado para las categorías, fabricantes y formas farmacéuticas iniciales
   const [initialCategories, setInitialCategories] = useState<MedicationCategory[]>([]);
+  const [initialManufacturers, setInitialManufacturers] = useState<Manufacturer[]>([]);
   const [initialPharmaceuticalForms, setInitialPharmaceuticalForms] = useState<PharmaceuticalFormDoc[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [manufacturersLoading, setManufacturersLoading] = useState(true);
   const [pharmaceuticalFormsLoading, setPharmaceuticalFormsLoading] = useState(true);
 
   // Use custom hook to load catalog data
@@ -85,6 +87,24 @@ const MedicationCatalogSelects = memo(({
     };
 
     loadInitialCategories();
+  }, []);
+
+  // Cargar manufacturers iniciales (primeros 10)
+  useEffect(() => {
+    const loadInitialManufacturers = async () => {
+      try {
+        setManufacturersLoading(true);
+        const response = await findManufacturersPaginated(1, 10);
+        setInitialManufacturers(response.items);
+      } catch (error) {
+        console.error("Error loading initial manufacturers:", error);
+        setInitialManufacturers([]);
+      } finally {
+        setManufacturersLoading(false);
+      }
+    };
+
+    loadInitialManufacturers();
   }, []);
 
   // Cargar formas farmacéuticas iniciales (primeras 10)
@@ -133,12 +153,19 @@ const MedicationCatalogSelects = memo(({
 
   const searchManufacturersList = useCallback(async (query: string): Promise<Manufacturer[]> => {
     try {
-      return await searchManufacturers(query);
+      if (!query || query.trim() === "") {
+        // Si no hay búsqueda, retornar los manufacturers iniciales
+        return initialManufacturers;
+      }
+      
+      // Buscar con paginación para obtener máximo 10 resultados
+      const response = await findManufacturersPaginated(1, 10, query);
+      return response.items;
     } catch (error) {
       console.error("Error searching manufacturers:", error);
       return [];
     }
-  }, []);
+  }, [initialManufacturers]);
 
   const searchPharmaceuticalFormsList = useCallback(async (query: string): Promise<PharmaceuticalFormDoc[]> => {
     try {
@@ -179,7 +206,20 @@ const MedicationCatalogSelects = memo(({
   }, []);
 
   const handleCreateManufacturer = useCallback(async (name: string): Promise<Manufacturer> => {
-    return await createManufacturer({ name, createdBy: "current-user" });
+    try {
+      const newManufacturer = await createManufacturer({ 
+        name, 
+        createdBy: "current-user" // TODO: Usar ID del usuario actual
+      });
+      
+      // Actualizar la lista de manufacturers iniciales con el nuevo manufacturer
+      setInitialManufacturers(prev => [newManufacturer, ...prev]);
+      
+      return newManufacturer;
+    } catch (error) {
+      console.error("Error creating manufacturer:", error);
+      throw error;
+    }
   }, []);
 
   const handleCreatePharmaceuticalForm = useCallback(async (name: string): Promise<PharmaceuticalFormDoc> => {
@@ -199,7 +239,7 @@ const MedicationCatalogSelects = memo(({
     }
   }, []);
 
-  if (loading || categoriesLoading || pharmaceuticalFormsLoading) {
+  if (loading || categoriesLoading || manufacturersLoading || pharmaceuticalFormsLoading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-center py-8">
@@ -255,7 +295,7 @@ const MedicationCatalogSelects = memo(({
         <div className="space-y-2">
           <CreatableSelect<Manufacturer>
             label="Proveedor"
-            values={[]}
+            values={initialManufacturers}
             selectedValue={selectedValues.manufacturer}
             onChange={(manufacturer) => onFieldChange('manufacturerId', manufacturer.id)}
             searchFunction={searchManufacturersList}
