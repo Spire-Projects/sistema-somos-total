@@ -31,6 +31,13 @@ export interface IMedicationBatchRepository {
   getBatchCountByMedicationId(medicationId: string): Promise<number>;
   getStatistics(medicationId?: string): Promise<BatchStatistics>;
   
+  // 🆕 NUEVOS MÉTODOS PARA STOCK ACTIVO
+  getTotalActiveStockByMedicationId(medicationId: string): Promise<number>;
+  getActiveBatchCountByMedicationId(medicationId: string): Promise<number>;
+  findActiveBatchesByMedicationId(medicationId: string): Promise<MedicationBatch[]>;
+  getOldestActiveBatchByMedicationId(medicationId: string): Promise<MedicationBatch | null>;
+  findMedicationIdsWithActiveStock(): Promise<string[]>;
+  
   // Validaciones
   batchIdExistsForMedication(medicationId: string, batchId: string, excludeId?: string): Promise<boolean>;
 }
@@ -378,6 +385,107 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     return stats;
   }
 
+  // 🆕 NUEVOS MÉTODOS PARA STOCK ACTIVO
+  
+  /**
+   * Obtiene el stock total activo de un medicamento (solo lotes con quantity > 0 y no vencidos)
+   */
+  async getTotalActiveStockByMedicationId(medicationId: string): Promise<number> {
+    const collection = await this.getCollection();
+    const today = new Date().toISOString().split('T')[0];
+    
+    const docs = await collection.find({
+      selector: {
+        medicationId,
+        isDeleted: false,
+        quantity: { $gt: 0 },
+        expirationDate: { $gt: today }
+      }
+    }).exec();
+
+    return docs.reduce((total: number, doc: any) => total + doc.toJSON().quantity, 0);
+  }
+
+  /**
+   * Obtiene la cantidad de lotes activos de un medicamento
+   */
+  async getActiveBatchCountByMedicationId(medicationId: string): Promise<number> {
+    const collection = await this.getCollection();
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Usar find().length para selectores complejos
+    const docs = await collection.find({
+      selector: {
+        medicationId,
+        isDeleted: false,
+        quantity: { $gt: 0 },
+        expirationDate: { $gt: today }
+      }
+    }).exec();
+    
+    return docs.length;
+  }
+
+  /**
+   * Obtiene todos los lotes activos de un medicamento
+   */
+  async findActiveBatchesByMedicationId(medicationId: string): Promise<MedicationBatch[]> {
+    const collection = await this.getCollection();
+    const today = new Date().toISOString().split('T')[0];
+    
+    const docs = await collection.find({
+      selector: {
+        medicationId,
+        isDeleted: false,
+        quantity: { $gt: 0 },
+        expirationDate: { $gt: today }
+      },
+      sort: [{ expirationDate: 'asc' }] // Ordenar por fecha de vencimiento
+    }).exec();
+
+    return docs.map((doc: any) => doc.toJSON());
+  }
+
+  /**
+   * Obtiene el lote activo más próximo a vencer de un medicamento
+   */
+  async getOldestActiveBatchByMedicationId(medicationId: string): Promise<MedicationBatch | null> {
+    const collection = await this.getCollection();
+    const today = new Date().toISOString().split('T')[0];
+    
+    const doc = await collection.findOne({
+      selector: {
+        medicationId,
+        isDeleted: false,
+        quantity: { $gt: 0 },
+        expirationDate: { $gt: today }
+      },
+      sort: [{ expirationDate: 'asc' }] // El más próximo a vencer primero
+    }).exec();
+
+    return doc ? doc.toJSON() : null;
+  }
+
+  /**
+   * Obtiene IDs de medicamentos que tienen stock activo
+   */
+  async findMedicationIdsWithActiveStock(): Promise<string[]> {
+    const collection = await this.getCollection();
+    const today = new Date().toISOString().split('T')[0];
+    
+    const docs = await collection.find({
+      selector: {
+        isDeleted: false,
+        quantity: { $gt: 0 },
+        expirationDate: { $gt: today }
+      }
+    }).exec();
+
+    // Agrupar por medicationId y eliminar duplicados
+    const medicationIds = new Set(docs.map((doc: any) => doc.toJSON().medicationId));
+    return Array.from(medicationIds);
+  }
+
   async batchIdExistsForMedication(medicationId: string, batchId: string, excludeId?: string): Promise<boolean> {
     const collection = await this.getCollection();
     const selector: any = {
@@ -445,6 +553,28 @@ export class FirestoreMedicationBatchRepository implements IMedicationBatchRepos
   }
 
   async batchIdExistsForMedication(_medicationId: string, _batchId: string, _excludeId?: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  // 🆕 NUEVOS MÉTODOS PARA STOCK ACTIVO - Firestore placeholders
+  
+  async getTotalActiveStockByMedicationId(_medicationId: string): Promise<number> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  async getActiveBatchCountByMedicationId(_medicationId: string): Promise<number> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  async findActiveBatchesByMedicationId(_medicationId: string): Promise<MedicationBatch[]> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  async getOldestActiveBatchByMedicationId(_medicationId: string): Promise<MedicationBatch | null> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  async findMedicationIdsWithActiveStock(): Promise<string[]> {
     throw new Error('Firestore implementation not yet available');
   }
 }

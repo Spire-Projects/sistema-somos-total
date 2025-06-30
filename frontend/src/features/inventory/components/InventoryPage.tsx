@@ -1,12 +1,61 @@
-import { useCallback } from 'react';
+import { useCallback, memo } from 'react';
 import { AddMedicationDialog } from './AddMedicationDialog';
+import { MedicationSearch } from './MedicationSearch';
+import { MedicationFilters } from './MedicationFilters';
+import { MedicationTable } from './MedicationTable';
+import { DataPagination } from '@/shared/components/DataPagination';
+import { useMedicationCatalog } from '../hooks/useMedicationCatalog';
+import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
 
-export const InventoryPage = () => {
+const InventoryPageComponent = () => {
+  const {
+    medications,
+    loading,
+    error,
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    searchQuery,
+    filters,
+    sort,
+    setPage,
+    setPageSize,
+    setSearch,
+    setFilters,
+    setSort,
+    clearFilters,
+    refresh
+  } = useMedicationCatalog({
+    initialPageSize: 10
+  });
+
   const handleMedicationAdded = useCallback(() => {
-    // TODO: Aquí se puede implementar la lógica para recargar la lista de medicamentos
-    console.log('Medicamento agregado exitosamente - refrescar lista');
-    // Por ejemplo: refetch de la query de medicamentos
+    console.log('Medicamento agregado exitosamente - refrescando lista');
+    void refresh();
+  }, [refresh]);
+
+  const handleRowClick = useCallback((medication: MedicationCatalogView) => {
+    console.log('Clicked medication:', medication.id);
+    // TODO: Abrir modal de detalles o navegar a página de detalles
   }, []);
+
+  if (error) {
+    return (
+      <div className="p-4 lg:p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-red-800 font-medium">Error al cargar medicamentos</h3>
+          <p className="text-red-600 text-sm mt-1">{error}</p>
+          <button 
+            onClick={refresh}
+            className="mt-2 text-red-700 underline text-sm hover:text-red-800"
+          >
+            Intentar nuevamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -19,12 +68,69 @@ export const InventoryPage = () => {
         <AddMedicationDialog onMedicationAdded={handleMedicationAdded} />
       </div>
       
-      {/* Contenido del inventario */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <p className="text-gray-500 text-center">
-          Lista de medicamentos aparecerá aquí...
-        </p>
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <MedicationSearch
+          value={searchQuery}
+          onChange={setSearch}
+          disabled={loading}
+        />
+        <MedicationFilters
+          filters={filters}
+          onChange={setFilters}
+          onClear={clearFilters}
+          disabled={loading}
+        />
       </div>
+
+      {/* Results Summary */}
+      <div className="flex items-center justify-between text-sm text-gray-600">
+        <div>
+          {loading ? (
+            <span>Cargando medicamentos...</span>
+          ) : (
+            <span>
+              Mostrando {medications.length} de {totalItems} medicamentos
+              {searchQuery && ` para "${searchQuery}"`}
+            </span>
+          )}
+        </div>
+        {!loading && totalItems > 0 && (
+          <div>
+            Página {currentPage} de {totalPages}
+          </div>
+        )}
+      </div>
+      
+      {/* Table */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <MedicationTable
+          medications={medications}
+          loading={loading}
+          sort={sort}
+          onSort={setSort}
+          onRowClick={handleRowClick}
+        />
+      </div>
+
+      {/* Pagination */}
+      {!loading && totalItems > 0 && (
+        <div className="flex justify-center">
+          <DataPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={pageSize}
+            onPageChange={setPage}
+            onItemsPerPageChange={setPageSize}
+            startIndex={(currentPage - 1) * pageSize + 1}
+            endIndex={Math.min(currentPage * pageSize, totalItems)}
+            itemName="medicamentos"
+          />
+        </div>
+      )}
     </div>
   );
 };
+
+export const InventoryPage = memo(InventoryPageComponent);
