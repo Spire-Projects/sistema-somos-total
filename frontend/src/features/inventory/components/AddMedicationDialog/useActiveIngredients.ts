@@ -38,6 +38,7 @@ export const useActiveIngredients = (selectedIds: string[]) => {
   return {
     selectedIngredients,
     setSelectedIngredients,
-    loading
+    loading,
+    reloadIngredients: () => loadIngredients(selectedIds)
   };
 };

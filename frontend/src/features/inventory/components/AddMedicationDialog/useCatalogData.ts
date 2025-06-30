@@ -6,27 +6,23 @@ import {
 } from "../../../../shared/services";
 import type { 
   MedicationCategory, 
-  GenericNameDoc, 
   Manufacturer, 
   PharmaceuticalFormDoc 
 } from "../../../../shared/types/Medication";
 
 interface CatalogSelectedValues {
   category: MedicationCategory | null;
-  generic: GenericNameDoc | null;
   manufacturer: Manufacturer | null;
   pharmaceuticalForm: PharmaceuticalFormDoc | null;
 }
 
 export const useCatalogData = (
   categoryId: string,
-  genericName: string,
   manufacturerId: string,
   pharmaceuticalFormId: string
 ) => {
   const [selectedValues, setSelectedValues] = useState<CatalogSelectedValues>({
     category: null,
-    generic: null,
     manufacturer: null,
     pharmaceuticalForm: null
   });
@@ -41,19 +37,8 @@ export const useCatalogData = (
         pharmaceuticalFormId ? findPharmaceuticalFormById(pharmaceuticalFormId) : null,
       ]);
 
-      // For generic name, we create a mock object since it's stored as string
-      const generic = genericName ? { 
-        id: "", 
-        name: genericName,
-        createdAt: new Date().toISOString(),
-        createdBy: "",
-        sincronized: false,
-        isDeleted: false
-      } as GenericNameDoc : null;
-
       setSelectedValues({
         category,
-        generic,
         manufacturer,
         pharmaceuticalForm
       });
@@ -61,14 +46,13 @@ export const useCatalogData = (
       console.error("Error loading catalog data:", error);
       setSelectedValues({
         category: null,
-        generic: null,
         manufacturer: null,
         pharmaceuticalForm: null
       });
     } finally {
       setLoading(false);
     }
-  }, [categoryId, genericName, manufacturerId, pharmaceuticalFormId]);
+  }, [categoryId, manufacturerId, pharmaceuticalFormId]);
 
   useEffect(() => {
     loadCatalogData();

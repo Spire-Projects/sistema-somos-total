@@ -2,13 +2,6 @@ import React, { memo, useEffect, useState } from "react";
 import { Card, CardContent } from "../../../../shared/components/ui/card";
 import { Label } from "../../../../shared/components/ui/label";
 import { Package } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../../shared/components/ui/select";
 import type { Medication } from "../../../../shared/types/Medication";
 import type { BatchFormData } from "../../utils/batchForm.utils";
 import type { FieldErrors } from "react-hook-form";
@@ -31,7 +24,6 @@ interface BatchMedicationCardProps {
 
 const BatchMedicationCard: React.FC<BatchMedicationCardProps> = ({
   selectedMedication,
-  formData,
   errors,
   mode,
   handleInputChange,

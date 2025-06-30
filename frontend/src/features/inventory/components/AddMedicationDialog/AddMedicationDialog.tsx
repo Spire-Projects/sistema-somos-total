@@ -62,12 +62,17 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
   // Custom validation rules
   const validationRules = useMemo(() => ({
     comercialName: {
-      required: "El nombre comercial es requerido",
+      required: "El nombre de marca es requerido",
       minLength: { value: 2, message: "Mínimo 2 caracteres" },
       maxLength: { value: 100, message: "Máximo 100 caracteres" }
     },
     tradeName: {
-      required: "El nombre del fabricante es requerido",
+      required: "El nombre comercial completo es requerido",
+      minLength: { value: 2, message: "Mínimo 2 caracteres" },
+      maxLength: { value: 100, message: "Máximo 100 caracteres" }
+    },
+    genericName: {
+      required: "El principio activo es requerido",
       minLength: { value: 2, message: "Mínimo 2 caracteres" },
       maxLength: { value: 100, message: "Máximo 100 caracteres" }
     },
@@ -169,11 +174,11 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
           {/* Información Básica */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="comercialName">Nombre Comercial *</Label>
+              <Label htmlFor="comercialName">Nombre de Marca *</Label>
               <Input
                 id="comercialName"
                 {...register("comercialName", validationRules.comercialName)}
-                placeholder="Nombre comercial del fabricante"
+                placeholder="Ej: Tylenol, Advil, Omeprazol MK"
               />
               {errors.comercialName && (
                 <p className="text-sm text-red-600">{errors.comercialName.message}</p>
@@ -181,11 +186,11 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tradeName">Nombre del Fabricante *</Label>
+              <Label htmlFor="tradeName">Nombre Comercial Completo *</Label>
               <Input
                 id="tradeName"
                 {...register("tradeName", validationRules.tradeName)}
-                placeholder="Nombre comercial del fabricante"
+                placeholder="Ej: Tylenol Extra Fuerte 500mg, Advil 200mg Cápsulas"
               />
               {errors.tradeName && (
                 <p className="text-sm text-red-600">{errors.tradeName.message}</p>
@@ -193,10 +198,22 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
             </div>
           </div>
 
+          {/* Principio Activo (Nombre Genérico) */}
+          <div className="space-y-2">
+            <Label htmlFor="genericName">Principio Activo (Nombre Genérico) *</Label>
+            <Input
+              id="genericName"
+              {...register("genericName", validationRules.genericName)}
+              placeholder="Ej: Acetaminofén, Ibuprofeno, Omeprazol, Ácido Acetilsalicílico"
+            />
+            {errors.genericName && (
+              <p className="text-sm text-red-600">{errors.genericName.message}</p>
+            )}
+          </div>
+
           {/* Selects de Catálogos */}
           <MedicationCatalogSelects
             categoryId={watchedValues.categoryId}
-            genericName={watchedValues.genericName}
             manufacturerId={watchedValues.manufacturerId}
             pharmaceuticalFormId={watchedValues.pharmaceuticalFormId}
             onFieldChange={handleFieldChange}
@@ -213,11 +230,11 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
           {/* Información Adicional */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="presentation">Presentación *</Label>
+              <Label htmlFor="presentation">Presentación del Producto *</Label>
               <Input
                 id="presentation"
                 {...register("presentation", validationRules.presentation)}
-                placeholder="Ej: Tabletas - Caja x 30"
+                placeholder="Ej: Caja x 30 tabletas, Frasco x 100ml, Blíster x 20 cápsulas"
               />
               {errors.presentation && (
                 <p className="text-sm text-red-600">{errors.presentation.message}</p>
@@ -225,11 +242,11 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="concentration">Concentración *</Label>
+              <Label htmlFor="concentration">Concentración por Dosis *</Label>
               <Input
                 id="concentration"
                 {...register("concentration", validationRules.concentration)}
-                placeholder="Ej: 500mg"
+                placeholder="Ej: 500mg, 10ml, 25%, 5mg/ml, 200UI"
               />
               {errors.concentration && (
                 <p className="text-sm text-red-600">{errors.concentration.message}</p>
@@ -243,39 +260,42 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
             <Input
               id="barcode"
               {...register("barcode", validationRules.barcode)}
-              placeholder="Código de barras del producto"
+              placeholder="Ej: 7701234567890, 123456789012"
             />
+            {errors.barcode && (
+              <p className="text-sm text-red-600">{errors.barcode.message}</p>
+            )}
           </div>
 
           {/* Información Descriptiva */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
+              <Label htmlFor="description">Descripción del Producto</Label>
               <Textarea
                 id="description"
                 {...register("description")}
-                placeholder="Descripción del producto"
+                placeholder="Ej: Analgésico y antipirético de acción rápida. Alivia dolor de cabeza, muscular y fiebre..."
                 rows={3}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="indications">Indicaciones</Label>
+                <Label htmlFor="indications">Indicaciones Médicas</Label>
                 <Textarea
                   id="indications"
                   {...register("indications")}
-                  placeholder="Para qué se usa este medicamento"
+                  placeholder="Ej: Dolor de cabeza, fiebre, dolor muscular, artritis, dolor dental..."
                   rows={4}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="warnings">Advertencias</Label>
+                <Label htmlFor="warnings">Advertencias y Precauciones</Label>
                 <Textarea
                   id="warnings"
                   {...register("warnings")}
-                  placeholder="Advertencias y precauciones"
+                  placeholder="Ej: No exceder la dosis recomendada. Consultar médico si persisten síntomas..."
                   rows={4}
                 />
               </div>

@@ -11,26 +11,8 @@ import {
   findPharmaceuticalFormsPaginated
 } from "../../../../shared/services";
 
-// Mock functions for missing services
-const searchGenericNames = async (_query: string): Promise<GenericNameDoc[]> => {
-  // TODO: Implement actual search
-  return [];
-};
-
-const createGenericName = async (data: { name: string; createdBy?: string }): Promise<GenericNameDoc> => {
-  // TODO: Implement actual creation
-  return {
-    id: `generic-${Date.now()}`,
-    name: data.name,
-    createdAt: new Date().toISOString(),
-    createdBy: data.createdBy || "",
-    sincronized: false,
-    isDeleted: false
-  };
-};
 import type { 
   MedicationCategory, 
-  GenericNameDoc, 
   Manufacturer, 
   PharmaceuticalFormDoc 
 } from "../../../../shared/types/Medication";
@@ -39,7 +21,6 @@ import { useCatalogData } from "./useCatalogData.ts";
 
 interface MedicationCatalogSelectsProps {
   categoryId: string;
-  genericName: string;
   manufacturerId: string;
   pharmaceuticalFormId: string;
   onFieldChange: (field: keyof CreateMedicationData, value: any) => void;
@@ -48,7 +29,6 @@ interface MedicationCatalogSelectsProps {
 
 const MedicationCatalogSelects = memo(({
   categoryId,
-  genericName,
   manufacturerId,
   pharmaceuticalFormId,
   onFieldChange,
@@ -66,7 +46,6 @@ const MedicationCatalogSelects = memo(({
   // Use custom hook to load catalog data
   const { selectedValues, loading } = useCatalogData(
     categoryId,
-    genericName,
     manufacturerId,
     pharmaceuticalFormId
   );
@@ -125,7 +104,6 @@ const MedicationCatalogSelects = memo(({
     loadInitialPharmaceuticalForms();
   }, []);
 
-  // Optimized search functions with caching
   const searchCategories = useCallback(async (query: string): Promise<MedicationCategory[]> => {
     try {
       if (!query || query.trim() === "") {
@@ -141,15 +119,6 @@ const MedicationCatalogSelects = memo(({
       return [];
     }
   }, [initialCategories]);
-
-  const searchGeneric = useCallback(async (query: string): Promise<GenericNameDoc[]> => {
-    try {
-      return await searchGenericNames(query);
-    } catch (error) {
-      console.error("Error searching generic names:", error);
-      return [];
-    }
-  }, []);
 
   const searchManufacturersList = useCallback(async (query: string): Promise<Manufacturer[]> => {
     try {
@@ -199,10 +168,6 @@ const MedicationCatalogSelects = memo(({
       console.error("Error creating category:", error);
       throw error;
     }
-  }, []);
-
-  const handleCreateGeneric = useCallback(async (name: string): Promise<GenericNameDoc> => {
-    return await createGenericName({ name, createdBy: "current-user" });
   }, []);
 
   const handleCreateManufacturer = useCallback(async (name: string): Promise<Manufacturer> => {
@@ -256,7 +221,7 @@ const MedicationCatalogSelects = memo(({
         {/* Categoría */}
         <div className="space-y-2">
           <CreatableSelect<MedicationCategory>
-            label="Categoría"
+            label="Categoría del Medicamento"
             values={initialCategories}
             selectedValue={selectedValues.category}
             onChange={(category) => onFieldChange('categoryId', category.id)}
@@ -264,37 +229,17 @@ const MedicationCatalogSelects = memo(({
             onAddValue={handleCreateCategory}
             displayField="name"
             valueField="id"
-            placeholder="Seleccionar categoría"
+            placeholder="Ej: Analgésicos, Antibióticos, Vitaminas"
           />
           {errors.categoryId && (
             <p className="text-sm text-red-600">{errors.categoryId.message}</p>
           )}
         </div>
 
-        {/* Nombre Genérico */}
-        <div className="space-y-2">
-          <CreatableSelect<GenericNameDoc>
-            label="Nombre Genérico"
-            values={[]}
-            selectedValue={selectedValues.generic}
-            onChange={(generic) => onFieldChange('genericName', generic.name)}
-            searchFunction={searchGeneric}
-            onAddValue={handleCreateGeneric}
-            displayField="name"
-            valueField="id"
-            placeholder="Seleccionar nombre genérico"
-          />
-          {errors.genericName && (
-            <p className="text-sm text-red-600">{errors.genericName.message}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Proveedor/Fabricante */}
         <div className="space-y-2">
           <CreatableSelect<Manufacturer>
-            label="Proveedor"
+            label="Fabricante/Laboratorio"
             values={initialManufacturers}
             selectedValue={selectedValues.manufacturer}
             onChange={(manufacturer) => onFieldChange('manufacturerId', manufacturer.id)}
@@ -302,13 +247,15 @@ const MedicationCatalogSelects = memo(({
             onAddValue={handleCreateManufacturer}
             displayField="name"
             valueField="id"
-            placeholder="Seleccionar proveedor"
+            placeholder="Ej: Bayer, Pfizer, Genfar, MK"
           />
           {errors.manufacturerId && (
             <p className="text-sm text-red-600">{errors.manufacturerId.message}</p>
           )}
         </div>
+      </div>
 
+      <div className="grid grid-cols-1 gap-4">
         {/* Forma Farmacéutica */}
         <div className="space-y-2">
           <CreatableSelect<PharmaceuticalFormDoc>
@@ -320,7 +267,7 @@ const MedicationCatalogSelects = memo(({
             onAddValue={handleCreatePharmaceuticalForm}
             displayField="name"
             valueField="id"
-            placeholder="Seleccionar forma farmacéutica"
+            placeholder="Ej: Tabletas, Cápsulas, Jarabe, Inyectable, Crema"
           />
           {errors.pharmaceuticalFormId && (
             <p className="text-sm text-red-600">{errors.pharmaceuticalFormId.message}</p>

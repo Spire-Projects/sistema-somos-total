@@ -1,11 +1,12 @@
-import { memo, useCallback, useState, useMemo } from "react";
+import { memo, useCallback, useState, useMemo, useEffect } from "react";
 import { Badge } from "../../../../shared/components/ui/badge";
 import { Button } from "../../../../shared/components/ui/button";
 import { X, Plus, Loader2 } from "lucide-react";
 import CreatableSelect from "../../../../shared/components/CreatableSelect";
 import { 
-  searchActiveIngredients,
-  createActiveIngredient
+  createActiveIngredient,
+  findActiveIngredientsPaginated,
+  searchActiveIngredients
 } from "../../../../shared/services";
 import type { ActiveIngredient } from "../../../../shared/types/Medication";
 import { useActiveIngredients } from "./useActiveIngredients.ts";
@@ -22,13 +23,38 @@ const ActiveIngredientsMultiSelect = memo(({
   error
 }: ActiveIngredientsMultiSelectProps) => {
   const [showSelector, setShowSelector] = useState(false);
+  const [availableIngredients, setAvailableIngredients] = useState<ActiveIngredient[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(true);
   
-  // Use custom hook to manage active ingredients
+  // Use custom hook to manage selected active ingredients
   const { selectedIngredients, setSelectedIngredients, loading } = useActiveIngredients(selectedIds);
 
-  // Optimized search function
+  // Load initial ingredients for selector
+  useEffect(() => {
+    const loadInitialIngredients = async () => {
+      try {
+        setLoadingInitial(true);
+        const response = await findActiveIngredientsPaginated(1, 10);
+        setAvailableIngredients(response.items);
+      } catch (error) {
+        console.error("Error loading initial active ingredients:", error);
+        setAvailableIngredients([]);
+      } finally {
+        setLoadingInitial(false);
+      }
+    };
+
+    loadInitialIngredients();
+  }, []);
+
+  // Optimized search function with pagination
   const searchIngredients = useCallback(async (query: string): Promise<ActiveIngredient[]> => {
     try {
+      if (!query.trim()) {
+        // Return initial ingredients if no search query
+        return availableIngredients.filter(ingredient => !selectedIds.includes(ingredient.id));
+      }
+      
       const results = await searchActiveIngredients(query);
       // Filter out already selected ingredients
       return results.filter(ingredient => !selectedIds.includes(ingredient.id));
@@ -36,11 +62,14 @@ const ActiveIngredientsMultiSelect = memo(({
       console.error("Error searching active ingredients:", error);
       return [];
     }
-  }, [selectedIds]);
+  }, [selectedIds, availableIngredients]);
 
   // Create function
   const handleCreateIngredient = useCallback(async (name: string): Promise<ActiveIngredient> => {
-    return await createActiveIngredient({ name, createdBy: "current-user" });
+    const newIngredient = await createActiveIngredient({ name, createdBy: "current-user" });
+    // Add to available ingredients for future searches
+    setAvailableIngredients(prev => [...prev, newIngredient]);
+    return newIngredient;
   }, []);
 
   // Add ingredient to selection
@@ -86,7 +115,7 @@ const ActiveIngredientsMultiSelect = memo(({
     [selectedIngredients, handleRemoveIngredient]
   );
 
-  if (loading) {
+  if (loading || loadingInitial) {
     return (
       <div className="space-y-3">
         <label className="text-sm font-medium text-gray-700">
@@ -138,7 +167,7 @@ const ActiveIngredientsMultiSelect = memo(({
           <CreatableSelect<ActiveIngredient>
             label=""
             hideLabel={true}
-            values={[]}
+            values={availableIngredients.filter(ingredient => !selectedIds.includes(ingredient.id))}
             selectedValue={null}
             onChange={handleAddIngredient}
             searchFunction={searchIngredients}
