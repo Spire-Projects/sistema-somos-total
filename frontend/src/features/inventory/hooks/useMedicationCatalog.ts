@@ -7,8 +7,7 @@ import type {
 } from '@/shared/types/MedicationViewTypes';
 import type { ItemsResponse } from '@/shared/types/UtilTypes';
 import { 
-  getMedicationCatalogPaginated, 
-  searchMedicationCatalogPaginated 
+  getMedicationCatalogPaginated
 } from '@/shared/services/MedicationService';
 
 interface UseMedicationCatalogParams {
@@ -98,13 +97,16 @@ export const useMedicationCatalog = (
       let response: ItemsResponse<MedicationCatalogView>;
 
       if (searchQuery.trim()) {
-        // Use search endpoint if there's a search query
-        response = await searchMedicationCatalogPaginated(
-          searchQuery,
-          currentPage,
-          pageSize,
-          filters
-        );
+        // Use search endpoint if there's a search query - manually construct params
+        response = await getMedicationCatalogPaginated({
+          page: currentPage,
+          size: pageSize,
+          filters: {
+            ...filters,
+            searchQuery
+          },
+          sort
+        });
       } else {
         // Use catalog endpoint for filtered/sorted results
         response = await getMedicationCatalogPaginated(queryParams);

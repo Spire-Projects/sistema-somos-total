@@ -6,7 +6,8 @@ import { getMedicationRepository } from '../db/repositories/medication.repositor
 import type { 
   MedicationCatalogView, 
   MedicationCatalogFilters, 
-  MedicationCatalogQueryParams
+  MedicationCatalogQueryParams,
+  MedicationCatalogSort
 } from '../types/MedicationViewTypes';
 import { getMedicationBatchRepository } from '../db/repositories/medicationBatch.repository';
 import { getStockStatus, calculateDaysToExpiration } from '../types/MedicationViewTypes';
@@ -171,17 +172,29 @@ export const getMedicationCatalogPaginated = async (
 ): Promise<ItemsResponse<MedicationCatalogView>> => {
   const { page, size, filters, sort } = params;
   
-  // 1. Obtener medicamentos paginados con filtros aplicados
-  const medicationsResponse = await medicationDB.findAllPaginatedWithFilters(page, size, filters, sort);
+  // Separar campos de ordenamiento: los que existen en schema vs calculados
+  const schemaFields = ['tradeName', 'genericName', 'comercialName', 'createdAt', 'updatedAt'];
+  const calculatedFields = ['totalActiveStock', 'activeBatchCount', 'categoryName', 'manufacturerName'];
+  
+  const isSchemaField = sort && schemaFields.includes(sort.field);
+  const dbSort = isSchemaField ? sort : undefined; // Solo pasar sort si es campo del schema
+  
+  // 1. Obtener medicamentos paginados con filtros aplicados (solo ordenar si es campo del schema)
+  const medicationsResponse = await medicationDB.findAllPaginatedWithFilters(page, size, filters, dbSort);
   
   // 2. Para cada medicamento, obtener sus datos de stock agregados
-  const catalogViews: MedicationCatalogView[] = await Promise.all(
+  let catalogViews: MedicationCatalogView[] = await Promise.all(
     medicationsResponse.items.map(async (medication) => {
       return await createMedicationCatalogView(medication);
     })
   );
   
-  // 3. Aplicar filtros de stock si los hay (que requieren datos de lotes)
+  // 3. Si el ordenamiento es por campo calculado, ordenar en memoria
+  if (sort && calculatedFields.includes(sort.field)) {
+    catalogViews = sortCatalogViewsInMemory(catalogViews, sort);
+  }
+  
+  // 4. Aplicar filtros de stock si los hay (que requieren datos de lotes)
   let filteredViews = catalogViews;
   if (filters?.stockStatus || filters?.hasStock !== undefined || filters?.minStock !== undefined || filters?.maxStock !== undefined) {
     filteredViews = catalogViews.filter(view => {
@@ -227,23 +240,18 @@ export const searchMedicationCatalogPaginated = async (
   size: number,
   filters?: MedicationCatalogFilters
 ): Promise<ItemsResponse<MedicationCatalogView>> => {
-  // 1. Buscar medicamentos con el query
-  const medicationsResponse = await medicationDB.searchMedicationsPaginated(query, page, size, filters);
-  
-  // 2. Convertir a vista de catálogo
-  const catalogViews: MedicationCatalogView[] = await Promise.all(
-    medicationsResponse.items.map(async (medication) => {
-      return await createMedicationCatalogView(medication);
-    })
-  );
-  
-  return {
-    items: catalogViews,
-    page: medicationsResponse.page,
-    size: medicationsResponse.size,
-    totalItems: medicationsResponse.totalItems,
-    totalPages: medicationsResponse.totalPages
+  // Crear filtros combinando la búsqueda con los filtros adicionales
+  const combinedFilters: MedicationCatalogFilters = {
+    ...filters,
+    searchQuery: query
   };
+
+  // Usar el método principal que ya maneja ordenamiento híbrido
+  return getMedicationCatalogPaginated({
+    page,
+    size,
+    filters: combinedFilters
+  });
 };
 
 /**
@@ -310,5 +318,54 @@ const createMedicationCatalogView = async (medication: Medication): Promise<Medi
     
     createdAt: medication.createdAt
   };
+};
+
+/**
+ * 🔧 HELPER: Ordenar vistas de catálogo en memoria por campos calculados
+ * Usado cuando el ordenamiento es por campos que no existen en el schema de medications
+ */
+const sortCatalogViewsInMemory = (
+  catalogViews: MedicationCatalogView[], 
+  sort: MedicationCatalogSort
+): MedicationCatalogView[] => {
+  return [...catalogViews].sort((a, b) => {
+    let valueA: any, valueB: any;
+    
+    // Obtener los valores a comparar según el campo de ordenamiento
+    switch (sort.field) {
+      case 'totalActiveStock':
+        valueA = a.totalActiveStock;
+        valueB = b.totalActiveStock;
+        break;
+      case 'activeBatchCount':
+        valueA = a.activeBatchCount;
+        valueB = b.activeBatchCount;
+        break;
+      case 'categoryName':
+        valueA = a.categoryName.toLowerCase();
+        valueB = b.categoryName.toLowerCase();
+        break;
+      case 'manufacturerName':
+        valueA = a.manufacturerName.toLowerCase();
+        valueB = b.manufacturerName.toLowerCase();
+        break;
+      default:
+        // Para campos que no son calculados (fallback), usar string comparison
+        valueA = String(a[sort.field as keyof MedicationCatalogView] || '').toLowerCase();
+        valueB = String(b[sort.field as keyof MedicationCatalogView] || '').toLowerCase();
+        break;
+    }
+    
+    // Realizar la comparación
+    let result = 0;
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      result = valueA - valueB;
+    } else {
+      result = String(valueA).localeCompare(String(valueB));
+    }
+    
+    // Aplicar orden descendente si es necesario
+    return sort.order === 'desc' ? -result : result;
+  });
 };
 

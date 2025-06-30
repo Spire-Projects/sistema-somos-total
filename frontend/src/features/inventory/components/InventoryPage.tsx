@@ -57,7 +57,7 @@ const InventoryPageComponent = () => {
     }
 
     return (
-      <div className="p-4 lg:p-6">
+      <div className="p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h3 className="text-red-800 font-medium">Error al cargar medicamentos</h3>
           <p className="text-red-600 text-sm mt-1">{error}</p>
@@ -73,12 +73,12 @@ const InventoryPageComponent = () => {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-6">
+    <div className="p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Inventario</h1>
-          <p className="text-gray-600">Gestión de medicamentos y control de stock</p>
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">Inventario</p>
+            <p className="text-gray-500 text-sm sm:text-gray-600">Gestión de medicamentos y control de stock</p>
         </div>
         <AddMedicationDialog onMedicationAdded={handleMedicationAdded} />
       </div>
@@ -118,19 +118,33 @@ const InventoryPageComponent = () => {
       </div>
       
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <MedicationTable
-          medications={medications}
-          loading={loading}
-          sort={sort}
-          onSort={setSort}
-          onRowClick={handleRowClick}
-        />
+      <div>
+        {/* Desktop/Tablet container */}
+        <div className="hidden md:block bg-white rounded-lg shadow-sm border">
+          <MedicationTable
+            medications={medications}
+            loading={loading}
+            sort={sort}
+            onSort={setSort}
+            onRowClick={handleRowClick}
+          />
+        </div>
+        
+        {/* Mobile view - no container */}
+        <div className="md:hidden">
+          <MedicationTable
+            medications={medications}
+            loading={loading}
+            sort={sort}
+            onSort={setSort}
+            onRowClick={handleRowClick}
+          />
+        </div>
       </div>
 
       {/* Pagination */}
       {!loading && totalItems > 0 && (
-        <div className="flex justify-center">
+        <div className="w-full">
           <DataPagination
             currentPage={currentPage}
             totalPages={totalPages}

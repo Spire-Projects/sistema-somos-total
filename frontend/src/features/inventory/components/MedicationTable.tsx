@@ -11,6 +11,7 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { MedicationMobileList } from './MedicationMobileList';
 import type { 
   MedicationCatalogView, 
   MedicationCatalogSort, 
@@ -100,128 +101,142 @@ export const MedicationTable = memo<MedicationTableProps>(({
   }, [onRowClick]);
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[200px]">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSort('tradeName')}
-                className="h-auto p-0 font-semibold hover:bg-transparent"
-              >
-                {SORTABLE_COLUMNS.tradeName}
-                {getSortIcon('tradeName')}
-              </Button>
-            </TableHead>
-            <TableHead className="w-[180px]">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSort('genericName')}
-                className="h-auto p-0 font-semibold hover:bg-transparent"
-              >
-                {SORTABLE_COLUMNS.genericName}
-                {getSortIcon('genericName')}
-              </Button>
-            </TableHead>
-            <TableHead>Concentración</TableHead>
-            <TableHead className="text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSort('totalActiveStock')}
-                className="h-auto p-0 font-semibold hover:bg-transparent"
-              >
-                Stock
-                {getSortIcon('totalActiveStock')}
-              </Button>
-            </TableHead>
-            <TableHead className="text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSort('activeBatchCount')}
-                className="h-auto p-0 font-semibold hover:bg-transparent"
-              >
-                Lotes
-                {getSortIcon('activeBatchCount')}
-              </Button>
-            </TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Vencimiento</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {loading ? (
-            Array.from({ length: 5 }).map((_, index) => (
-              <LoadingSkeleton key={index} />
-            ))
-          ) : medications.length === 0 ? (
+    <>
+      {/* Mobile View - Hidden on MD and above */}
+      <div className="md:hidden">
+        <MedicationMobileList
+          medications={medications}
+          loading={loading}
+          sort={sort}
+          onSort={onSort}
+          onRowClick={onRowClick}
+        />
+      </div>
+
+      {/* Desktop/Tablet View - Hidden below MD */}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                No se encontraron medicamentos
-              </TableCell>
+              <TableHead className="w-[200px]">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSort('tradeName')}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  {SORTABLE_COLUMNS.tradeName}
+                  {getSortIcon('tradeName')}
+                </Button>
+              </TableHead>
+              <TableHead className="w-[180px]">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSort('genericName')}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  {SORTABLE_COLUMNS.genericName}
+                  {getSortIcon('genericName')}
+                </Button>
+              </TableHead>
+              <TableHead>Concentración</TableHead>
+              <TableHead className="text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSort('totalActiveStock')}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  Stock
+                  {getSortIcon('totalActiveStock')}
+                </Button>
+              </TableHead>
+              <TableHead className="text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSort('activeBatchCount')}
+                  className="h-auto p-0 font-semibold hover:bg-transparent"
+                >
+                  Lotes
+                  {getSortIcon('activeBatchCount')}
+                </Button>
+              </TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Vencimiento</TableHead>
             </TableRow>
-          ) : (
-            medications.map((medication) => (
-              <TableRow
-                key={medication.id}
-                className={onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
-                onClick={() => handleRowClick(medication)}
-              >
-                <TableCell className="font-medium">
-                  <div>
-                    <div className="font-semibold">{medication.tradeName}</div>
-                    {medication.comercialName && (
-                      <div className="text-xs text-gray-500">{medication.comercialName}</div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">{medication.genericName}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">{medication.concentration}</div>
-                  <div className="text-xs text-gray-500">{medication.presentation}</div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Package className="h-3 w-3 text-gray-400" />
-                    <span className="font-medium">{medication.totalActiveStock}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className="text-sm text-gray-600">{medication.activeBatchCount}</span>
-                </TableCell>
-                <TableCell>
-                  {getStockStatusBadge(medication.stockStatus)}
-                </TableCell>
-                <TableCell>
-                  {medication.oldestActiveBatch ? (
-                    <div className="flex items-center gap-1">
-                      {medication.oldestActiveBatch.daysToExpiration <= 30 && (
-                        <AlertTriangle className="h-3 w-3 text-orange-500" />
-                      )}
-                      <div className="text-xs">
-                        <div>{formatDate(medication.oldestActiveBatch.expirationDate)}</div>
-                        <div className="text-gray-500">
-                          {medication.oldestActiveBatch.daysToExpiration}d restantes
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-gray-400">-</span>
-                  )}
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, index) => (
+                <LoadingSkeleton key={index} />
+              ))
+            ) : medications.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  No se encontraron medicamentos
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              medications.map((medication) => (
+                <TableRow
+                  key={medication.id}
+                  className={onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
+                  onClick={() => handleRowClick(medication)}
+                >
+                  <TableCell className="font-medium">
+                    <div>
+                      <div className="font-semibold">{medication.tradeName}</div>
+                      {medication.comercialName && (
+                        <div className="text-xs text-gray-500">{medication.comercialName}</div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{medication.genericName}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{medication.concentration}</div>
+                    <div className="text-xs text-gray-500">{medication.presentation}</div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Package className="h-3 w-3 text-gray-400" />
+                      <span className="font-medium">{medication.totalActiveStock}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="text-sm text-gray-600">{medication.activeBatchCount}</span>
+                  </TableCell>
+                  <TableCell>
+                    {getStockStatusBadge(medication.stockStatus)}
+                  </TableCell>
+                  <TableCell>
+                    {medication.oldestActiveBatch ? (
+                      <div className="flex items-center gap-1">
+                        {medication.oldestActiveBatch.daysToExpiration <= 30 && (
+                          <AlertTriangle className="h-3 w-3 text-orange-500" />
+                        )}
+                        <div className="text-xs">
+                          <div>{formatDate(medication.oldestActiveBatch.expirationDate)}</div>
+                          <div className="text-gray-500">
+                            {medication.oldestActiveBatch.daysToExpiration}d restantes
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">-</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 });
 
