@@ -1,6 +1,5 @@
-import type { RxJsonSchema, RxDatabase, RxCollection } from 'rxdb';
+import type { RxJsonSchema, RxCollection } from 'rxdb';
 import type { PharmaceuticalFormDoc } from '../../types/Medication';
-import { config } from '../../config/config';
 
 // Esquema RxDB para PharmaceuticalForm
 export const pharmaceuticalFormSchema: RxJsonSchema<PharmaceuticalFormDoc> = {

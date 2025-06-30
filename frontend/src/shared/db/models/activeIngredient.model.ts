@@ -1,6 +1,5 @@
-import type { RxJsonSchema, RxDatabase, RxCollection } from 'rxdb';
+import type { RxJsonSchema, RxCollection } from 'rxdb';
 import type { ActiveIngredient } from '../../types/Medication';
-import { config } from '../../config/config';
 
 // Esquema RxDB para ActiveIngredient
 export const activeIngredientSchema: RxJsonSchema<ActiveIngredient> = {

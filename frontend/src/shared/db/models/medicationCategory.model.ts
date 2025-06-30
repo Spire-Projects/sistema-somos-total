@@ -1,7 +1,5 @@
-import type { RxJsonSchema, RxDatabase, RxCollection } from 'rxdb';
+import type { RxJsonSchema, RxCollection } from 'rxdb';
 import type { MedicationCategory } from '../../types/Medication';
-import { config } from '../../config/config';
-
 // Esquema RxDB para MedicationCategory
 export const medicationCategorySchema: RxJsonSchema<MedicationCategory> = {
   version: 0,

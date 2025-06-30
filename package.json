@@ -54,7 +54,7 @@
   },
   "build": {
     "appId": "com.farmaapp.monorepo",
-    "productName": "FarmaApp",
+    "productName": "Farmacia_La_Bonita",
     "directories": {
       "output": "release"
     },
@@ -68,6 +68,7 @@
     ],
     "extraResources": [],
     "win": {
+      "icon": "assets/icons/logoWin.ico",
       "target": [
         {
           "target": "nsis",
