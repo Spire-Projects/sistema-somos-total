@@ -112,7 +112,19 @@ export const useMedicationCatalog = (
 
       setData(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading medications');
+      const errorMessage = err instanceof Error ? err.message : 'Error loading medications';
+      
+      // Si el error es de DB no inicializada, mostrar mensaje más amigable y reintentar
+      if (errorMessage.includes('Database not initialized')) {
+        setError('Inicializando base de datos...');
+        // Reintentar después de un breve delay
+        setTimeout(() => {
+          void fetchData();
+        }, 1000);
+        return;
+      }
+      
+      setError(errorMessage);
       console.error('Error fetching medication catalog:', err);
     } finally {
       setLoading(false);

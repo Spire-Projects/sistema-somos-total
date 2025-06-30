@@ -89,6 +89,29 @@ export const medicationSchema: RxJsonSchema<Medication> = {
       maxLength: 100
     }
   },
-  required: ['id', 'tradeName', 'genericName', 'activeIngredientIds', 'pharmaceuticalFormId', 'concentration', 'presentation', 'manufacturerId', 'categoryId', 'comercialName'],
-  indexes: ['tradeName', 'genericName', 'barcode', 'categoryId', 'manufacturerId', 'createdAt']
+  required: ['id', 'tradeName', 'genericName', 'activeIngredientIds', 'pharmaceuticalFormId', 'concentration', 'presentation', 'manufacturerId', 'categoryId', 'comercialName', 'isDeleted'],
+  indexes: [
+    // Índices simples existentes
+    'tradeName', 
+    'genericName', 
+    'barcode', 
+    'categoryId', 
+    'manufacturerId', 
+    'createdAt',
+    'isDeleted',
+    
+    // Índices compuestos optimizados para el catálogo de medicamentos
+    ['isDeleted', 'categoryId'],           // Filtro por categoría
+    ['isDeleted', 'manufacturerId'],       // Filtro por fabricante  
+    ['isDeleted', 'pharmaceuticalFormId'], // Filtro por forma farmacéutica
+    ['isDeleted', 'tradeName'],           // Búsqueda por nombre comercial
+    ['isDeleted', 'genericName'],         // Búsqueda por nombre genérico
+    ['isDeleted', 'createdAt'],           // Ordenamiento por fecha de creación
+    ['isDeleted', 'barcode'],             // Búsqueda por código de barras
+    
+    // Índices compuestos para consultas complejas frecuentes
+    ['isDeleted', 'categoryId', 'manufacturerId'],     // Filtro combinado categoría + fabricante
+    ['isDeleted', 'categoryId', 'createdAt'],          // Filtro categoría + ordenamiento fecha
+    ['isDeleted', 'manufacturerId', 'createdAt']       // Filtro fabricante + ordenamiento fecha
+  ]
 };

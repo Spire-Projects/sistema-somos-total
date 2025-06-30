@@ -150,11 +150,11 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     const collection = await this.getCollection();
     const skip = (page - 1) * size;
     
-    // Obtener total de elementos
+    // Obtener total de elementos - selector simple, usar count() directamente
     const totalItems = await collection.count({
       selector: {
         medicationId,
-        isDeleted: false
+        isDeleted: false  // Usar false en lugar de { $ne: true }
       }
     }).exec();
 
@@ -250,8 +250,21 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
       }
     }
 
-    // Obtener total de elementos
-    const totalItems = await collection.count({ selector }).exec();
+    // Obtener total de elementos - usar find().length para selectores complejos
+    let totalItems: number;
+    const hasComplexSelector = (selector.expirationDate && (selector.expirationDate.$gte || selector.expirationDate.$lte)) ||
+                              (selector.purchaseDate && (selector.purchaseDate.$gte || selector.purchaseDate.$lte)) ||
+                              (selector.quantity && (selector.quantity.$gte || selector.quantity.$lte)) ||
+                              (selector.purchasePrice && (selector.purchasePrice.$gte || selector.purchasePrice.$lte));
+    
+    if (hasComplexSelector) {
+      // Para selectores complejos con rangos, usar find().length para evitar QU14
+      const allDocs = await collection.find({ selector }).exec();
+      totalItems = allDocs.length;
+    } else {
+      // Para selectores simples, usar count() que es más eficiente
+      totalItems = await collection.count({ selector }).exec();
+    }
 
     // Obtener elementos paginados
     const docs = await collection.find({
@@ -341,10 +354,11 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
 
   async getBatchCountByMedicationId(medicationId: string): Promise<number> {
     const collection = await this.getCollection();
+    // Selector simple con índices optimizados, usar count() directamente
     return await collection.count({
       selector: {
         medicationId,
-        isDeleted: false
+        isDeleted: false  // Usar false en lugar de { $ne: true }
       }
     }).exec();
   }

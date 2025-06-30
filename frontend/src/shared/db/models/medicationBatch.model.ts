@@ -25,15 +25,21 @@ export const medicationBatchSchema: RxJsonSchema<MedicationBatch> = {
     },
     quantity: {
       type: 'number',
-      minimum: 0
+      minimum: 0,
+      maximum: 1000000, // Valor máximo razonable para un inventario
+      multipleOf: 1 // Requerido para índices en campos numéricos
     },
     purchasePrice: {
       type: 'number',
-      minimum: 0
+      minimum: 0,
+      maximum: 10000000, // Valor máximo razonable para un precio de compra
+      multipleOf: 0.01 // Precisión de dos decimales para precios
     },
     sellingPrice: {
       type: 'number',
-      minimum: 0
+      minimum: 0,
+      maximum: 10000000, // Valor máximo razonable para un precio de venta
+      multipleOf: 0.01 // Precisión de dos decimales para precios
     },
     purchaseDate: {
       type: 'string',
@@ -66,16 +72,38 @@ export const medicationBatchSchema: RxJsonSchema<MedicationBatch> = {
       maxLength: 100
     }
   },
-  required: ['id', 'medicationId', 'batchId', 'expirationDate', 'quantity', 'purchasePrice', 'sellingPrice'],
+  required: ['id', 'medicationId', 'batchId', 'expirationDate', 'quantity', 'purchasePrice', 'sellingPrice', 'isDeleted'],
   indexes: [
+    // Índices simples existentes
     'medicationId',
     'batchId',
     'expirationDate',
     'purchaseDate',
     'supplier',
     'createdAt',
-    ['medicationId', 'expirationDate'], // índice compuesto
-    ['medicationId', 'batchId'] // índice compuesto para unicidad
+    'isDeleted',
+    'quantity',
+    
+    // Índices compuestos existentes
+    ['medicationId', 'expirationDate'],
+    ['medicationId', 'batchId'],
+    
+    // Nuevos índices compuestos optimizados para el catálogo
+    ['isDeleted', 'medicationId'],              // Consultas por medicamento
+    ['isDeleted', 'expirationDate'],            // Filtros de vencimiento
+    ['isDeleted', 'quantity'],                  // Filtros de stock
+    ['isDeleted', 'purchaseDate'],              // Filtros por fecha de compra
+    ['isDeleted', 'supplier'],                  // Filtros por proveedor
+    
+    // Índices compuestos para filtros combinados del catálogo
+    ['isDeleted', 'medicationId', 'quantity'],            // Stock por medicamento
+    ['isDeleted', 'medicationId', 'expirationDate'],      // Vencimiento por medicamento
+    ['isDeleted', 'quantity', 'expirationDate'],          // Stock + vencimiento
+    ['isDeleted', 'medicationId', 'quantity', 'expirationDate'], // Consulta completa catálogo
+    
+    // Índices para agregaciones de stock
+    ['medicationId', 'isDeleted', 'quantity'],            // Suma de stock por medicamento
+    ['medicationId', 'isDeleted', 'expirationDate', 'quantity'] // Análisis completo por medicamento
   ]
 };
 

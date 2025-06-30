@@ -274,8 +274,20 @@ export class LocalMedicationDB implements IMedicationRepository {
       sortConfig.push({ tradeName: 'asc' });
     }
 
-    // Obtener total de elementos
-    const totalItems = await collection.count({ selector }).exec();
+    // Obtener total de elementos - usar find().length para selectores complejos
+    let totalItems: number;
+    const hasComplexSelector = selector.$and || selector.$or || 
+                              (selector.createdAt && (selector.createdAt.$gte || selector.createdAt.$lte)) ||
+                              (selector.updatedAt && (selector.updatedAt.$gte || selector.updatedAt.$lte));
+    
+    if (hasComplexSelector) {
+      // Para selectores complejos, usar find().length para evitar QU14
+      const allDocs = await collection.find({ selector }).exec();
+      totalItems = allDocs.length;
+    } else {
+      // Para selectores simples, usar count() que es más eficiente
+      totalItems = await collection.count({ selector }).exec();
+    }
 
     // Obtener elementos paginados
     const docs = await collection.find({
