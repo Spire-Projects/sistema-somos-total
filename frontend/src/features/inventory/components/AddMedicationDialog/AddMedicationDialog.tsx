@@ -174,7 +174,7 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
           {/* Información Básica */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="comercialName">Nombre de Marca *</Label>
+              <Label htmlFor="comercialName">Nombre Comercial*</Label>
               <Input
                 id="comercialName"
                 {...register("comercialName", validationRules.comercialName)}
@@ -272,10 +272,11 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
             <div className="space-y-2">
               <Label htmlFor="description">Descripción del Producto</Label>
               <Textarea
-                id="description"
-                {...register("description")}
-                placeholder="Ej: Analgésico y antipirético de acción rápida. Alivia dolor de cabeza, muscular y fiebre..."
-                rows={3}
+              id="description"
+              {...register("description")}
+              placeholder="Ej: Analgésico y antipirético de acción rápida. Alivia dolor de cabeza, muscular y fiebre..."
+              rows={3}
+              className="placeholder:text-gray-400"
               />
             </div>
 
@@ -286,6 +287,7 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
                   id="indications"
                   {...register("indications")}
                   placeholder="Ej: Dolor de cabeza, fiebre, dolor muscular, artritis, dolor dental..."
+                  className="placeholder:text-gray-400"
                   rows={4}
                 />
               </div>
@@ -297,6 +299,7 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
                   {...register("warnings")}
                   placeholder="Ej: No exceder la dosis recomendada. Consultar médico si persisten síntomas..."
                   rows={4}
+                  className="placeholder:text-gray-400"
                 />
               </div>
             </div>

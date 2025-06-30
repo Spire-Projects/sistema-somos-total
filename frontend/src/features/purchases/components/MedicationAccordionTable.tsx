@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Trash2, Package, DollarSign, ChevronDown, ChevronRight, Calendar } from 'lucide-react';
+import { Edit, Trash2, Package, DollarSign, ChevronDown, ChevronRight, Calendar, Plus } from 'lucide-react';
 import { Button } from '../../../shared/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../shared/components/ui/table';
 import { Badge } from '../../../shared/components/ui/badge';
@@ -412,6 +412,15 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="font-mono text-sm font-medium">{batch.batchId}</span>
                                     <div className="flex gap-1">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-7 w-7 text-green-600 hover:text-green-700"
+                                        onClick={() => onCreateBatch(medication.medication.id)}
+                                        title="Agregar nuevo lote de este medicamento"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
                                       <Button 
                                         variant="ghost" 
                                         size="icon" 

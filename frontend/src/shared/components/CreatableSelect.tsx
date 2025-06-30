@@ -206,7 +206,7 @@ const CreatableSelect = <T,>({
             disabled={disabled}
             onClick={() => !disabled && setOpen(!open)}
           >
-            <span className="truncate text-left">
+            <span className={`truncate text-left ${!displayText ? 'text-gray-400' : ''}`}>
               {displayText || placeholder || `Seleccionar ${label.toLowerCase()}`}
             </span>
             <ChevronDown className={`ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform ${open ? 'rotate-180' : ''}`} />

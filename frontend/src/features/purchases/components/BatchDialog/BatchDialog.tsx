@@ -36,6 +36,7 @@ interface BatchDialogProps {
   onSuccess: () => void;
   batch?: BatchWithMedication | null;
   mode: "create" | "edit";
+  preselectedMedicationId?: string | null;
 }
 
 const BatchDialog: React.FC<BatchDialogProps> = ({
@@ -44,6 +45,7 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   onSuccess,
   batch,
   mode,
+  preselectedMedicationId = null,
 }) => {
   const authUser = useSelector((state: any) => state.auth.user);
   const [profitMargin, setProfitMargin] = useState(0);
@@ -83,6 +85,13 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
       }
     }
   }, [isOpen, mode, batch, authUser, reset]);
+
+  // Efecto para preseleccionar medicamento
+  useEffect(() => {
+    if (isOpen && mode === "create" && preselectedMedicationId) {
+      setValue("medicationId", preselectedMedicationId);
+    }
+  }, [isOpen, mode, preselectedMedicationId, setValue]);
 
   useEffect(() => {
     if (isProfitMode && purchasePrice && profitMargin >= 0) {

@@ -35,6 +35,7 @@ export const BatchManager: React.FC = () => {
   const [editingBatch, setEditingBatch] = useState<BatchWithMedication | null>(
     null
   );
+  const [preselectedMedicationId, setPreselectedMedicationId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMedications();
@@ -85,10 +86,10 @@ export const BatchManager: React.FC = () => {
   };
 
   // Manejar diálogos
-  const handleCreateBatch = (_medicationId: string) => {
-    // TODO: Preseleccionar el medicamento en el diálogo
+  const handleCreateBatch = (medicationId: string) => {
     setDialogMode("create");
     setEditingBatch(null);
+    setPreselectedMedicationId(medicationId || null); // Si medicationId es "" será null
     setDialogOpen(true);
   };
 
@@ -118,6 +119,11 @@ export const BatchManager: React.FC = () => {
 
   const handleDialogSuccess = () => {
     loadMedications();
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setPreselectedMedicationId(null); // Limpiar el medicamento preseleccionado
   };
 
   // Calcular información de paginación
@@ -213,10 +219,11 @@ export const BatchManager: React.FC = () => {
       {/* Diálogo de lote */}
       <BatchDialog
         isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleDialogClose}
         onSuccess={handleDialogSuccess}
         batch={editingBatch}
         mode={dialogMode}
+        preselectedMedicationId={preselectedMedicationId}
       />
     </div>
   );

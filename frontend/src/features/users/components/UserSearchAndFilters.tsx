@@ -3,7 +3,7 @@ import { Search, Plus } from 'lucide-react';
 import { Input } from '../../../shared/components/ui/input';
 import { Button } from '../../../shared/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components/ui/select';
-import { cn } from '../../../lib/utils';
+import { FilterTabs, type FilterOption } from '../../../shared/components/FilterTabs';
 
 export type UserFilter = 'all' | 'admin' | 'cashier' | 'warehouse' | 'vendor' | 'accounting';
 
@@ -26,13 +26,11 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
 }) => {
   // Estado para el tamaño de la pantalla
   const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
 
   // Efecto para detectar el tamaño de la pantalla
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
-      setIsTablet(window.innerWidth >= 640 && window.innerWidth < 768);
     };
     
     // Inicializar
@@ -45,7 +43,7 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const filterOptions = [
+  const filterOptions: FilterOption[] = [
     { value: 'all', label: 'Todos', count: userCounts.all },
     { value: 'admin', label: 'Administradores', count: userCounts.admin },
     { value: 'cashier', label: 'Caja', count: userCounts.cashier },
@@ -78,38 +76,12 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
       </div>
 
       {/* Tabs de filtros personalizados - Visibles en desktop */}
-      <div className={cn("overflow-x-auto py-1", isMobile ? "hidden" : "block")}>
-        <div className="flex gap-2 md:gap-3">
-          {filterOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => onFilterChange(option.value as UserFilter)}
-              className={cn(
-                "px-4 py-2 text-sm rounded-full border border-gray-300 transition-all whitespace-nowrap flex items-center",
-                activeFilter === option.value
-                  ? "bg-primary text-primary-foreground border-primary font-medium"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              )}
-            >
-              <span>
-                {isTablet && option.label.length > 10
-                  ? option.label.split(' ')[0]
-                  : option.label}
-              </span>
-              {option.count > 0 && (
-                <span className={cn(
-                  "ml-1.5 text-xs px-1.5 py-0.5 rounded-full inline-flex items-center justify-center min-w-[20px]",
-                  activeFilter === option.value
-                    ? "bg-primary-foreground text-primary"
-                    : "bg-gray-200 text-gray-700"
-                )}>
-                  {option.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+      <FilterTabs
+        options={filterOptions}
+        activeFilter={activeFilter}
+        onFilterChange={(filter) => onFilterChange(filter as UserFilter)}
+        className={isMobile ? "hidden" : "block"}
+      />
 
       {/* Select para filtros en móvil */}
       <div className={isMobile ? "block w-full" : "hidden"}>
@@ -120,7 +92,7 @@ export const UserSearchAndFilters: React.FC<UserSearchAndFiltersProps> = ({
           <SelectContent>
             {filterOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label} {option.count > 0 && `(${option.count})`}
+                {option.label} {(option.count ?? 0) > 0 && `(${option.count})`}
               </SelectItem>
             ))}
           </SelectContent>
