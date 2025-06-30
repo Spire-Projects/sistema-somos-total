@@ -1,5 +1,4 @@
-import type { UserRole } from './User';
-import type { AuthUser } from '../db/models/user.model';
+import type { AuthUser, UserRole } from './User';
 
 // Register
 export interface RegisterRequest {

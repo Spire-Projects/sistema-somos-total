@@ -3,8 +3,12 @@ import type {
   CreatePharmaceuticalFormData,
   UpdatePharmaceuticalFormData,
 } from "../types/MedicationCrud";
-import { getPharmaceuticalFormDB } from "../db/models/pharmaceuticalForm.model";
+import type { ItemsResponse } from "../types/UtilTypes";
+import { getPharmaceuticalFormRepository } from "../db/repositories/pharmaceuticalForm.repository";
 import { generateId } from "../utils/id.utils";
+
+// Instancia global del repository
+const repository = getPharmaceuticalFormRepository();
 
 /**
  * Crear una nueva forma farmacéutica
@@ -12,10 +16,8 @@ import { generateId } from "../utils/id.utils";
 export const createPharmaceuticalForm = async (
   data: CreatePharmaceuticalFormData
 ): Promise<PharmaceuticalFormDoc> => {
-  const db = getPharmaceuticalFormDB();
-
   // Verificar si ya existe una forma farmacéutica con el mismo nombre
-  const existing = await db.findByName(data.name);
+  const existing = await repository.findByName(data.name);
   if (existing) {
     throw new Error(
       `Pharmaceutical form with name "${data.name}" already exists`
@@ -33,7 +35,7 @@ export const createPharmaceuticalForm = async (
     isDeleted: false,
   };
 
-  return await db.create(newForm);
+  return await repository.create(newForm);
 };
 
 /**
@@ -42,8 +44,7 @@ export const createPharmaceuticalForm = async (
 export const findPharmaceuticalFormById = async (
   id: string
 ): Promise<PharmaceuticalFormDoc | null> => {
-  const db = getPharmaceuticalFormDB();
-  return await db.findById(id);
+  return await repository.findById(id);
 };
 
 /**
@@ -52,8 +53,7 @@ export const findPharmaceuticalFormById = async (
 export const findAllPharmaceuticalForms = async (): Promise<
   PharmaceuticalFormDoc[]
 > => {
-  const db = getPharmaceuticalFormDB();
-  return await db.findAll();
+  return await repository.findAll();
 };
 
 /**
@@ -62,8 +62,7 @@ export const findAllPharmaceuticalForms = async (): Promise<
 export const findPharmaceuticalFormByName = async (
   name: string
 ): Promise<PharmaceuticalFormDoc | null> => {
-  const db = getPharmaceuticalFormDB();
-  return await db.findByName(name);
+  return await repository.findByName(name);
 };
 
 /**
@@ -73,17 +72,15 @@ export const updatePharmaceuticalForm = async (
   id: string,
   data: UpdatePharmaceuticalFormData
 ): Promise<PharmaceuticalFormDoc | null> => {
-  const db = getPharmaceuticalFormDB();
-
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Pharmaceutical form with ID "${id}" not found`);
   }
 
   // Si se está cambiando el nombre, verificar que no exista otro con ese nombre
   if (data.name && data.name !== existing.name) {
-    const nameExists = await db.findByName(data.name);
+    const nameExists = await repository.findByName(data.name);
     if (nameExists) {
       throw new Error(
         `Pharmaceutical form with name "${data.name}" already exists`
@@ -97,8 +94,8 @@ export const updatePharmaceuticalForm = async (
     updatedAt: new Date().toISOString(),
   };
 
-  await db.update(id, updateData);
-  return await db.findById(id);
+  await repository.update(id, updateData);
+  return await repository.findById(id);
 };
 
 /**
@@ -107,15 +104,13 @@ export const updatePharmaceuticalForm = async (
 export const deletePharmaceuticalForm = async (
   id: string
 ): Promise<boolean> => {
-  const db = getPharmaceuticalFormDB();
-
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Pharmaceutical form with ID "${id}" not found`);
   }
 
-  return await db.delete(id);
+  return await repository.delete(id);
 };
 
 /**
@@ -124,6 +119,16 @@ export const deletePharmaceuticalForm = async (
 export const searchPharmaceuticalForms = async (
   query: string
 ): Promise<PharmaceuticalFormDoc[]> => {
-  const db = getPharmaceuticalFormDB();
-  return await db.search(query);
+  return await repository.search(query);
+};
+
+/**
+ * Obtener formas farmacéuticas paginadas con búsqueda opcional
+ */
+export const findPharmaceuticalFormsPaginated = async (
+  page: number,
+  size: number,
+  searchQuery?: string
+): Promise<ItemsResponse<PharmaceuticalFormDoc>> => {
+  return await repository.findAllPaginated(page, size, searchQuery);
 };

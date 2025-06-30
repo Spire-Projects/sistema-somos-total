@@ -1,16 +1,20 @@
 import { useAppSelector } from "../store/hooks";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown, Menu } from "lucide-react";
 import { useLocation } from "react-router";
 
-export const Header = () => {
+interface HeaderProps {
+  onToggleSidebar?: () => void;
+}
+
+export const Header = ({ onToggleSidebar }: HeaderProps) => {
   const { user } = useAppSelector((state) => state.auth);
   const location = useLocation();
 
   const sectionNames: Record<string, string> = {
     "/dashboard": "Dashboard",
     "/inventory": "Inventario",
-    "/sales": "Ventas",
-    "/purchases": "Compras",
+    "/sales": "Compras",
+    "/purchases": "Ventas",
     "/clients": "Clientes",
     "/reports": "Reportes",
     "/users": "Usuarios",
@@ -22,39 +26,55 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+    <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 sm:py-4 shadow-sm">
       <div className="flex justify-between items-center">
         {user && (
-          <div className="flex items-center justify-between gap-4 ml-6 w-full">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-bold text-gray-900">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 w-full">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+              {/* Botón menú para móviles */}
+              {onToggleSidebar && (
+                <button 
+                  onClick={onToggleSidebar}
+                  className="p-2 -ml-1 sm:-ml-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 lg:hidden"
+                  aria-label="Menú"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              )}
+              
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate flex-1 min-w-0">
                 {getSectionName()}
               </h2>
             </div>
 
             {/* Right side - Notifications and User Info */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
               <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
                   1
                 </span>
               </button>
 
-              <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                <div className="text-sm text-right">
-                  <div className="font-medium text-gray-900">
+              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-gray-200">
+                {/* Desktop/Tablet: Mostrar nombre completo */}
+                <div className="hidden sm:block text-sm text-right">
+                  <div className="font-medium text-gray-900 text-xs sm:text-sm">
                     {user.fullName}
                   </div>
-                  <div className="text-gray-500 capitalize">{user.role}</div>
+                  <div className="text-gray-500 capitalize text-xs">
+                    {user.role}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 bg-green-600 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-white">
+                
+                {/* Mobile: Solo mostrar inicial y chevron */}
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-xs sm:text-sm font-medium text-white">
                       {user.fullName?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                 </div>
               </div>
             </div>

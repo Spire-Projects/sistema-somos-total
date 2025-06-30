@@ -1,12 +1,10 @@
 import { config } from '../config/config';
-import { localUserDB } from '../db/database';
-import { firestoreUserDB } from '../db/firestore';
+import { getUserRepository } from '../db/repositories/user.repository';
 import type {
   UserDocument,
   CreateUserData,
   UpdateUserData,
   LoginCredentials,
-  AuthUser
 } from '../db/models/user.model';
 import {
   hashPassword,
@@ -18,11 +16,10 @@ import {
   storeToken,
   removeStoredToken
 } from '../utils/auth.utils';
+import type { AuthUser } from '../types/User';
 
-// Selector de base de datos según el modo
-const getUserDB = () => {
-  return config.APP_MODE === 'local' ? localUserDB : firestoreUserDB;
-};
+// Selector de base de datos según el modo (repositorio)
+const getUserDB = () => getUserRepository();
 
 export const UserService = {
   // Registrar un nuevo usuario
@@ -199,6 +196,32 @@ export const UserService = {
     }
   },
 
+  // Eliminar usuario completamente (elimina el registro de la base de datos)
+  async deleteUser(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const db = getUserDB();
+      
+      // Verificar que el usuario existe antes de intentar eliminarlo
+      const user = await db.findById(id);
+      if (!user) {
+        return { success: false, error: 'Usuario no encontrado' };
+      }
+
+      // Eliminar el usuario de la base de datos
+      const deleteResult = await db.delete(id);
+      
+      if (!deleteResult) {
+        return { success: false, error: 'No se pudo eliminar el usuario' };
+      }
+
+      console.log(`✅ Usuario ${user.fullName} (${user.email}) eliminado completamente de la base de datos`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error eliminando usuario:', error);
+      return { success: false, error: 'Error eliminando usuario' };
+    }
+  },
+
   // Obtener usuarios por rol
   async getUsersByRole(role: string): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
     try {
@@ -213,23 +236,41 @@ export const UserService = {
     }
   },
 
-  // Sincronizar datos locales a Firestore (solo en modo local)
-  async syncToFirestore(): Promise<{ success: boolean; error?: string }> {
-    if (config.APP_MODE !== 'local') {
-      return { success: false, error: 'Sincronización solo disponible en modo local' };
-    }
-
+  // Buscar usuarios por texto (coincidencia parcial en email, nombre o rol)
+  async searchUsers(searchText: string): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
     try {
-      // Obtener todos los usuarios locales
-      const localUsers = await localUserDB.findAll();
+      if (!searchText || searchText.trim() === '') {
+        return await this.getAllUsers();
+      }
+
+      // Normalizar texto de búsqueda
+      const normalizedText = searchText.trim().toLowerCase();
       
-      // Sincronizar a Firestore
-      await firestoreUserDB.syncFromLocal(localUsers);
+      // Obtener la base de datos apropiada
+      const db = getUserDB();
       
-      return { success: true };
+      // Usar el método especializado de búsqueda si estamos en modo local
+      let filteredUsers;
+      if (config.APP_MODE === 'local' && 'findByText' in db) {
+        // Si la base de datos tiene un método findByText, usarlo directamente
+        filteredUsers = await db.findByText(normalizedText);
+      } else {
+        // Si no, usamos el enfoque genérico (compatible con Firestore)
+        const allUsers = await db.findAll();
+        filteredUsers = allUsers.filter(user => 
+          user.email.toLowerCase().includes(normalizedText) ||
+          user.fullName.toLowerCase().includes(normalizedText) ||
+          user.role.toLowerCase().includes(normalizedText)
+        );
+      }
+      
+      const authUsers = filteredUsers.map(userToAuthUser);
+      console.log(`🔍 Búsqueda de usuarios: "${searchText}" - ${authUsers.length} resultados`);
+      
+      return { success: true, users: authUsers };
     } catch (error) {
-      console.error('Error sincronizando a Firestore:', error);
-      return { success: false, error: 'Error sincronizando datos' };
+      console.error('❌ Error buscando usuarios:', error);
+      return { success: false, error: 'Error al buscar usuarios' };
     }
-  }
+  },
 };

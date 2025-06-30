@@ -3,8 +3,12 @@ import type {
   CreateMedicationCategoryData,
   UpdateMedicationCategoryData,
 } from "../types/MedicationCrud";
-import { getMedicationCategoryDB } from "../db/models/medicationCategory.model";
+import type { ItemsResponse } from "../types/UtilTypes";
+import { getMedicationCategoryRepository } from "../db/repositories/category.repository";
 import { generateId } from "../utils/id.utils";
+
+// Instancia global del repository
+const repository = getMedicationCategoryRepository();
 
 /**
  * Crear una nueva categoría de medicamento
@@ -12,10 +16,8 @@ import { generateId } from "../utils/id.utils";
 export const createMedicationCategory = async (
   data: CreateMedicationCategoryData
 ): Promise<MedicationCategory> => {
-  const db = getMedicationCategoryDB();
-
   // Verificar si ya existe una categoría con el mismo nombre
-  const existing = await db.findByName(data.name);
+  const existing = await repository.findByName(data.name);
   if (existing) {
     throw new Error(
       `Medication category with name "${data.name}" already exists`
@@ -30,7 +32,7 @@ export const createMedicationCategory = async (
     createdBy: data.createdBy,
   };
 
-  return await db.create(newCategory);
+  return await repository.create(newCategory);
 };
 
 /**
@@ -39,8 +41,7 @@ export const createMedicationCategory = async (
 export const findMedicationCategoryById = async (
   id: string
 ): Promise<MedicationCategory | null> => {
-  const db = getMedicationCategoryDB();
-  return await db.findById(id);
+  return await repository.findById(id);
 };
 
 /**
@@ -49,8 +50,7 @@ export const findMedicationCategoryById = async (
 export const findAllMedicationCategories = async (): Promise<
   MedicationCategory[]
 > => {
-  const db = getMedicationCategoryDB();
-  return await db.findAll();
+  return await repository.findAll();
 };
 
 /**
@@ -59,8 +59,7 @@ export const findAllMedicationCategories = async (): Promise<
 export const findMedicationCategoryByName = async (
   name: string
 ): Promise<MedicationCategory | null> => {
-  const db = getMedicationCategoryDB();
-  return await db.findByName(name);
+  return await repository.findByName(name);
 };
 
 /**
@@ -70,17 +69,15 @@ export const updateMedicationCategory = async (
   id: string,
   data: UpdateMedicationCategoryData
 ): Promise<MedicationCategory | null> => {
-  const db = getMedicationCategoryDB();
-
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Medication category with ID "${id}" not found`);
   }
 
   // Si se está cambiando el nombre, verificar que no exista otro con ese nombre
   if (data.name && data.name !== existing.name) {
-    const nameExists = await db.findByName(data.name);
+    const nameExists = await repository.findByName(data.name);
     if (nameExists) {
       throw new Error(
         `Medication category with name "${data.name}" already exists`
@@ -93,8 +90,8 @@ export const updateMedicationCategory = async (
     updatedAt: new Date().toISOString(),
   };
 
-  await db.update(id, updateData);
-  return await db.findById(id);
+  await repository.update(id, updateData);
+  return await repository.findById(id);
 };
 
 /**
@@ -103,15 +100,13 @@ export const updateMedicationCategory = async (
 export const deleteMedicationCategory = async (
   id: string
 ): Promise<boolean> => {
-  const db = getMedicationCategoryDB();
-
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Medication category with ID "${id}" not found`);
   }
 
-  return await db.delete(id);
+  return await repository.delete(id);
 };
 
 /**
@@ -120,6 +115,16 @@ export const deleteMedicationCategory = async (
 export const searchMedicationCategories = async (
   query: string
 ): Promise<MedicationCategory[]> => {
-  const db = getMedicationCategoryDB();
-  return await db.search(query);
+  return await repository.search(query);
+};
+
+/**
+ * Obtener categorías paginadas con búsqueda opcional
+ */
+export const findMedicationCategoriesPaginated = async (
+  page: number,
+  size: number,
+  searchQuery?: string
+): Promise<ItemsResponse<MedicationCategory>> => {
+  return await repository.findAllPaginated(page, size, searchQuery);
 };

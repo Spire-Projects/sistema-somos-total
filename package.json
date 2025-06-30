@@ -36,7 +36,9 @@
   "license": "ISC",
   "description": "Sistema de gestión farmacéutica con Electron, React y RxDB",
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.10",
     "express": "^5.1.0",
+    "tailwindcss": "^4.1.10",
     "vite": "^6.3.5"
   },
   "devDependencies": {

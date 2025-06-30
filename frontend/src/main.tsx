@@ -52,24 +52,58 @@ async function initializeApp() {
     await checkAndInitializeData();
     
     console.log('✅ Aplicación inicializada correctamente');
+    return true;
   } catch (error) {
     console.error('❌ Error inicializando aplicación:', error);
     // En desarrollo, continuar aunque falle la inicialización
     if (import.meta.env.PROD) {
       throw error;
     }
+    return false;
   }
 }
 
-// Inicializar la aplicación
-initializeApp();
+// Función principal que espera la inicialización antes de renderizar
+async function main() {
+  try {
+    console.log('🚀 Iniciando FarmaApp...');
+    
+    // Esperar a que la aplicación se inicialice completamente
+    const initialized = await initializeApp();
+    
+    if (!initialized && import.meta.env.PROD) {
+      throw new Error('Failed to initialize application');
+    }
+    
+    // Solo renderizar React después de que todo esté listo
+    console.log('🎨 Renderizando interfaz de usuario...');
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <Provider store={store}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </Provider>
+      </StrictMode>
+    );
+    
+    console.log('🎉 FarmaApp cargada exitosamente');
+  } catch (error) {
+    console.error('💥 Error fatal iniciando aplicación:', error);
+    
+    // Mostrar error en la UI
+    document.getElementById("root")!.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: red; font-family: Arial, sans-serif;">
+        <h1>Error de Inicialización</h1>
+        <p>No se pudo inicializar la aplicación.</p>
+        <p>Por favor, recarga la página.</p>
+        <button onclick="window.location.reload()" style="padding: 10px 20px; margin-top: 10px;">
+          Recargar
+        </button>
+      </div>
+    `;
+  }
+}
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </Provider>
-  </StrictMode>
-);
+// Ejecutar la función principal
+main();

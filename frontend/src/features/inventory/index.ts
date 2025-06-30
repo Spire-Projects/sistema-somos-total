@@ -1,2 +1,10 @@
+// Hooks
+export { useMedicationCatalog } from './hooks/useMedicationCatalog';
+
+// Components
 export * from './components/InventoryPage';
-export * from './components/AddMedicationDialog';
+export { MedicationSearch } from './components/MedicationSearch';
+export { MedicationFilters } from './components/MedicationFilters';
+export { MedicationTable } from './components/MedicationTable';
+export { MedicationMobileList } from './components/MedicationMobileList';
+export * from './components/AddMedicationDialog/AddMedicationDialog';

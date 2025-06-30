@@ -1,23 +1,35 @@
-import type { Medication, MedicationBatch } from '../types/Medication';
-import type { CreateMedicationData, UpdateMedicationData, CreateMedicationBatchData, UpdateMedicationBatchData } from '../types/MedicationCrud';
-import { getMedicationDB } from '../db/models/medication.model';
+import type { Medication } from '../types/Medication';
+import type { CreateMedicationData, UpdateMedicationData } from '../types/MedicationCrud';
 import { generateId } from '../utils/id.utils';
+import type { ItemsResponse } from '../types/UtilTypes';
+import { getMedicationRepository } from '../db/repositories/medication.repository';
+import type { 
+  MedicationCatalogView, 
+  MedicationCatalogFilters, 
+  MedicationCatalogQueryParams,
+  MedicationCatalogSort
+} from '../types/MedicationViewTypes';
+import { getMedicationBatchRepository } from '../db/repositories/medicationBatch.repository';
+import { getStockStatus, calculateDaysToExpiration } from '../types/MedicationViewTypes';
+
+// Crear una sola instancia del repositorio para todo el servicio
+const medicationDB = getMedicationRepository();
+// Crear instancia del repositorio de lotes
+const medicationBatchDB = getMedicationBatchRepository();
 
 /**
  * Crear un nuevo medicamento
  */
 export const createMedication = async (data: CreateMedicationData): Promise<Medication> => {
-  const db = getMedicationDB();
-  
   // Verificar si ya existe un medicamento con el mismo nombre comercial
-  const existing = await db.findByTradeName(data.tradeName);
+  const existing = await medicationDB.findByTradeName(data.tradeName);
   if (existing) {
     throw new Error(`Medication with trade name "${data.tradeName}" already exists`);
   }
   
   // Verificar si ya existe un medicamento con el mismo código de barras (si se proporciona)
   if (data.barcode) {
-    const barcodeExists = await db.findByBarcode(data.barcode);
+    const barcodeExists = await medicationDB.findByBarcode(data.barcode);
     if (barcodeExists) {
       throw new Error(`Medication with barcode "${data.barcode}" already exists`);
     }
@@ -35,8 +47,6 @@ export const createMedication = async (data: CreateMedicationData): Promise<Medi
     manufacturerId: data.manufacturerId,
     categoryId: data.categoryId,
     barcode: data.barcode,
-    batches: [], // Comienza sin lotes
-    totalStock: 0, // Stock inicial en 0
     description: data.description,
     indications: data.indications,
     warnings: data.warnings,
@@ -46,72 +56,64 @@ export const createMedication = async (data: CreateMedicationData): Promise<Medi
     createdBy: data.createdBy
   };
   
-  return await db.create(newMedication);
+  return await medicationDB.create(newMedication);
 };
 
 /**
  * Buscar medicamento por ID
  */
 export const findMedicationById = async (id: string): Promise<Medication | null> => {
-  const db = getMedicationDB();
-  return await db.findById(id);
+  return await medicationDB.findById(id);
 };
 
 /**
  * Obtener todos los medicamentos
  */
 export const findAllMedications = async (): Promise<Medication[]> => {
-  const db = getMedicationDB();
-  return await db.findAll();
+  return await medicationDB.findAll();
 };
 
 /**
  * Buscar medicamento por nombre comercial
  */
 export const findMedicationByTradeName = async (tradeName: string): Promise<Medication | null> => {
-  const db = getMedicationDB();
-  return await db.findByTradeName(tradeName);
+  return await medicationDB.findByTradeName(tradeName);
 };
 
 /**
  * Buscar medicamento por código de barras
  */
 export const findMedicationByBarcode = async (barcode: string): Promise<Medication | null> => {
-  const db = getMedicationDB();
-  return await db.findByBarcode(barcode);
+  return await medicationDB.findByBarcode(barcode);
 };
 
 /**
  * Buscar medicamentos por categoría
  */
 export const findMedicationsByCategory = async (categoryId: string): Promise<Medication[]> => {
-  const db = getMedicationDB();
-  return await db.findByCategory(categoryId);
+  return await medicationDB.findByCategory(categoryId);
 };
 
 /**
  * Buscar medicamentos por fabricante
  */
 export const findMedicationsByManufacturer = async (manufacturerId: string): Promise<Medication[]> => {
-  const db = getMedicationDB();
-  return await db.findByManufacturer(manufacturerId);
+  return await medicationDB.findByManufacturer(manufacturerId);
 };
 
 /**
  * Actualizar medicamento
  */
 export const updateMedication = async (id: string, data: UpdateMedicationData): Promise<Medication> => {
-  const db = getMedicationDB();
-  
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await medicationDB.findById(id);
   if (!existing) {
     throw new Error(`Medication with ID "${id}" not found`);
   }
   
   // Si se está cambiando el nombre comercial, verificar que no exista otro con ese nombre
   if (data.tradeName && data.tradeName !== existing.tradeName) {
-    const nameExists = await db.findByTradeName(data.tradeName);
+    const nameExists = await medicationDB.findByTradeName(data.tradeName);
     if (nameExists) {
       throw new Error(`Medication with trade name "${data.tradeName}" already exists`);
     }
@@ -119,7 +121,7 @@ export const updateMedication = async (id: string, data: UpdateMedicationData): 
   
   // Si se está cambiando el código de barras, verificar que no exista otro con ese código
   if (data.barcode && data.barcode !== existing.barcode) {
-    const barcodeExists = await db.findByBarcode(data.barcode);
+    const barcodeExists = await medicationDB.findByBarcode(data.barcode);
     if (barcodeExists) {
       throw new Error(`Medication with barcode "${data.barcode}" already exists`);
     }
@@ -131,117 +133,239 @@ export const updateMedication = async (id: string, data: UpdateMedicationData): 
     updatedAt: new Date().toISOString()
   };
   
-  return await db.update(id, updateData);
+  return await medicationDB.update(id, updateData);
 };
 
 /**
  * Eliminar medicamento (soft delete)
  */
 export const deleteMedication = async (id: string): Promise<boolean> => {
-  const db = getMedicationDB();
-  
   // Verificar si existe
-  const existing = await db.findById(id);
+  const existing = await medicationDB.findById(id);
   if (!existing) {
     throw new Error(`Medication with ID "${id}" not found`);
   }
   
-  return await db.delete(id);
+  return await medicationDB.delete(id);
 };
 
 /**
  * Buscar medicamentos
  */
 export const searchMedications = async (query: string): Promise<Medication[]> => {
-  const db = getMedicationDB();
-  return await db.search(query);
+  return await medicationDB.search(query);
 };
 
-// ============= OPERACIONES DE LOTES =============
-
-/**
- * Agregar un lote a un medicamento
- */
-export const addMedicationBatch = async (medicationId: string, data: CreateMedicationBatchData): Promise<Medication> => {
-  const db = getMedicationDB();
-  
-  const batch: MedicationBatch = {
-    batchId: data.batchId, // Usuario define el ID del lote
-    expirationDate: data.expirationDate,
-    quantity: data.quantity,
-    purchasePrice: data.purchasePrice,
-    sellingPrice: data.sellingPrice,
-    purchaseDate: data.purchaseDate,
-    supplier: data.supplier,
-    createdAt: new Date().toISOString(),
-    createdBy: data.createdBy
-  };
-  
-  return await db.addBatch(medicationId, batch);
+export const findAllMedicationsPaginated = (page: number, size: number): Promise<ItemsResponse<Medication>> => {
+  return medicationDB.find(page, size);
 };
 
 /**
- * Actualizar un lote de medicamento
+ * 🆕 MÉTODOS DEL CATÁLOGO OPTIMIZADO - COMBINAN MEDICAMENTOS Y LOTES
  */
-export const updateMedicationBatch = async (medicationId: string, batchId: string, data: UpdateMedicationBatchData): Promise<Medication> => {
-  const db = getMedicationDB();
-  
-  const updateData = {
-    ...data,
-    updatedAt: new Date().toISOString()
-  };
-  
-  return await db.updateBatch(medicationId, batchId, updateData);
-};
 
 /**
- * Eliminar un lote de medicamento
+ * Obtener vista de catálogo paginada con filtros y agregaciones de stock
  */
-export const removeMedicationBatch = async (medicationId: string, batchId: string): Promise<Medication> => {
-  const db = getMedicationDB();
-  return await db.removeBatch(medicationId, batchId);
-};
-
-/**
- * Obtener lotes de un medicamento específico
- */
-export const getMedicationBatches = async (medicationId: string): Promise<MedicationBatch[]> => {
-  const db = getMedicationDB();
-  const medication = await db.findById(medicationId);
+export const getMedicationCatalogPaginated = async (
+  params: MedicationCatalogQueryParams
+): Promise<ItemsResponse<MedicationCatalogView>> => {
+  const { page, size, filters, sort } = params;
   
-  if (!medication) {
-    throw new Error(`Medication with ID "${medicationId}" not found`);
+  // Separar campos de ordenamiento: los que existen en schema vs calculados
+  const schemaFields = ['tradeName', 'genericName', 'comercialName', 'createdAt', 'updatedAt'];
+  const calculatedFields = ['totalActiveStock', 'activeBatchCount', 'categoryName', 'manufacturerName'];
+  
+  const isSchemaField = sort && schemaFields.includes(sort.field);
+  const dbSort = isSchemaField ? sort : undefined; // Solo pasar sort si es campo del schema
+  
+  // 1. Obtener medicamentos paginados con filtros aplicados (solo ordenar si es campo del schema)
+  const medicationsResponse = await medicationDB.findAllPaginatedWithFilters(page, size, filters, dbSort);
+  
+  // 2. Para cada medicamento, obtener sus datos de stock agregados
+  let catalogViews: MedicationCatalogView[] = await Promise.all(
+    medicationsResponse.items.map(async (medication) => {
+      return await createMedicationCatalogView(medication);
+    })
+  );
+  
+  // 3. Si el ordenamiento es por campo calculado, ordenar en memoria
+  if (sort && calculatedFields.includes(sort.field)) {
+    catalogViews = sortCatalogViewsInMemory(catalogViews, sort);
   }
   
-  return medication.batches;
-};
-
-/**
- * Buscar lote específico en un medicamento
- */
-export const findMedicationBatch = async (medicationId: string, batchId: string): Promise<MedicationBatch | null> => {
-  const batches = await getMedicationBatches(medicationId);
-  return batches.find(batch => batch.batchId === batchId) || null;
-};
-
-/**
- * Calcular stock total de un medicamento (suma de todos los lotes)
- */
-export const calculateTotalStock = async (medicationId: string): Promise<number> => {
-  const batches = await getMedicationBatches(medicationId);
-  return batches.reduce((total, batch) => total + batch.quantity, 0);
-};
-
-/**
- * Obtener lotes próximos a vencer (dentro de los próximos N días)
- */
-export const getExpiringBatches = async (medicationId: string, daysFromNow: number = 30): Promise<MedicationBatch[]> => {
-  const batches = await getMedicationBatches(medicationId);
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + daysFromNow);
+  // 4. Aplicar filtros de stock si los hay (que requieren datos de lotes)
+  let filteredViews = catalogViews;
+  if (filters?.stockStatus || filters?.hasStock !== undefined || filters?.minStock !== undefined || filters?.maxStock !== undefined) {
+    filteredViews = catalogViews.filter(view => {
+      // Filtro por estado de stock
+      if (filters.stockStatus && view.stockStatus !== filters.stockStatus) {
+        return false;
+      }
+      
+      // Filtro por stock activo
+      if (filters.hasStock !== undefined && (view.totalActiveStock > 0) !== filters.hasStock) {
+        return false;
+      }
+      
+      // Filtro por stock mínimo
+      if (filters.minStock !== undefined && view.totalActiveStock < filters.minStock) {
+        return false;
+      }
+      
+      // Filtro por stock máximo
+      if (filters.maxStock !== undefined && view.totalActiveStock > filters.maxStock) {
+        return false;
+      }
+      
+      return true;
+    });
+  }
   
-  return batches.filter(batch => {
-    const expirationDate = new Date(batch.expirationDate);
-    return expirationDate <= futureDate;
-  }).sort((a, b) => new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime());
+  return {
+    items: filteredViews,
+    page: medicationsResponse.page,
+    size: medicationsResponse.size,
+    totalItems: medicationsResponse.totalItems,
+    totalPages: medicationsResponse.totalPages
+  };
 };
+
+/**
+ * Buscar medicamentos en el catálogo con filtros y paginación
+ */
+export const searchMedicationCatalogPaginated = async (
+  query: string,
+  page: number,
+  size: number,
+  filters?: MedicationCatalogFilters
+): Promise<ItemsResponse<MedicationCatalogView>> => {
+  // Crear filtros combinando la búsqueda con los filtros adicionales
+  const combinedFilters: MedicationCatalogFilters = {
+    ...filters,
+    searchQuery: query
+  };
+
+  // Usar el método principal que ya maneja ordenamiento híbrido
+  return getMedicationCatalogPaginated({
+    page,
+    size,
+    filters: combinedFilters
+  });
+};
+
+/**
+ * Obtener medicamentos que tienen stock activo (para filtros rápidos)
+ */
+export const getMedicationsWithActiveStock = async (): Promise<string[]> => {
+  return await medicationBatchDB.findMedicationIdsWithActiveStock();
+};
+
+/**
+ * Contar medicamentos con filtros aplicados
+ */
+export const countMedicationsWithFilters = async (filters?: MedicationCatalogFilters): Promise<number> => {
+  return await medicationDB.countMedicationsWithFilters(filters);
+};
+
+/**
+ * 🔧 HELPER: Crear vista de catálogo para un medicamento
+ * Combina datos del medicamento con agregaciones de sus lotes
+ */
+const createMedicationCatalogView = async (medication: Medication): Promise<MedicationCatalogView> => {
+  // Obtener datos agregados de lotes
+  const [totalActiveStock, activeBatchCount, oldestActiveBatch] = await Promise.all([
+    medicationBatchDB.getTotalActiveStockByMedicationId(medication.id),
+    medicationBatchDB.getActiveBatchCountByMedicationId(medication.id),
+    medicationBatchDB.getOldestActiveBatchByMedicationId(medication.id)
+  ]);
+  
+  // Calcular estado de stock
+  const stockStatus = getStockStatus(totalActiveStock);
+  
+  // Calcular días hasta expiración del lote más antiguo
+  const daysToExpiration = oldestActiveBatch 
+    ? calculateDaysToExpiration(oldestActiveBatch.expirationDate) 
+    : null;
+  
+  return {
+    id: medication.id,
+    comercialName: medication.comercialName,
+    tradeName: medication.tradeName,
+    genericName: medication.genericName,
+    concentration: medication.concentration,
+    presentation: medication.presentation,
+    barcode: medication.barcode,
+    
+    // Datos resueltos (por ahora usamos IDs, luego se pueden resolver)
+    manufacturerName: medication.manufacturerId || 'Unknown', // TODO: resolver nombre
+    categoryName: medication.categoryId || 'Unknown', // TODO: resolver nombre  
+    pharmaceuticalFormName: medication.pharmaceuticalFormId || 'Unknown', // TODO: resolver nombre
+    
+    totalActiveStock,
+    activeBatchCount,
+    hasStock: totalActiveStock > 0,
+    stockStatus,
+    
+    // Información del batch más crítico
+    oldestActiveBatch: oldestActiveBatch ? {
+      id: oldestActiveBatch.id,
+      batchId: oldestActiveBatch.batchId,
+      expirationDate: oldestActiveBatch.expirationDate,
+      quantity: oldestActiveBatch.quantity,
+      daysToExpiration: daysToExpiration || 0
+    } : undefined,
+    
+    createdAt: medication.createdAt
+  };
+};
+
+/**
+ * 🔧 HELPER: Ordenar vistas de catálogo en memoria por campos calculados
+ * Usado cuando el ordenamiento es por campos que no existen en el schema de medications
+ */
+const sortCatalogViewsInMemory = (
+  catalogViews: MedicationCatalogView[], 
+  sort: MedicationCatalogSort
+): MedicationCatalogView[] => {
+  return [...catalogViews].sort((a, b) => {
+    let valueA: any, valueB: any;
+    
+    // Obtener los valores a comparar según el campo de ordenamiento
+    switch (sort.field) {
+      case 'totalActiveStock':
+        valueA = a.totalActiveStock;
+        valueB = b.totalActiveStock;
+        break;
+      case 'activeBatchCount':
+        valueA = a.activeBatchCount;
+        valueB = b.activeBatchCount;
+        break;
+      case 'categoryName':
+        valueA = a.categoryName.toLowerCase();
+        valueB = b.categoryName.toLowerCase();
+        break;
+      case 'manufacturerName':
+        valueA = a.manufacturerName.toLowerCase();
+        valueB = b.manufacturerName.toLowerCase();
+        break;
+      default:
+        // Para campos que no son calculados (fallback), usar string comparison
+        valueA = String(a[sort.field as keyof MedicationCatalogView] || '').toLowerCase();
+        valueB = String(b[sort.field as keyof MedicationCatalogView] || '').toLowerCase();
+        break;
+    }
+    
+    // Realizar la comparación
+    let result = 0;
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      result = valueA - valueB;
+    } else {
+      result = String(valueA).localeCompare(String(valueB));
+    }
+    
+    // Aplicar orden descendente si es necesario
+    return sort.order === 'desc' ? -result : result;
+  });
+};
+

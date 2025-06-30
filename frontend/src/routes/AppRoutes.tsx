@@ -9,22 +9,38 @@ import { PurchasesPage } from '../features/purchases/components/PurchasesPage';
 import { ClientsPage } from '../features/clients/components/ClientsPage';
 import { ReportsPage } from '../features/reports/components/ReportsPage';
 import { SettingsPage } from '../features/settings/components/SettingsPage';
+import { ProtectedRoute } from './ProtectedRoute';
+import { useAppSelector } from '../shared/store/hooks';
 
 export const AppRoutes = () => {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<MainLayout />}>
+      {/* Ruta pública: login */}
+      <Route 
+        path="/login" 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} 
+      />
+      
+      {/* Rutas protegidas: requieren autenticación */}
+      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="sales" element={<SalesPage />} />
-        <Route path="purchases" element={<PurchasesPage />} />
-        <Route path="clients" element={<ClientsPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="users" element={<UserManager />} />
-        <Route path="settings" element={<SettingsPage />} />
+        
+        {/* Rutas accesibles para admin y cashier */}
+        <Route path="dashboard" element={<ProtectedRoute allowedRoles={["admin", "cashier"]}><DashboardPage /></ProtectedRoute>} />
+        <Route path="sales" element={<ProtectedRoute allowedRoles={["admin", "cashier"]}><SalesPage /></ProtectedRoute>} />
+        <Route path="clients" element={<ProtectedRoute allowedRoles={["admin", "cashier"]}><ClientsPage /></ProtectedRoute>} />
+        
+        {/* Rutas accesibles solo para admin */}
+        <Route path="inventory" element={<ProtectedRoute allowedRoles={["admin"]}><InventoryPage /></ProtectedRoute>} />
+        <Route path="purchases" element={<ProtectedRoute allowedRoles={["admin"]}><PurchasesPage /></ProtectedRoute>} />
+        <Route path="reports" element={<ProtectedRoute allowedRoles={["admin"]}><ReportsPage /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute allowedRoles={["admin"]}><UserManager /></ProtectedRoute>} />
+        <Route path="settings" element={<ProtectedRoute allowedRoles={["admin"]}><SettingsPage /></ProtectedRoute>} />
       </Route>
+      
+      {/* Ruta fallback */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
