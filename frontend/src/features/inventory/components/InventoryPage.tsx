@@ -1,4 +1,5 @@
 import { useCallback, memo } from 'react';
+import { Warehouse } from 'lucide-react';
 import { AddMedicationDialog } from './AddMedicationDialog';
 import { MedicationSearch } from './MedicationSearch';
 import { MedicationFilters } from './MedicationFilters';
@@ -76,9 +77,14 @@ const InventoryPageComponent = () => {
     <div className="p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg self-center mt-1">
+            <Warehouse className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-blue-600" />
+          </div>
+          <div>
             <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">Inventario</p>
             <p className="text-gray-500 text-sm sm:text-gray-600">Gestión de medicamentos y control de stock</p>
+          </div>
         </div>
         <AddMedicationDialog onMedicationAdded={handleMedicationAdded} />
       </div>
