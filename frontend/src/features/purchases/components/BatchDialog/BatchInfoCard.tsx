@@ -20,7 +20,7 @@ const BatchInfoCard: React.FC<BatchInfoCardProps> = ({
   handleInputChange
 }) => {
   return (
-    <Card>
+    <Card className='p-0'>
       <CardContent className="p-4 space-y-4">
         <h3 className="font-medium">Información del Lote</h3>
         

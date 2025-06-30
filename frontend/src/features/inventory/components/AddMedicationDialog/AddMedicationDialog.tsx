@@ -160,7 +160,7 @@ const AddMedicationDialog = memo(({ onMedicationAdded }: AddMedicationDialogProp
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="w-full sm:w-auto">
+        <Button className="w-full sm:w-auto" data-medication-dialog-trigger>
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Producto
         </Button>

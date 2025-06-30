@@ -27,8 +27,8 @@ const BatchPriceCard: React.FC<BatchPriceCardProps> = ({
   handleProfitMarginChange
 }) => {
   return (
-    <Card>
-      <CardContent className="p-4 m-3 space-y-4">
+    <Card className='p-0'>
+      <CardContent className="p-2 m-3 space-y-4">
         <h3 className="font-medium flex items-center gap-2">
           <DollarSign className="h-4 w-4" />
           Precios

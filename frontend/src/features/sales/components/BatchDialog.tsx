@@ -187,8 +187,8 @@ export const BatchDialog: React.FC<BatchDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Información del Medicamento */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
+          <Card className='p-0'>
+            <CardContent className="p-0 space-y-4">
               <h3 className="font-medium flex items-center gap-2">
                 <Package className="h-4 w-4" />
                 Información del Medicamento

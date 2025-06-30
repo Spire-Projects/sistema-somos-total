@@ -8,10 +8,11 @@ import {
   DialogTitle,
 } from "../../../../shared/components/ui/dialog";
 import { Button } from "../../../../shared/components/ui/button";
-import { Package } from "lucide-react";
+import { Package, Plus } from "lucide-react";
 import type { Medication } from "../../../../shared/types/Medication";
 import type { BatchWithMedication } from "../../../../shared/types/Sales";
 import { useSelector } from "react-redux";
+import AddMedicationDialog from "../../../inventory/components/AddMedicationDialog/AddMedicationDialog";
 import {
   calculateProfitMargin,
   calculateSellingPrice,
@@ -48,6 +49,7 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   const [profitMargin, setProfitMargin] = useState(0);
   const [isProfitMode, setIsProfitMode] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showAddMedicationDialog, setShowAddMedicationDialog] = useState(false);
 
   // Configurar react-hook-form
   const form = useForm<BatchFormData>({
@@ -108,6 +110,27 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   const handleProfitMarginChange = useCallback((value: number) => {
     setProfitMargin(value);
   }, []);
+
+  const handleMedicationAdded = useCallback(() => {
+    setShowAddMedicationDialog(false);
+    // Aquí podrías recargar la lista de medicamentos si fuera necesario
+  }, []);
+
+  // Efecto para activar el dialog de medicamentos
+  useEffect(() => {
+    if (showAddMedicationDialog) {
+      // Simular click en el trigger del AddMedicationDialog
+      const timer = setTimeout(() => {
+        const triggerButton = document.querySelector('[data-medication-dialog-trigger]') as HTMLButtonElement;
+        if (triggerButton) {
+          triggerButton.click();
+        }
+        setShowAddMedicationDialog(false);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showAddMedicationDialog]);
 
   const onSubmit = async (data: BatchFormData) => {
     setLoading(true);
@@ -186,7 +209,13 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
             handleInputChange={handleInputChange}
           />
 
-          <Button type="button" variant="outline" className="w-full mb-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full mb-4"
+            onClick={() => setShowAddMedicationDialog(true)}
+          >
+            <Plus className="h-5 w-5 mr-2" />
             Agregar Medicamento
           </Button>
 
@@ -210,6 +239,11 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
           <BatchDialogFooter mode={mode} loading={loading} onClose={onClose} />
         </form>
       </DialogContent>
+
+      {/* Componente AddMedicationDialog oculto para activar su diálogo */}
+      <div style={{ position: 'fixed', top: -9999, left: -9999, visibility: 'hidden', pointerEvents: 'none' }}>
+        <AddMedicationDialog onMedicationAdded={handleMedicationAdded} />
+      </div>
     </Dialog>
   );
 };

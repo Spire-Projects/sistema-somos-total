@@ -25,6 +25,8 @@ export interface IMedicationBatchRepository {
   findWithFilters(filters: BatchFilters, page?: number, size?: number): Promise<BatchSearchResult>;
   findBatchesExpiringInDays(days: number): Promise<MedicationBatch[]>;
   findBatchesBySupplier(supplier: string): Promise<MedicationBatch[]>;
+  searchByBatchId(batchId: string): Promise<MedicationBatch[]>;
+  searchByBatchIdPaginated(batchId: string, page: number, size: number): Promise<{ batches: MedicationBatch[]; totalItems: number; totalPages: number }>;
   
   // Estadísticas
   getTotalStockByMedicationId(medicationId: string): Promise<number>;
@@ -340,6 +342,57 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     return docs.map((doc: any) => doc.toJSON());
   }
 
+  async searchByBatchId(batchId: string): Promise<MedicationBatch[]> {
+    const collection = await this.getCollection();
+    const searchTerm = batchId.toLowerCase();
+    
+    const docs = await collection.find({
+      selector: {
+        isDeleted: false,
+        batchId: {
+          $regex: searchTerm
+        }
+      },
+      sort: [{ expirationDate: 'asc' }]
+    }).exec();
+
+    return docs.map((doc: any) => doc.toJSON());
+  }
+
+  async searchByBatchIdPaginated(
+    batchId: string, 
+    page: number, 
+    size: number
+  ): Promise<{ batches: MedicationBatch[]; totalItems: number; totalPages: number }> {
+    const collection = await this.getCollection();
+    const searchTerm = batchId.toLowerCase();
+    const skip = (page - 1) * size;
+    
+    // Obtener todos los resultados para contar el total
+    const allDocs = await collection.find({
+      selector: {
+        isDeleted: false,
+        batchId: {
+          $regex: searchTerm
+        }
+      },
+      sort: [{ expirationDate: 'asc' }]
+    }).exec();
+
+    const totalItems = allDocs.length;
+    const totalPages = Math.ceil(totalItems / size);
+    
+    // Aplicar paginación
+    const paginatedDocs = allDocs.slice(skip, skip + size);
+    const batches = paginatedDocs.map((doc: any) => doc.toJSON());
+
+    return {
+      batches,
+      totalItems,
+      totalPages
+    };
+  }
+
   async getTotalStockByMedicationId(medicationId: string): Promise<number> {
     const collection = await this.getCollection();
     const docs = await collection.find({
@@ -551,6 +604,18 @@ export class FirestoreMedicationBatchRepository implements IMedicationBatchRepos
   }
 
   async findBatchesBySupplier(_supplier: string): Promise<MedicationBatch[]> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  async searchByBatchId(_batchId: string): Promise<MedicationBatch[]> {
+    throw new Error('Firestore implementation not yet available');
+  }
+
+  async searchByBatchIdPaginated(
+    _batchId: string, 
+    _page: number, 
+    _size: number
+  ): Promise<{ batches: MedicationBatch[]; totalItems: number; totalPages: number }> {
     throw new Error('Firestore implementation not yet available');
   }
 

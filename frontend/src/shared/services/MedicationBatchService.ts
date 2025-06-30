@@ -461,3 +461,73 @@ export const searchBatchesWithMedicationInfo = async (
     totalPages: Math.ceil(batchesWithMedication.length / size)
   };
 };
+
+/**
+ * Buscar medicamentos con lotes por término de búsqueda combinado
+ * Busca tanto por nombre de medicamento como por ID de lote
+ * OPTIMIZADO: Paginación a nivel de repositorio
+ */
+export const searchMedicationsWithBatchesCombined = async (
+  query: string,
+  page: number = 1,
+  size: number = 10
+): Promise<ItemsResponse<MedicationWithBatches>> => {
+  if (!query.trim()) {
+    // Si no hay query, devolver la búsqueda paginada normal
+    return getMedicationsWithBatchesPaginated(page, size);
+  }
+
+  const medicationDB = medicationDb;
+  const batchDB = medicationBatchDb;
+  
+  const searchTerm = query.trim();
+  
+  // 🚀 BUSCAR DE FORMA PAGINADA desde el repositorio
+  
+  // 1. Buscar medicamentos por nombre (paginado)
+  const medicationsByNameResponse = await medicationDB.searchMedicationsPaginated(searchTerm, page, size);
+  
+  // 2. Buscar lotes por ID de lote (paginado)
+  const batchesByBatchIdResponse = await batchDB.searchByBatchIdPaginated(searchTerm, page, size);
+  
+  // 3. Obtener IDs únicos de medicamentos de ambas búsquedas
+  const medicationIds = new Set<string>();
+  
+  // Agregar medicamentos encontrados por nombre
+  medicationsByNameResponse.items.forEach(med => medicationIds.add(med.id));
+  
+  // Agregar medicamentos de lotes encontrados por batch ID
+  batchesByBatchIdResponse.batches.forEach(batch => medicationIds.add(batch.medicationId));
+  
+  // 4. Combinar y paginar los resultados únicos
+  const uniqueMedicationIds = Array.from(medicationIds);
+  
+  // Aplicar paginación a los IDs únicos
+  const startIndex = (page - 1) * size;
+  const endIndex = startIndex + size;
+  const paginatedMedicationIds = uniqueMedicationIds.slice(startIndex, endIndex);
+  
+  // 5. Obtener datos completos de medicamentos con lotes solo para la página actual
+  const medicationsWithBatches: MedicationWithBatches[] = [];
+  
+  for (const medicationId of paginatedMedicationIds) {
+    const medication = await medicationDB.findById(medicationId);
+    if (medication) {
+      const medicationWithBatches = await getMedicationWithBatches(medicationId, 1, 20);
+      if (medicationWithBatches) {
+        medicationsWithBatches.push(medicationWithBatches);
+      }
+    }
+  }
+  
+  // 6. Calcular totales
+  const totalPages = Math.ceil(uniqueMedicationIds.length / size);
+  
+  return {
+    items: medicationsWithBatches,
+    page: page,
+    size: size,
+    totalItems: uniqueMedicationIds.length, // Total real de esta búsqueda combinada
+    totalPages
+  };
+};
