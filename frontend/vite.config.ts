@@ -6,6 +6,7 @@ import path from "path";
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
+  base: "./", // Importante para Electron: usar rutas relativas
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

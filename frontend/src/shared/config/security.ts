@@ -3,9 +3,10 @@ export const securityConfig = {
   // Validación de JWT secret
   validateJWTSecret: () => {
     const secret = import.meta.env.VITE_JWT_SECRET;
+    const appMode = import.meta.env.VITE_APP_MODE;
     
-    if (import.meta.env.PROD) {
-      // En producción, el secret debe ser fuerte
+    if (appMode === 'deploy') {
+      // En modo deploy (producción real), el secret debe ser fuerte
       if (!secret || secret.length < 32) {
         throw new Error('JWT Secret debe tener al menos 32 caracteres en producción');
       }
@@ -29,7 +30,9 @@ export const securityConfig = {
       appId: import.meta.env.VITE_FIREBASE_APP_ID,
     };
     
-    if (import.meta.env.PROD) {
+    const appMode = import.meta.env.VITE_APP_MODE;
+    
+    if (appMode === 'deploy') {
       // Validar que no sean valores de demo
       const isDemoConfig = Object.values(config).some(value => 
         value?.includes('demo') || value?.includes('example')
@@ -45,7 +48,9 @@ export const securityConfig = {
   
   // Deshabilitar logs sensibles en producción
   setupLogging: () => {
-    if (import.meta.env.PROD) {
+    const appMode = import.meta.env.VITE_APP_MODE;
+    
+    if (appMode === 'deploy') {
       // Sobrescribir console.log para evitar logs sensibles
       const originalLog = console.log;
       console.log = (...args: any[]) => {
@@ -72,8 +77,12 @@ export const initSecurity = () => {
     securityConfig.validateFirebaseConfig();
     securityConfig.setupLogging();
     
-    if (import.meta.env.PROD) {
+    const appMode = import.meta.env.VITE_APP_MODE;
+    
+    if (appMode === 'deploy') {
       console.log('🔒 Configuración de seguridad validada para producción');
+    } else {
+      console.log('🔧 Configuración de seguridad para modo:', appMode);
     }
   } catch (error) {
     console.error('❌ Error de configuración de seguridad:', error);

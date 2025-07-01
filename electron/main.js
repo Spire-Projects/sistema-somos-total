@@ -77,7 +77,7 @@ async function initializeApp() {
     console.log('🚀 Inicializando FarmaApp...');
     
     if (isDev && !app.isPackaged) {
-      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5174');
+      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5173');
       console.log('💡 Asegúrate de ejecutar "npm run dev:frontend" en otra terminal');
     } else {
       console.log('📦 Modo producción: Usando archivos compilados');

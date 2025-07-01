@@ -9,11 +9,14 @@
     "dev:electron": "cross-env NODE_ENV=development electron --inspect=5858 electron/main.cjs",
     "dev:electron:watch": "tsc -p electron/tsconfig.json --watch",
     "dev": "concurrently \"npm run dev:frontend\" \"wait-on http://localhost:5173 && npm run dev:electron\"",
-    "build:frontend": "cd frontend && npm run build",
-    "build:electron": "echo 'Electron ya está en JavaScript'",
-    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build:local",
+    "build:frontend:deploy": "cd frontend && npm run build:production",
+    "build:electron": "echo 'Electron ya está en JavaScript'",    "build": "npm run build:frontend",
+    "build:deploy": "npm run build:frontend:deploy",
     "package": "npm run build && electron-builder",
+    "package:deploy": "npm run build:deploy && electron-builder",
     "package:win": "npm run build && electron-builder --win",
+    "package:win:deploy": "npm run build:deploy && electron-builder --win",
     "package:linux": "npm run build && electron-builder --linux",
     "package:mac": "npm run build && electron-builder --mac",
     "dist": "npm run package",
@@ -65,6 +68,9 @@
       "node_modules/**/*",
       "!node_modules/**/test/**/*",
       "!node_modules/**/*.md"
+    ],
+    "asarUnpack": [
+      "frontend/dist/**/*"
     ],
     "extraResources": [],
     "win": {

@@ -217,7 +217,7 @@ npm run install:all
 # Iniciar desarrollo
 npm run dev:frontend
 ```
-Ir a: **http://localhost:5174**
+Ir a: **http://localhost:5173**
 
 ### 2. Desarrollo Electron Completo
 ```bash

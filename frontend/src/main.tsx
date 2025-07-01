@@ -18,8 +18,8 @@ try {
   initSecurity();
 } catch (error) {
   console.error('Error crítico de seguridad:', error);
-  // En producción, no continuar si hay errores de seguridad
-  if (import.meta.env.PROD) {
+  // En modo deploy, no continuar si hay errores de seguridad
+  if (import.meta.env.VITE_APP_MODE === 'deploy') {
     throw error;
   }
 }
@@ -56,7 +56,7 @@ async function initializeApp() {
   } catch (error) {
     console.error('❌ Error inicializando aplicación:', error);
     // En desarrollo, continuar aunque falle la inicialización
-    if (import.meta.env.PROD) {
+    if (import.meta.env.VITE_APP_MODE === 'deploy') {
       throw error;
     }
     return false;
@@ -71,7 +71,7 @@ async function main() {
     // Esperar a que la aplicación se inicialice completamente
     const initialized = await initializeApp();
     
-    if (!initialized && import.meta.env.PROD) {
+    if (!initialized && import.meta.env.VITE_APP_MODE === 'deploy') {
       throw new Error('Failed to initialize application');
     }
     
