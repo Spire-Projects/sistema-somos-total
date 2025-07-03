@@ -1,10 +1,14 @@
-import { getGenericNameDB } from "../db/models/genericName.model";
+import { getGenericNameDocRepository } from "../db/repositories/genericName.repository";
 import type { GenericNameDoc } from "../types/Medication";
 import type {
   CreateGenericNameData,
   UpdateGenericNameData,
 } from "../types/MedicationCrud";
+import type { ItemsResponse } from "../types/UtilTypes";
 import { generateId } from "../utils/id.utils";
+
+// Instancia del repositorio
+const repository = getGenericNameDocRepository();
 
 /**
  * Crear un nuevo nombre genérico
@@ -12,10 +16,7 @@ import { generateId } from "../utils/id.utils";
 export const createGenericName = async (
   data: CreateGenericNameData
 ): Promise<GenericNameDoc> => {
-  const db = getGenericNameDB();
-
-  // Verificar si ya existe un nombre genérico con el mismo nombre
-  const existing = await db.findByName(data.name);
+  const existing = await repository.findByName(data.name);
   if (existing) {
     throw new Error(`Generic name with name "${data.name}" already exists`);
   }
@@ -31,7 +32,7 @@ export const createGenericName = async (
     isDeleted: false,
   };
 
-  return await db.create(newName);
+  return await repository.create(newName);
 };
 
 /**
@@ -40,16 +41,14 @@ export const createGenericName = async (
 export const findGenericNameById = async (
   id: string
 ): Promise<GenericNameDoc | null> => {
-  const db = getGenericNameDB();
-  return await db.findById(id);
+  return await repository.findById(id);
 };
 
 /**
  * Obtener todos los nombres genéricos
  */
 export const findAllGenericNames = async (): Promise<GenericNameDoc[]> => {
-  const db = getGenericNameDB();
-  return await db.findAll();
+  return await repository.findAll();
 };
 
 /**
@@ -58,8 +57,7 @@ export const findAllGenericNames = async (): Promise<GenericNameDoc[]> => {
 export const findGenericNameByName = async (
   name: string
 ): Promise<GenericNameDoc | null> => {
-  const db = getGenericNameDB();
-  return await db.findByName(name);
+  return await repository.findByName(name);
 };
 
 /**
@@ -69,15 +67,13 @@ export const updateGenericName = async (
   id: string,
   data: UpdateGenericNameData
 ): Promise<GenericNameDoc | null> => {
-  const db = getGenericNameDB();
-
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Generic name with ID "${id}" not found`);
   }
 
   if (data.name && data.name !== existing.name) {
-    const nameExists = await db.findByName(data.name);
+    const nameExists = await repository.findByName(data.name);
     if (nameExists) {
       throw new Error(`Generic name with name "${data.name}" already exists`);
     }
@@ -89,22 +85,20 @@ export const updateGenericName = async (
     updatedAt: new Date().toISOString(),
   };
 
-  await db.update(id, updateData);
-  return await db.findById(id);
+  await repository.update(id, updateData);
+  return await repository.findById(id);
 };
 
 /**
  * Eliminar nombre genérico (soft delete)
  */
 export const deleteGenericName = async (id: string): Promise<boolean> => {
-  const db = getGenericNameDB();
-
-  const existing = await db.findById(id);
+  const existing = await repository.findById(id);
   if (!existing) {
     throw new Error(`Generic name with ID "${id}" not found`);
   }
 
-  return await db.delete(id);
+  return await repository.delete(id);
 };
 
 /**
@@ -113,6 +107,16 @@ export const deleteGenericName = async (id: string): Promise<boolean> => {
 export const searchGenericNames = async (
   query: string
 ): Promise<GenericNameDoc[]> => {
-  const db = getGenericNameDB();
-  return await db.search(query);
+  return await repository.search(query);
+};
+
+/**
+ * Obtener nombres genéricos paginados
+ */
+export const findGenericNamesPaginated = async (
+  page: number,
+  size: number,
+  searchQuery?: string
+): Promise<ItemsResponse<GenericNameDoc>> => {
+  return await repository.findAllPaginated(page, size, searchQuery);
 };

@@ -1,50 +1,63 @@
-import type { GenericNameDoc } from "@/shared/types/Medication";
+import type { RxJsonSchema, RxCollection } from "rxdb";
+import type { GenericNameDoc } from "../../types/Medication";
 
-let genericNames: GenericNameDoc[] = [];
-
-export const getGenericNameDB = () => ({
-  async findById(id: string): Promise<GenericNameDoc | null> {
-    return genericNames.find((item) => item.id === id) ?? null;
+export const genericNameSchema: RxJsonSchema<GenericNameDoc> = {
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: {
+      type: "string",
+      maxLength: 100,
+    },
+    name: {
+      type: "string",
+      maxLength: 200,
+    },
+    aliases: {
+      type: "array",
+      uniqueItems: true,
+      items: {
+        type: "string",
+        maxLength: 100,
+      },
+    },
+    description: {
+      type: "string",
+      maxLength: 500,
+    },
+    createdAt: {
+      type: "string",
+      maxLength: 50,
+    },
+    createdBy: {
+      type: "string",
+      maxLength: 100,
+    },
+    updatedAt: {
+      type: "string",
+      maxLength: 50,
+    },
+    updatedBy: {
+      type: "string",
+      maxLength: 100,
+    },
+    sincronized: {
+      type: "boolean",
+    },
+    isDeleted: {
+      type: "boolean",
+    },
   },
+  required: [
+    "id",
+    "name",
+    "createdAt",
+    "createdBy",
+    "sincronized",
+    "isDeleted",
+  ],
+  indexes: ["name", "createdAt", "isDeleted"],
+};
 
-  async findByName(name: string): Promise<GenericNameDoc | null> {
-    return (
-      genericNames.find(
-        (item) => item.name.toLowerCase() === name.toLowerCase()
-      ) ?? null
-    );
-  },
-
-  async findAll(): Promise<GenericNameDoc[]> {
-    return genericNames.filter((item) => !item.isDeleted);
-  },
-
-  async create(data: GenericNameDoc): Promise<GenericNameDoc> {
-    genericNames.push(data);
-    return data;
-  },
-
-  async update(id: string, data: Partial<GenericNameDoc>): Promise<boolean> {
-    const index = genericNames.findIndex((item) => item.id === id);
-    if (index === -1) return false;
-    genericNames[index] = { ...genericNames[index], ...data };
-    return true;
-  },
-
-  async delete(id: string): Promise<boolean> {
-    const index = genericNames.findIndex((item) => item.id === id);
-    if (index === -1) return false;
-    genericNames[index].isDeleted = true;
-    return true;
-  },
-
-  async search(query: string): Promise<GenericNameDoc[]> {
-    const q = query.toLowerCase();
-    return genericNames.filter(
-      (item) =>
-        !item.isDeleted &&
-        (item.name.toLowerCase().includes(q) ||
-          item.aliases?.some((alias) => alias.toLowerCase().includes(q)))
-    );
-  },
-});
+export type GenericNameCollection = RxCollection<GenericNameDoc>;

@@ -19,8 +19,10 @@ import type {
   Manufacturer,
   Medication,
   MedicationBatch,
+  GenericNameDoc,
 } from "../types/Medication";
 import { config } from "../config/config";
+import { genericNameSchema } from "./models/genericName.model";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -50,6 +52,7 @@ export interface DatabaseCollections {
   users: RxCollection<UserDocument>;
   active_ingredients: RxCollection<ActiveIngredient>;
   medication_categories: RxCollection<MedicationCategory>;
+  generic_names: RxCollection<GenericNameDoc>;
   pharmaceutical_forms: RxCollection<PharmaceuticalFormDoc>;
   manufacturers: RxCollection<Manufacturer>;
   medications: RxCollection<Medication>;
@@ -100,6 +103,9 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         active_ingredients: {
           schema: activeIngredientSchema,
+        },
+        generic_names:{
+          schema: genericNameSchema
         },
         medication_categories: {
           schema: medicationCategorySchema,

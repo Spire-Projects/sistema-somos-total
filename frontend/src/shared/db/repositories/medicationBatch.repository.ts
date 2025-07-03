@@ -1,16 +1,17 @@
-import type { RxCollection } from 'rxdb';
-import type { 
-  MedicationBatch, 
-  BatchFilters, 
+import type { RxCollection } from "rxdb";
+import type {
+  MedicationBatch,
+  BatchFilters,
   BatchSearchResult,
-  BatchStatistics
-} from '../../types/Medication';
-import type { 
-  CreateMedicationBatchData, 
-  UpdateMedicationBatchData 
-} from '../../types/MedicationCrud';
-import { generateId } from '../../utils/id.utils';
-import { config } from '../../config/config';
+  BatchStatistics,
+} from "../../types/Medication";
+import type {
+  CreateMedicationBatchData,
+  UpdateMedicationBatchData,
+} from "../../types/MedicationCrud";
+import { generateId } from "../../utils/id.utils";
+import { config } from "../../config/config";
+import type { ItemsResponse } from "@/shared/types/UtilTypes";
 
 // Tipos para el repositorio
 export interface IMedicationBatchRepository {
@@ -19,42 +20,72 @@ export interface IMedicationBatchRepository {
   findById(id: string): Promise<MedicationBatch | null>;
   update(id: string, data: UpdateMedicationBatchData): Promise<MedicationBatch>;
   delete(id: string): Promise<void>;
-  
+
   // Búsquedas especializadas
-  findByMedicationId(medicationId: string, page?: number, size?: number): Promise<BatchSearchResult>;
-  findWithFilters(filters: BatchFilters, page?: number, size?: number): Promise<BatchSearchResult>;
+  findByMedicationId(
+    medicationId: string,
+    page?: number,
+    size?: number
+  ): Promise<BatchSearchResult>;
+  findWithFilters(
+    filters: BatchFilters,
+    page?: number,
+    size?: number
+  ): Promise<BatchSearchResult>;
   findBatchesExpiringInDays(days: number): Promise<MedicationBatch[]>;
   findBatchesBySupplier(supplier: string): Promise<MedicationBatch[]>;
   searchByBatchId(batchId: string): Promise<MedicationBatch[]>;
-  searchByBatchIdPaginated(batchId: string, page: number, size: number): Promise<{ batches: MedicationBatch[]; totalItems: number; totalPages: number }>;
-  
+  searchByBatchIdPaginated(
+    batchId: string,
+    page: number,
+    size: number
+  ): Promise<{
+    batches: MedicationBatch[];
+    totalItems: number;
+    totalPages: number;
+  }>;
+
   // Estadísticas
   getTotalStockByMedicationId(medicationId: string): Promise<number>;
   getBatchCountByMedicationId(medicationId: string): Promise<number>;
   getStatistics(medicationId?: string): Promise<BatchStatistics>;
-  
+
   // 🆕 NUEVOS MÉTODOS PARA STOCK ACTIVO
   getTotalActiveStockByMedicationId(medicationId: string): Promise<number>;
   getActiveBatchCountByMedicationId(medicationId: string): Promise<number>;
-  findActiveBatchesByMedicationId(medicationId: string): Promise<MedicationBatch[]>;
-  getOldestActiveBatchByMedicationId(medicationId: string): Promise<MedicationBatch | null>;
+  findActiveBatchesByMedicationId(
+    medicationId: string
+  ): Promise<MedicationBatch[]>;
+  findActiveBatchesByMedicationIdPaginated(
+    medicationId: string,
+    page: number,
+    size: number
+  ): Promise<ItemsResponse<MedicationBatch>>;
+
+  getOldestActiveBatchByMedicationId(
+    medicationId: string
+  ): Promise<MedicationBatch | null>;
   findMedicationIdsWithActiveStock(): Promise<string[]>;
-  
+
   // Validaciones
-  batchIdExistsForMedication(medicationId: string, batchId: string, excludeId?: string): Promise<boolean>;
+  batchIdExistsForMedication(
+    medicationId: string,
+    batchId: string,
+    excludeId?: string
+  ): Promise<boolean>;
 }
-
-
 
 /**
  * Repositorio local para MedicationBatch usando RxDB
  */
-export class LocalMedicationBatchRepository implements IMedicationBatchRepository {
+export class LocalMedicationBatchRepository
+  implements IMedicationBatchRepository
+{
   private async getCollection(): Promise<RxCollection<MedicationBatch>> {
-    const { getDatabase } = await import('../database');
+    const { getDatabase } = await import("../database");
     const db = getDatabase();
     if (!db) {
-      throw new Error('Database not initialized. Call initDatabase() first.');
+      throw new Error("Database not initialized. Call initDatabase() first.");
     }
     return db.medication_batches;
   }
@@ -63,7 +94,7 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     const collection = await this.getCollection();
     const id = generateId();
     const now = new Date().toISOString();
-    
+
     const batch: MedicationBatch = {
       id,
       medicationId: data.medicationId,
@@ -79,7 +110,7 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
       createdAt: now,
       createdBy: data.createdBy,
       updatedAt: now,
-      updatedBy: data.createdBy
+      updatedBy: data.createdBy,
     };
 
     const doc = await collection.insert(batch);
@@ -88,24 +119,31 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
 
   async findById(id: string): Promise<MedicationBatch | null> {
     const collection = await this.getCollection();
-    const doc = await collection.findOne({
-      selector: {
-        id,
-        isDeleted: false
-      }
-    }).exec();
+    const doc = await collection
+      .findOne({
+        selector: {
+          id,
+          isDeleted: false,
+        },
+      })
+      .exec();
 
     return doc ? doc.toJSON() : null;
   }
 
-  async update(id: string, data: UpdateMedicationBatchData): Promise<MedicationBatch> {
+  async update(
+    id: string,
+    data: UpdateMedicationBatchData
+  ): Promise<MedicationBatch> {
     const collection = await this.getCollection();
-    const doc = await collection.findOne({
-      selector: {
-        id,
-        isDeleted: false
-      }
-    }).exec();
+    const doc = await collection
+      .findOne({
+        selector: {
+          id,
+          isDeleted: false,
+        },
+      })
+      .exec();
 
     if (!doc) {
       throw new Error(`Batch with id ${id} not found`);
@@ -115,11 +153,11 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     const updateData = {
       ...data,
       updatedAt: now,
-      sincronized: false
+      sincronized: false,
     };
 
     await doc.update({
-      $set: updateData
+      $set: updateData,
     });
 
     return doc.toJSON();
@@ -127,12 +165,14 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
 
   async delete(id: string): Promise<void> {
     const collection = await this.getCollection();
-    const doc = await collection.findOne({
-      selector: {
-        id,
-        isDeleted: false
-      }
-    }).exec();
+    const doc = await collection
+      .findOne({
+        selector: {
+          id,
+          isDeleted: false,
+        },
+      })
+      .exec();
 
     if (!doc) {
       throw new Error(`Batch with id ${id} not found`);
@@ -143,33 +183,41 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
       $set: {
         isDeleted: true,
         updatedAt: now,
-        sincronized: false
-      }
+        sincronized: false,
+      },
     });
   }
 
-  async findByMedicationId(medicationId: string, page: number = 1, size: number = 10): Promise<BatchSearchResult> {
+  async findByMedicationId(
+    medicationId: string,
+    page: number = 1,
+    size: number = 10
+  ): Promise<BatchSearchResult> {
     const collection = await this.getCollection();
     const skip = (page - 1) * size;
-    
+
     // Obtener total de elementos - selector simple, usar count() directamente
-    const totalItems = await collection.count({
-      selector: {
-        medicationId,
-        isDeleted: false  // Usar false en lugar de { $ne: true }
-      }
-    }).exec();
+    const totalItems = await collection
+      .count({
+        selector: {
+          medicationId,
+          isDeleted: false, // Usar false en lugar de { $ne: true }
+        },
+      })
+      .exec();
 
     // Obtener elementos paginados
-    const docs = await collection.find({
-      selector: {
-        medicationId,
-        isDeleted: false
-      },
-      sort: [{ expirationDate: 'asc' }],
-      skip,
-      limit: size
-    }).exec();
+    const docs = await collection
+      .find({
+        selector: {
+          medicationId,
+          isDeleted: false,
+        },
+        sort: [{ expirationDate: "asc" }],
+        skip,
+        limit: size,
+      })
+      .exec();
 
     const batches = docs.map((doc: any) => doc.toJSON());
     const totalPages = Math.ceil(totalItems / size);
@@ -179,17 +227,21 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
       totalItems,
       totalPages,
       currentPage: page,
-      itemsPerPage: size
+      itemsPerPage: size,
     };
   }
 
-  async findWithFilters(filters: BatchFilters, page: number = 1, size: number = 10): Promise<BatchSearchResult> {
+  async findWithFilters(
+    filters: BatchFilters,
+    page: number = 1,
+    size: number = 10
+  ): Promise<BatchSearchResult> {
     const collection = await this.getCollection();
     const skip = (page - 1) * size;
-    
+
     // Construir selector basado en filtros
     const selector: any = {
-      isDeleted: false
+      isDeleted: false,
     };
 
     if (filters.medicationId) {
@@ -231,7 +283,10 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     }
 
     // Filtros de cantidad
-    if (filters.minQuantity !== undefined || filters.maxQuantity !== undefined) {
+    if (
+      filters.minQuantity !== undefined ||
+      filters.maxQuantity !== undefined
+    ) {
       selector.quantity = {};
       if (filters.minQuantity !== undefined) {
         selector.quantity.$gte = filters.minQuantity;
@@ -242,7 +297,10 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     }
 
     // Filtros de precio
-    if (filters.minPurchasePrice !== undefined || filters.maxPurchasePrice !== undefined) {
+    if (
+      filters.minPurchasePrice !== undefined ||
+      filters.maxPurchasePrice !== undefined
+    ) {
       selector.purchasePrice = {};
       if (filters.minPurchasePrice !== undefined) {
         selector.purchasePrice.$gte = filters.minPurchasePrice;
@@ -254,11 +312,16 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
 
     // Obtener total de elementos - usar find().length para selectores complejos
     let totalItems: number;
-    const hasComplexSelector = (selector.expirationDate && (selector.expirationDate.$gte || selector.expirationDate.$lte)) ||
-                              (selector.purchaseDate && (selector.purchaseDate.$gte || selector.purchaseDate.$lte)) ||
-                              (selector.quantity && (selector.quantity.$gte || selector.quantity.$lte)) ||
-                              (selector.purchasePrice && (selector.purchasePrice.$gte || selector.purchasePrice.$lte));
-    
+    const hasComplexSelector =
+      (selector.expirationDate &&
+        (selector.expirationDate.$gte || selector.expirationDate.$lte)) ||
+      (selector.purchaseDate &&
+        (selector.purchaseDate.$gte || selector.purchaseDate.$lte)) ||
+      (selector.quantity &&
+        (selector.quantity.$gte || selector.quantity.$lte)) ||
+      (selector.purchasePrice &&
+        (selector.purchasePrice.$gte || selector.purchasePrice.$lte));
+
     if (hasComplexSelector) {
       // Para selectores complejos con rangos, usar find().length para evitar QU14
       const allDocs = await collection.find({ selector }).exec();
@@ -269,12 +332,14 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     }
 
     // Obtener elementos paginados
-    const docs = await collection.find({
-      selector,
-      sort: [{ expirationDate: 'asc' }],
-      skip,
-      limit: size
-    }).exec();
+    const docs = await collection
+      .find({
+        selector,
+        sort: [{ expirationDate: "asc" }],
+        skip,
+        limit: size,
+      })
+      .exec();
 
     const batches = docs.map((doc: any) => doc.toJSON());
     const totalPages = Math.ceil(totalItems / size);
@@ -289,11 +354,11 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         switch (filters.status) {
-          case 'expired':
+          case "expired":
             return diffDays < 0;
-          case 'expiring':
+          case "expiring":
             return diffDays >= 0 && diffDays <= 30;
-          case 'valid':
+          case "valid":
             return diffDays > 30;
           default:
             return true;
@@ -306,7 +371,7 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
       totalItems,
       totalPages,
       currentPage: page,
-      itemsPerPage: size
+      itemsPerPage: size,
     };
   }
 
@@ -314,30 +379,34 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     const collection = await this.getCollection();
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
-    const futureDateStr = futureDate.toISOString().split('T')[0];
+    const futureDateStr = futureDate.toISOString().split("T")[0];
 
-    const docs = await collection.find({
-      selector: {
-        isDeleted: false,
-        expirationDate: {
-          $lte: futureDateStr
-        }
-      },
-      sort: [{ expirationDate: 'asc' }]
-    }).exec();
+    const docs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          expirationDate: {
+            $lte: futureDateStr,
+          },
+        },
+        sort: [{ expirationDate: "asc" }],
+      })
+      .exec();
 
     return docs.map((doc: any) => doc.toJSON());
   }
 
   async findBatchesBySupplier(supplier: string): Promise<MedicationBatch[]> {
     const collection = await this.getCollection();
-    const docs = await collection.find({
-      selector: {
-        isDeleted: false,
-        supplier: supplier
-      },
-      sort: [{ expirationDate: 'asc' }]
-    }).exec();
+    const docs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          supplier: supplier,
+        },
+        sort: [{ expirationDate: "asc" }],
+      })
+      .exec();
 
     return docs.map((doc: any) => doc.toJSON());
   }
@@ -345,43 +414,51 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
   async searchByBatchId(batchId: string): Promise<MedicationBatch[]> {
     const collection = await this.getCollection();
     const searchTerm = batchId.toLowerCase();
-    
-    const docs = await collection.find({
-      selector: {
-        isDeleted: false,
-        batchId: {
-          $regex: searchTerm
-        }
-      },
-      sort: [{ expirationDate: 'asc' }]
-    }).exec();
+
+    const docs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          batchId: {
+            $regex: searchTerm,
+          },
+        },
+        sort: [{ expirationDate: "asc" }],
+      })
+      .exec();
 
     return docs.map((doc: any) => doc.toJSON());
   }
 
   async searchByBatchIdPaginated(
-    batchId: string, 
-    page: number, 
+    batchId: string,
+    page: number,
     size: number
-  ): Promise<{ batches: MedicationBatch[]; totalItems: number; totalPages: number }> {
+  ): Promise<{
+    batches: MedicationBatch[];
+    totalItems: number;
+    totalPages: number;
+  }> {
     const collection = await this.getCollection();
     const searchTerm = batchId.toLowerCase();
     const skip = (page - 1) * size;
-    
+
     // Obtener todos los resultados para contar el total
-    const allDocs = await collection.find({
-      selector: {
-        isDeleted: false,
-        batchId: {
-          $regex: searchTerm
-        }
-      },
-      sort: [{ expirationDate: 'asc' }]
-    }).exec();
+    const allDocs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          batchId: {
+            $regex: searchTerm,
+          },
+        },
+        sort: [{ expirationDate: "asc" }],
+      })
+      .exec();
 
     const totalItems = allDocs.length;
     const totalPages = Math.ceil(totalItems / size);
-    
+
     // Aplicar paginación
     const paginatedDocs = allDocs.slice(skip, skip + size);
     const batches = paginatedDocs.map((doc: any) => doc.toJSON());
@@ -389,31 +466,38 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     return {
       batches,
       totalItems,
-      totalPages
+      totalPages,
     };
   }
 
   async getTotalStockByMedicationId(medicationId: string): Promise<number> {
     const collection = await this.getCollection();
-    const docs = await collection.find({
-      selector: {
-        medicationId,
-        isDeleted: false
-      }
-    }).exec();
+    const docs = await collection
+      .find({
+        selector: {
+          medicationId,
+          isDeleted: false,
+        },
+      })
+      .exec();
 
-    return docs.reduce((total: number, doc: any) => total + doc.toJSON().quantity, 0);
+    return docs.reduce(
+      (total: number, doc: any) => total + doc.toJSON().quantity,
+      0
+    );
   }
 
   async getBatchCountByMedicationId(medicationId: string): Promise<number> {
     const collection = await this.getCollection();
     // Selector simple con índices optimizados, usar count() directamente
-    return await collection.count({
-      selector: {
-        medicationId,
-        isDeleted: false  // Usar false en lugar de { $ne: true }
-      }
-    }).exec();
+    return await collection
+      .count({
+        selector: {
+          medicationId,
+          isDeleted: false, // Usar false en lugar de { $ne: true }
+        },
+      })
+      .exec();
   }
 
   async getStatistics(medicationId?: string): Promise<BatchStatistics> {
@@ -427,11 +511,16 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
     const batches = docs.map((doc: any) => doc.toJSON());
 
     const today = new Date();
-    const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
+    const thirtyDaysFromNow = new Date(
+      today.getTime() + 30 * 24 * 60 * 60 * 1000
+    );
 
     const stats: BatchStatistics = {
       totalBatches: batches.length,
-      totalStock: batches.reduce((sum: number, batch: any) => sum + batch.quantity, 0),
+      totalStock: batches.reduce(
+        (sum: number, batch: any) => sum + batch.quantity,
+        0
+      ),
       batchesExpiringSoon: batches.filter((batch: any) => {
         const expDate = new Date(batch.expirationDate);
         return expDate <= thirtyDaysFromNow && expDate >= today;
@@ -440,95 +529,172 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
         const expDate = new Date(batch.expirationDate);
         return expDate < today;
       }).length,
-      averagePurchasePrice: batches.length > 0 
-        ? batches.reduce((sum: number, batch: any) => sum + batch.purchasePrice, 0) / batches.length 
-        : 0,
-      averageSellingPrice: batches.length > 0 
-        ? batches.reduce((sum: number, batch: any) => sum + batch.sellingPrice, 0) / batches.length 
-        : 0,
-      uniqueSuppliers: new Set(batches.map((batch: any) => batch.supplier).filter(Boolean)).size
+      averagePurchasePrice:
+        batches.length > 0
+          ? batches.reduce(
+              (sum: number, batch: any) => sum + batch.purchasePrice,
+              0
+            ) / batches.length
+          : 0,
+      averageSellingPrice:
+        batches.length > 0
+          ? batches.reduce(
+              (sum: number, batch: any) => sum + batch.sellingPrice,
+              0
+            ) / batches.length
+          : 0,
+      uniqueSuppliers: new Set(
+        batches.map((batch: any) => batch.supplier).filter(Boolean)
+      ).size,
     };
 
     return stats;
   }
 
   // 🆕 NUEVOS MÉTODOS PARA STOCK ACTIVO
-  
+
   /**
    * Obtiene el stock total activo de un medicamento (solo lotes con quantity > 0 y no vencidos)
    */
-  async getTotalActiveStockByMedicationId(medicationId: string): Promise<number> {
+  async getTotalActiveStockByMedicationId(
+    medicationId: string
+  ): Promise<number> {
     const collection = await this.getCollection();
-    const today = new Date().toISOString().split('T')[0];
-    
-    const docs = await collection.find({
-      selector: {
-        medicationId,
-        isDeleted: false,
-        quantity: { $gt: 0 },
-        expirationDate: { $gt: today }
-      }
-    }).exec();
+    const today = new Date().toISOString().split("T")[0];
 
-    return docs.reduce((total: number, doc: any) => total + doc.toJSON().quantity, 0);
+    const docs = await collection
+      .find({
+        selector: {
+          medicationId,
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+      })
+      .exec();
+
+    return docs.reduce(
+      (total: number, doc: any) => total + doc.toJSON().quantity,
+      0
+    );
   }
 
   /**
    * Obtiene la cantidad de lotes activos de un medicamento
    */
-  async getActiveBatchCountByMedicationId(medicationId: string): Promise<number> {
+  async getActiveBatchCountByMedicationId(
+    medicationId: string
+  ): Promise<number> {
     const collection = await this.getCollection();
-    const today = new Date().toISOString().split('T')[0];
-    
+    const today = new Date().toISOString().split("T")[0];
+
     // Usar find().length para selectores complejos
-    const docs = await collection.find({
-      selector: {
-        medicationId,
-        isDeleted: false,
-        quantity: { $gt: 0 },
-        expirationDate: { $gt: today }
-      }
-    }).exec();
-    
+    const docs = await collection
+      .find({
+        selector: {
+          medicationId,
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+      })
+      .exec();
+
     return docs.length;
   }
 
   /**
    * Obtiene todos los lotes activos de un medicamento
    */
-  async findActiveBatchesByMedicationId(medicationId: string): Promise<MedicationBatch[]> {
+  async findActiveBatchesByMedicationId(
+    medicationId: string
+  ): Promise<MedicationBatch[]> {
     const collection = await this.getCollection();
-    const today = new Date().toISOString().split('T')[0];
-    
-    const docs = await collection.find({
-      selector: {
-        medicationId,
-        isDeleted: false,
-        quantity: { $gt: 0 },
-        expirationDate: { $gt: today }
-      },
-      sort: [{ expirationDate: 'asc' }] // Ordenar por fecha de vencimiento
-    }).exec();
+    const today = new Date().toISOString().split("T")[0];
+
+    const docs = await collection
+      .find({
+        selector: {
+          medicationId,
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+        sort: [{ expirationDate: "asc" }], // Ordenar por fecha de vencimiento
+      })
+      .exec();
 
     return docs.map((doc: any) => doc.toJSON());
   }
 
   /**
+   * Obtiene todos los lotes activos de un medicamento con paginación
+   */
+  async findActiveBatchesByMedicationIdPaginated(
+    medicationId: string,
+    page: number,
+    size: number
+  ): Promise<ItemsResponse<MedicationBatch>> {
+    const collection = await this.getCollection();
+    const today = new Date().toISOString().split("T")[0];
+
+    // Calculate skip value for pagination
+    const skip = (page - 1) * size;
+
+    const docs = await collection
+      .find({
+        selector: {
+          medicationId,
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+        sort: [{ expirationDate: "asc" }],
+        skip,
+        limit: size,
+      })
+      .exec();
+
+    const totalDocs = await collection
+      .count({
+        selector: {
+          medicationId,
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+      })
+      .exec();
+
+    return {
+      items: docs.map((doc: any) => doc.toJSON() as MedicationBatch),
+      totalItems: totalDocs,
+      size: totalDocs,
+      totalPages: Math.ceil(totalDocs / size),
+      page,
+    };
+  }
+
+  /**
    * Obtiene el lote activo más próximo a vencer de un medicamento
    */
-  async getOldestActiveBatchByMedicationId(medicationId: string): Promise<MedicationBatch | null> {
+  async getOldestActiveBatchByMedicationId(
+    medicationId: string
+  ): Promise<MedicationBatch | null> {
     const collection = await this.getCollection();
-    const today = new Date().toISOString().split('T')[0];
-    
-    const doc = await collection.findOne({
-      selector: {
-        medicationId,
-        isDeleted: false,
-        quantity: { $gt: 0 },
-        expirationDate: { $gt: today }
-      },
-      sort: [{ expirationDate: 'asc' }] // El más próximo a vencer primero
-    }).exec();
+    const today = new Date().toISOString().split("T")[0];
+
+    const doc = await collection
+      .findOne({
+        selector: {
+          medicationId,
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+        sort: [{ expirationDate: "asc" }], // El más próximo a vencer primero
+      })
+      .exec();
 
     return doc ? doc.toJSON() : null;
   }
@@ -538,27 +704,35 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
    */
   async findMedicationIdsWithActiveStock(): Promise<string[]> {
     const collection = await this.getCollection();
-    const today = new Date().toISOString().split('T')[0];
-    
-    const docs = await collection.find({
-      selector: {
-        isDeleted: false,
-        quantity: { $gt: 0 },
-        expirationDate: { $gt: today }
-      }
-    }).exec();
+    const today = new Date().toISOString().split("T")[0];
+
+    const docs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          quantity: { $gt: 0 },
+          expirationDate: { $gt: today },
+        },
+      })
+      .exec();
 
     // Agrupar por medicationId y eliminar duplicados
-    const medicationIds = new Set(docs.map((doc: any) => doc.toJSON().medicationId));
+    const medicationIds = new Set(
+      docs.map((doc: any) => doc.toJSON().medicationId)
+    );
     return Array.from(medicationIds);
   }
 
-  async batchIdExistsForMedication(medicationId: string, batchId: string, excludeId?: string): Promise<boolean> {
+  async batchIdExistsForMedication(
+    medicationId: string,
+    batchId: string,
+    excludeId?: string
+  ): Promise<boolean> {
     const collection = await this.getCollection();
     const selector: any = {
       medicationId,
       batchId,
-      isDeleted: false
+      isDeleted: false,
     };
 
     if (excludeId) {
@@ -573,97 +747,129 @@ export class LocalMedicationBatchRepository implements IMedicationBatchRepositor
 /**
  * Repositorio para Firestore (placeholder - implementar según necesidades)
  */
-export class FirestoreMedicationBatchRepository implements IMedicationBatchRepository {
+export class FirestoreMedicationBatchRepository
+  implements IMedicationBatchRepository
+{
+  findActiveBatchesByMedicationIdPaginated(medicationId: string, page: number, size: number): Promise<ItemsResponse<MedicationBatch>> {
+    throw new Error("Method not implemented.");
+  }
   // TODO: Implementar métodos para Firestore si es necesario
   async create(_data: CreateMedicationBatchData): Promise<MedicationBatch> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
   async findById(_id: string): Promise<MedicationBatch | null> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async update(_id: string, _data: UpdateMedicationBatchData): Promise<MedicationBatch> {
-    throw new Error('Firestore implementation not yet available');
+  async update(
+    _id: string,
+    _data: UpdateMedicationBatchData
+  ): Promise<MedicationBatch> {
+    throw new Error("Firestore implementation not yet available");
   }
 
   async delete(_id: string): Promise<void> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async findByMedicationId(_medicationId: string, _page?: number, _size?: number): Promise<BatchSearchResult> {
-    throw new Error('Firestore implementation not yet available');
+  async findByMedicationId(
+    _medicationId: string,
+    _page?: number,
+    _size?: number
+  ): Promise<BatchSearchResult> {
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async findWithFilters(_filters: BatchFilters, _page?: number, _size?: number): Promise<BatchSearchResult> {
-    throw new Error('Firestore implementation not yet available');
+  async findWithFilters(
+    _filters: BatchFilters,
+    _page?: number,
+    _size?: number
+  ): Promise<BatchSearchResult> {
+    throw new Error("Firestore implementation not yet available");
   }
 
   async findBatchesExpiringInDays(_days: number): Promise<MedicationBatch[]> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
   async findBatchesBySupplier(_supplier: string): Promise<MedicationBatch[]> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
   async searchByBatchId(_batchId: string): Promise<MedicationBatch[]> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
   async searchByBatchIdPaginated(
-    _batchId: string, 
-    _page: number, 
+    _batchId: string,
+    _page: number,
     _size: number
-  ): Promise<{ batches: MedicationBatch[]; totalItems: number; totalPages: number }> {
-    throw new Error('Firestore implementation not yet available');
+  ): Promise<{
+    batches: MedicationBatch[];
+    totalItems: number;
+    totalPages: number;
+  }> {
+    throw new Error("Firestore implementation not yet available");
   }
 
   async getTotalStockByMedicationId(_medicationId: string): Promise<number> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
   async getBatchCountByMedicationId(_medicationId: string): Promise<number> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
   async getStatistics(_medicationId?: string): Promise<BatchStatistics> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async batchIdExistsForMedication(_medicationId: string, _batchId: string, _excludeId?: string): Promise<boolean> {
-    throw new Error('Firestore implementation not yet available');
+  async batchIdExistsForMedication(
+    _medicationId: string,
+    _batchId: string,
+    _excludeId?: string
+  ): Promise<boolean> {
+    throw new Error("Firestore implementation not yet available");
   }
 
   // 🆕 NUEVOS MÉTODOS PARA STOCK ACTIVO - Firestore placeholders
-  
-  async getTotalActiveStockByMedicationId(_medicationId: string): Promise<number> {
-    throw new Error('Firestore implementation not yet available');
+
+  async getTotalActiveStockByMedicationId(
+    _medicationId: string
+  ): Promise<number> {
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async getActiveBatchCountByMedicationId(_medicationId: string): Promise<number> {
-    throw new Error('Firestore implementation not yet available');
+  async getActiveBatchCountByMedicationId(
+    _medicationId: string
+  ): Promise<number> {
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async findActiveBatchesByMedicationId(_medicationId: string): Promise<MedicationBatch[]> {
-    throw new Error('Firestore implementation not yet available');
+  async findActiveBatchesByMedicationId(
+    _medicationId: string
+  ): Promise<MedicationBatch[]> {
+    throw new Error("Firestore implementation not yet available");
   }
 
-  async getOldestActiveBatchByMedicationId(_medicationId: string): Promise<MedicationBatch | null> {
-    throw new Error('Firestore implementation not yet available');
+  async getOldestActiveBatchByMedicationId(
+    _medicationId: string
+  ): Promise<MedicationBatch | null> {
+    throw new Error("Firestore implementation not yet available");
   }
 
   async findMedicationIdsWithActiveStock(): Promise<string[]> {
-    throw new Error('Firestore implementation not yet available');
+    throw new Error("Firestore implementation not yet available");
   }
 }
 
-
 export const LocalMedicationBatchDb = new LocalMedicationBatchRepository();
-export const FirestoreMedicationBatchDb = new FirestoreMedicationBatchRepository();
+export const FirestoreMedicationBatchDb =
+  new FirestoreMedicationBatchRepository();
 
 export const getMedicationBatchRepository = (): IMedicationBatchRepository => {
-  return config.APP_MODE === 'local' ? LocalMedicationBatchDb : FirestoreMedicationBatchDb;
-}
-
-
+  return config.APP_MODE === "local"
+    ? LocalMedicationBatchDb
+    : FirestoreMedicationBatchDb;
+};
