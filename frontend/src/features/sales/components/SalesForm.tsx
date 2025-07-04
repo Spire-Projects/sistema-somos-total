@@ -9,13 +9,27 @@ export const SalesForm = () => {
 
   const total = quantity * price;
 
-  const handleSubmit = () => {
-    // Aquí iría la lógica para guardar la venta
-    console.log({ product, quantity, price, total, client, paymentMethod });
+  const handleSubmit = async () => {
+    const saleData = { product, quantity, price, total, client, paymentMethod };
+    try {
+      /* await createSale(saleData); TDO FABIAN*/ 
+      alert('Venta registrada exitosamente');
+      resetForm();
+    } catch (error) {
+      console.error('Error al registrar la venta:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setProduct('');
+    setQuantity(1);
+    setPrice(0);
+    setClient('');
+    setPaymentMethod('efectivo');
   };
 
   return (
-    <div className="bg-white p-6 rounded-md shadow-md max-w-2xl mx-auto">
+    <div className="bg-white p-6 rounded-md shadow-md">
       <h2 className="text-xl font-bold mb-4 text-gray-800">Nueva Venta</h2>
 
       <div className="grid grid-cols-1 gap-4 mb-4">
@@ -77,13 +91,7 @@ export const SalesForm = () => {
         </button>
         <button
           className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-          onClick={() => {
-            setProduct('');
-            setQuantity(1);
-            setPrice(0);
-            setClient('');
-            setPaymentMethod('efectivo');
-          }}
+          onClick={resetForm}
         >
           CANCELAR
         </button>
