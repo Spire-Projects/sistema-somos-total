@@ -313,7 +313,7 @@ export const initializeDefaultData = async (): Promise<void> => {
     // Crear usuario administrador por defecto
     const adminUserData: CreateUserData = {
       fullName: 'Administrador del Sistema',
-      email: 'admin@farmaapp.com',
+      email: 'admin@labonita.com',
       password: 'admin123',
       role: 'admin'
     };
@@ -509,7 +509,7 @@ export const initializeAllData = async (): Promise<void> => {
     await initializeDefaultData();
     
     // Luego inicializar datos de medicamentos
-    await initializeMedicationData();
+    // await initializeMedicationData();
     
     console.log('✅ Todos los datos del sistema inicializados correctamente');
   } catch (error) {
