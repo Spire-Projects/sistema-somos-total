@@ -14,15 +14,19 @@ const getRepository = () => getClientRepository();
 export const createClient = async (clientData: CreateClientData): Promise<Client> => {
   const repository = getRepository();
   
-  // Validar que no exista un cliente con el mismo email o NIT
-  const existingEmail = await repository.findByEmail(clientData.email);
-  if (existingEmail) {
-    throw new Error('Ya existe un cliente con este email');
+  // Validar que no exista un cliente con el mismo email o NIT solo si están presentes
+  if (clientData.email && clientData.email.trim()) {
+    const existingEmail = await repository.findByEmail(clientData.email);
+    if (existingEmail) {
+      throw new Error('Ya existe un cliente con este email');
+    }
   }
 
-  const existingNit = await repository.findByNit(clientData.nit);
-  if (existingNit) {
-    throw new Error('Ya existe un cliente con este NIT');
+  if (clientData.nit && clientData.nit.trim()) {
+    const existingNit = await repository.findByNit(clientData.nit);
+    if (existingNit) {
+      throw new Error('Ya existe un cliente con este NIT');
+    }
   }
 
   const now = new Date().toISOString();
@@ -31,7 +35,9 @@ export const createClient = async (clientData: CreateClientData): Promise<Client
     createdAt: now,
     updatedAt: now,
     loyaltyPoints: clientData.loyaltyPoints || 0,
-    salesHistory: []
+    salesHistory: [],
+    sincronized: false,
+    isDeleted: false
   });
 };
 
@@ -85,15 +91,15 @@ export const getAllClientsPaginated = async (
 export const updateClient = async (id: string, updateData: UpdateClientData): Promise<Client | null> => {
   const repository = getRepository();
   
-  // Si se está actualizando email o NIT, validar que no existan duplicados
-  if (updateData.email) {
+  // Si se está actualizando email o NIT, validar que no existan duplicados solo si están presentes
+  if (updateData.email && updateData.email.trim()) {
     const existingEmail = await repository.findByEmail(updateData.email);
     if (existingEmail && existingEmail.id !== id) {
       throw new Error('Ya existe un cliente con este email');
     }
   }
 
-  if (updateData.nit) {
+  if (updateData.nit && updateData.nit.trim()) {
     const existingNit = await repository.findByNit(updateData.nit);
     if (existingNit && existingNit.id !== id) {
       throw new Error('Ya existe un cliente con este NIT');
