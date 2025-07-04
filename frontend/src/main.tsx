@@ -17,9 +17,9 @@ import "./shared/utils/debug.utils";
 try {
   initSecurity();
 } catch (error) {
-  console.error('Error crítico de seguridad:', error);
+  console.error("Error crítico de seguridad:", error);
   // En modo deploy, no continuar si hay errores de seguridad
-  if (import.meta.env.VITE_APP_MODE === 'deploy') {
+  if (import.meta.env.VITE_APP_MODE === "deploy") {
     throw error;
   }
 }
@@ -30,10 +30,10 @@ if (import.meta.env.DEV) {
   console.error = (...args) => {
     const message = args[0];
     if (
-      typeof message === 'string' && 
-      (message.includes('runtime.lastError') || 
-       message.includes('message port closed') ||
-       message.includes('Extension context invalidated'))
+      typeof message === "string" &&
+      (message.includes("runtime.lastError") ||
+        message.includes("message port closed") ||
+        message.includes("Extension context invalidated"))
     ) {
       return; // Suprimir estos warnings específicos
     }
@@ -45,18 +45,18 @@ if (import.meta.env.DEV) {
 async function initializeApp() {
   try {
     // 1. Inicializar la base de datos y modelos
-    console.log('🔄 Inicializando aplicación...');
+    console.log("🔄 Inicializando aplicación...");
     await initDatabaseAndModels();
-    
+
     // 2. Inicializar datos por defecto (usuario admin y datos de catálogo)
     await checkAndInitializeData();
-    
-    console.log('✅ Aplicación inicializada correctamente');
+
+    console.log("✅ Aplicación inicializada correctamente");
     return true;
   } catch (error) {
-    console.error('❌ Error inicializando aplicación:', error);
+    console.error("❌ Error inicializando aplicación:", error);
     // En desarrollo, continuar aunque falle la inicialización
-    if (import.meta.env.VITE_APP_MODE === 'deploy') {
+    if (import.meta.env.VITE_APP_MODE === "deploy") {
       throw error;
     }
     return false;
@@ -66,17 +66,14 @@ async function initializeApp() {
 // Función principal que espera la inicialización antes de renderizar
 async function main() {
   try {
-    console.log('🚀 Iniciando FarmaApp...');
-    
     // Esperar a que la aplicación se inicialice completamente
     const initialized = await initializeApp();
-    
-    if (!initialized && import.meta.env.VITE_APP_MODE === 'deploy') {
-      throw new Error('Failed to initialize application');
+
+    if (!initialized && import.meta.env.VITE_APP_MODE === "deploy") {
+      throw new Error("Failed to initialize application");
     }
-    
+
     // Solo renderizar React después de que todo esté listo
-    console.log('🎨 Renderizando interfaz de usuario...');
     createRoot(document.getElementById("root")!).render(
       <StrictMode>
         <Provider store={store}>
@@ -86,11 +83,7 @@ async function main() {
         </Provider>
       </StrictMode>
     );
-    
-    console.log('🎉 FarmaApp cargada exitosamente');
   } catch (error) {
-    console.error('💥 Error fatal iniciando aplicación:', error);
-    
     // Mostrar error en la UI
     document.getElementById("root")!.innerHTML = `
       <div style="padding: 20px; text-align: center; color: red; font-family: Arial, sans-serif;">

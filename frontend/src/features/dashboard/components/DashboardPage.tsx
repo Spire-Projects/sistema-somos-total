@@ -25,9 +25,9 @@ export const DashboardPage = () => {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-green-800 mb-2">Acciones Rápidas</h3>
             <div className="space-y-2">
-              <button className="w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
+              <Link to={"/inventory"} className="block w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
                 Ver Inventario
-              </button>
+              </Link>
               <button className="w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
                 Nueva Venta
               </button>
@@ -37,9 +37,9 @@ export const DashboardPage = () => {
               >
                 Gestión de Usuarios
               </Link>
-              <button className="w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
+              <Link to={"/reports"} className="block w-full text-left px-3 py-2 text-sm bg-white border border-green-300 rounded hover:bg-green-50 transition-colors">
                 Reportes
-              </button>
+              </Link>
             </div>
           </div>
 
