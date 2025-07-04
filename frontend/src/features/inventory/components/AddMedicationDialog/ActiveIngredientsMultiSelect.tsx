@@ -1,17 +1,23 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { X } from "lucide-react";
 import { Textarea } from "../../../../shared/components/ui/textarea";
 
 interface ActiveIngredientsMultiSelectProps {
   onChange: (ids: string[]) => void;
+  selected?: string[];
   error?: string;
 }
 
 const ActiveIngredientsMultiSelect = ({
   onChange,
+  selected = [],
   error,
 }: ActiveIngredientsMultiSelectProps) => {
   const [ingredientsText, setIngredientsText] = useState<string>("");
+
+  useEffect(() => {
+    setIngredientsText(selected.join("\n"));
+  }, [selected]);
 
   const ingredientsList = useMemo(() => {
     const list = ingredientsText

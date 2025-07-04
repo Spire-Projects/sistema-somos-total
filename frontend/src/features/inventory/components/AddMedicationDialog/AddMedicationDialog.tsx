@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useMemo } from "react";
+import { useState, memo, useCallback, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../../../shared/components/ui/button";
 import {
@@ -12,7 +12,11 @@ import { Input } from "../../../../shared/components/ui/input";
 import { Textarea } from "../../../../shared/components/ui/textarea";
 import { Label } from "../../../../shared/components/ui/label";
 import { Plus, Loader2 } from "lucide-react";
-import { createMedication } from "../../../../shared/services";
+import {
+  createMedication,
+  findMedicationById,
+  updateMedication,
+} from "../../../../shared/services";
 import type { CreateMedicationData } from "../../../../shared/types/MedicationCrud";
 import { toast } from "sonner";
 import MedicationCatalogSelects from "./MedicationCatalogSelects.tsx";
@@ -22,6 +26,8 @@ import GenericNameSelect from "./GenericNameSelect.tsx";
 
 interface AddMedicationDialogProps {
   onMedicationAdded?: () => void;
+  medicationId?: string;
+  edit?: boolean;
 }
 
 interface MedicationFormData
@@ -46,7 +52,7 @@ const defaultValues: Partial<MedicationFormData> = {
 };
 
 const AddMedicationDialog = memo(
-  ({ onMedicationAdded }: AddMedicationDialogProps) => {
+  ({ onMedicationAdded, medicationId, edit }: AddMedicationDialogProps) => {
     const [open, setOpen] = useState(false);
 
     const {
@@ -62,6 +68,32 @@ const AddMedicationDialog = memo(
     });
 
     const watchedValues = watch();
+
+    useEffect(() => {
+      const getData = async () => {
+        if (medicationId) {
+          const medicationData = await findMedicationById(medicationId);
+          console.log(medicationData);
+          if (!medicationData) return;
+
+          Object.keys(medicationData).forEach((key) => {
+            if (key in defaultValues) {
+              console.log(key);
+              console.log(
+                key as keyof MedicationFormData,
+                medicationData[key as keyof CreateMedicationData]
+              );
+              setValue(
+                key as keyof MedicationFormData,
+                medicationData[key as keyof CreateMedicationData]
+              );
+            }
+          });
+        }
+      };
+
+      getData();
+    }, [medicationId, setValue, open]);
 
     // Custom validation rules
     const validationRules = useMemo(
@@ -119,9 +151,14 @@ const AddMedicationDialog = memo(
             createdBy: "current-user", // TODO: Obtener del contexto de auth
           };
 
-          await createMedication(medicationData);
-
-          toast.success("Medicamento creado exitosamente");
+          if (medicationId) {
+            await updateMedication(medicationId, medicationData);
+            toast.success("Medicamento actualizado exitosamente");
+          } else {
+            // Create new medication
+            await createMedication(medicationData);
+            toast.success("Medicamento creado exitosamente");
+          }
 
           // Reset form y cerrar dialog
           reset();
@@ -166,8 +203,6 @@ const AddMedicationDialog = memo(
       [setValue]
     );
 
-    console.log(watchedValues)
-
     // Validation for required fields
     const isFormValid = useMemo(() => {
       return (
@@ -186,14 +221,20 @@ const AddMedicationDialog = memo(
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button className="w-full sm:w-auto" data-medication-dialog-trigger>
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Producto
+          <Button
+            className="w-full sm:w-auto"
+            variant={edit ? "outline" : "default"}
+            data-medication-dialog-trigger
+          >
+            {!edit && <Plus className="h-4 w-4 mr-2" />}
+            {edit ? "Editar" : "Nuevo Producto"}
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nuevo Producto</DialogTitle>
+            <DialogTitle>
+              {edit ? "Editar Producto" : "Nuevo Producto"}
+            </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -329,6 +370,7 @@ const AddMedicationDialog = memo(
                 handleFieldChange("activeIngredientIds", ids)
               }
               error={errors.activeIngredientIds?.message}
+              selected={watchedValues.activeIngredientIds}
             />
 
             {/* Botones */}

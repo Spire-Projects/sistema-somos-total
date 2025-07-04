@@ -1,12 +1,12 @@
-import { useCallback, memo } from 'react';
-import { Warehouse } from 'lucide-react';
-import { AddMedicationDialog } from './AddMedicationDialog';
-import { MedicationSearch } from './MedicationSearch';
-import { MedicationFilters } from './MedicationFilters';
-import { MedicationTable } from './MedicationTable';
-import { DataPagination } from '@/shared/components/DataPagination';
-import { useMedicationCatalog } from '../hooks/useMedicationCatalog';
-import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
+import { useCallback, memo } from "react";
+import { Warehouse } from "lucide-react";
+import { AddMedicationDialog } from "./AddMedicationDialog";
+import { MedicationSearch } from "./MedicationSearch";
+import { MedicationFilters } from "./MedicationFilters";
+import { MedicationTable } from "./MedicationTable";
+import { DataPagination } from "@/shared/components/DataPagination";
+import { useMedicationCatalog } from "../hooks/useMedicationCatalog";
+import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
 
 const InventoryPageComponent = () => {
   const {
@@ -26,30 +26,31 @@ const InventoryPageComponent = () => {
     setFilters,
     setSort,
     clearFilters,
-    refresh
+    refresh,
   } = useMedicationCatalog({
-    initialPageSize: 10
+    initialPageSize: 10,
   });
 
   const handleMedicationAdded = useCallback(() => {
-    console.log('Medicamento agregado exitosamente - refrescando lista');
     void refresh();
   }, [refresh]);
 
   const handleRowClick = useCallback((medication: MedicationCatalogView) => {
-    console.log('Clicked medication:', medication.id);
+    console.log("Clicked medication:", medication.id);
     // TODO: Abrir modal de detalles o navegar a página de detalles
   }, []);
 
   if (error) {
     // Si es error de inicialización, mostrar estado de carga
-    if (error.includes('Inicializando base de datos')) {
+    if (error.includes("Inicializando base de datos")) {
       return (
         <div className="p-4 lg:p-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              <h3 className="text-blue-800 font-medium">Inicializando aplicación</h3>
+              <h3 className="text-blue-800 font-medium">
+                Inicializando aplicación
+              </h3>
             </div>
             <p className="text-blue-600 text-sm mt-1">{error}</p>
           </div>
@@ -60,9 +61,11 @@ const InventoryPageComponent = () => {
     return (
       <div className="p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-medium">Error al cargar medicamentos</h3>
+          <h3 className="text-red-800 font-medium">
+            Error al cargar medicamentos
+          </h3>
           <p className="text-red-600 text-sm mt-1">{error}</p>
-          <button 
+          <button
             onClick={refresh}
             className="mt-2 text-red-700 underline text-sm hover:text-red-800"
           >
@@ -82,13 +85,17 @@ const InventoryPageComponent = () => {
             <Warehouse className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-blue-600" />
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">Inventario</p>
-            <p className="text-gray-500 text-sm sm:text-gray-600">Gestión de medicamentos y control de stock</p>
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
+              Inventario
+            </p>
+            <p className="text-gray-500 text-sm sm:text-gray-600">
+              Gestión de medicamentos y control de stock
+            </p>
           </div>
         </div>
         <AddMedicationDialog onMedicationAdded={handleMedicationAdded} />
       </div>
-      
+
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <MedicationSearch
@@ -122,7 +129,7 @@ const InventoryPageComponent = () => {
           </div>
         )}
       </div>
-      
+
       {/* Table */}
       <div>
         {/* Desktop/Tablet container */}
@@ -133,9 +140,10 @@ const InventoryPageComponent = () => {
             sort={sort}
             onSort={setSort}
             onRowClick={handleRowClick}
+            handleRefresh={handleMedicationAdded}
           />
         </div>
-        
+
         {/* Mobile view - no container */}
         <div className="md:hidden">
           <MedicationTable
@@ -144,6 +152,7 @@ const InventoryPageComponent = () => {
             sort={sort}
             onSort={setSort}
             onRowClick={handleRowClick}
+            handleRefresh={handleMedicationAdded}
           />
         </div>
       </div>

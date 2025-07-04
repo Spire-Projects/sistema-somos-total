@@ -4,6 +4,7 @@ import CreatableSelect from "@/shared/components/CreatableSelect";
 import type { GenericNameDoc } from "@/shared/types/Medication";
 import {
   createGenericName,
+  findGenericNameById,
   findGenericNamesPaginated,
 } from "@/shared/services/GenericNameService";
 
@@ -14,11 +15,20 @@ interface GenericNameSelectProps {
 }
 
 const GenericNameSelect = memo(
-  ({ onChange, error }: GenericNameSelectProps) => {
+  ({ onChange, error, selectedId }: GenericNameSelectProps) => {
     const [initialGenericNames, setInitialGenericNames] = useState<
       GenericNameDoc[]
     >([]);
     const [selected, setSelected] = useState<GenericNameDoc | null>(null);
+
+    useEffect(() => {
+      const getGenericName = async () => {
+        const genericName = await findGenericNameById(selectedId);
+        setSelected(genericName);
+      };
+
+      getGenericName();
+    }, [selectedId]);
 
     useEffect(() => {
       const loadInitial = async () => {
