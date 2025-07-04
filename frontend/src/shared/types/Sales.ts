@@ -1,5 +1,29 @@
 import type { MedicationBatch } from './Medication';
 
+export interface SaleItem {
+  batchId: string;
+  medicationId: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Sale {
+  id: string;
+  items: Array<{
+    batchId: string;
+    medicationId: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }>;
+  total: number;
+  client: string; // Cambia a `string` para evitar `undefined`
+  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia';
+  createdAt: number;
+  createdBy: string;
+}
+
 export interface BatchWithMedication extends MedicationBatch {
   medication: {
     id: string;
