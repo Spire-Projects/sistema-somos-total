@@ -1,0 +1,67 @@
+[33m00458c4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/sales-repository[m[33m)[m feat: sales repository
+[33m5a9c633[m[33m ([m[1;31morigin/develop[m[33m, [m[1;32mdevelop[m[33m)[m Merge pull request #4 from Spire-Projects/feat/dailyCashClosure
+[33m7772415[m feat: daily cash closure
+[33m4cd325b[m Merge pull request #3 from Spire-Projects/feature/US-19/RegisteFrecuentClient
+[33m711b394[m fix: debounce search
+[33ma0c49a4[m fix: color button
+[33m360400a[m fix: save data like undefined
+[33m3b1cf09[m feat: table clients
+[33m7163819[m feat: sync firebase
+[33m11cd72d[m feat: edit medication
+[33m3cb8511[m fix: indexes client schema
+[33mfbe32d6[m feat: add products finish form
+[33m4df8b0c[m hotfix: electron settings
+[33mcd68d67[m feat: add icon
+[33ma9f2b62[m Merge pull request #2 from Spire-Projects/feature/ID_06_09/UserManagmentAndBatchManagment
+[33m404e2cf[m[33m ([m[1;31morigin/feature/ID_06_09/UserManagmentAndBatchManagment[m[33m)[m refactor: tabs
+[33mf3e6499[m feat: add medication dialog on batch dialog
+[33m89de800[m fix: ui responsive
+[33m0e2e92e[m fix: pagination componente
+[33mceed633[m fix: indexers db
+[33m895676d[m feat: add filters and table inventary
+[33mf3c82ca[m refactor: form create medication
+[33ma49618c[m refactor: ingredients repository
+[33ma0cc730[m refactor: forms pharma repository
+[33m0b2c243[m refactor: category repository
+[33m9ba6b2d[m refactor: inventory page
+[33m269159d[m refactor: inventory page
+[33m7468909[m refactor: database
+[33m8ed841e[m refactor: replace mocked data in purchases
+[33mc108847[m refactor: move logic to a hook
+[33m6d571f2[m feat: customs dialog
+[33mf3ec108[m feat: protect path by role
+[33m9a3c66b[m Merge branch 'develop' into feature/US-09/RegisterUsers
+[33m42e8038[m Merge branch 'develop' of github.com:Spire-Projects/sistema-farmacia into develop
+[33m7c3a4d4[m feat: add purchase section
+[33mdddaed0[m Merge pull request #1 from Spire-Projects/feature/US-22/crear-categorias
+[33m61df728[m[33m ([m[1;31morigin/feature/US-22/crear-categorias[m[33m)[m US-22 feat: add comercial name to product
+[33m4564997[m feat: purchase mocked
+[33mf56a3e2[m US-22 feat: add generic names selector
+[33mf43932e[m US-22 feat: update selector for manufacters, categories and pharmaceutical forms
+[33m9f17f35[m US-22 feat: async create table select component refactor
+[33me6670ff[m fix: colors
+[33m4750d64[m fix: tabs
+[33m9de8f45[m Merge branch 'develop' of github.com:Spire-Projects/sistema-farmacia into develop
+[33me258e8f[m fix: delete script
+[33m38a2ce5[m feat: config styles
+[33m767cf2e[m feat: add logo images
+[33mc98a4d6[m feat: basic data
+[33m8f9e016[m feat: inventory provitional page
+[33ma6ce966[m fix: db initialization
+[33maa32ba7[m feat: create Medication crud
+[33m56e2f58[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Remove Dockerfile and create_icon.py
+[33ma0b7809[m Untrack all package-lock.json files and update .gitignore to ignore them, including electron/package-lock.json
+[33m920e52a[m Untrack node_modules and dist-electron; update .gitignore to ignore them
+[33m1e04388[m release: setup
+[33mce2a82e[m Deja de trackear node_modules, archivos de lock, .env y carpetas de build
+[33m3f62227[m fix: default user
+[33maedafa5[m refactor: change to rxdb
+[33mab82470[m fix: delete bad builds
+[33m20fda2d[m build: setting win electron
+[33ma6e2e9a[m build: setting electron
+[33m024a4dc[m build: setting electron
+[33m8ad643a[m documentation: create readme
+[33m4c6d72b[m fix: close rxdb data base
+[33m3569af3[m feat: login
+[33mcbb4a00[m refactor: change to rxdb
+[33m4f2ee48[m release: setup
