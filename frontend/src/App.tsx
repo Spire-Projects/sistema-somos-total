@@ -9,13 +9,13 @@ import { startAllReplications } from './shared/db/replication/startReplications'
 function App() {
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    const init = async () => {
-      const db = await initDatabase();
-      startAllReplications(db);
-    };
-    init();
-  }, []);
+  // useEffect(() => {
+  //   const init = async () => {
+  //     const db = await initDatabase();
+  //     startAllReplications(db);
+  //   };
+  //   init();
+  // }, []);
 
   useEffect(() => {
     // Cargar usuario del localStorage al iniciar la app

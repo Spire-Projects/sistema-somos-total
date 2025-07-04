@@ -18,6 +18,8 @@ import type {
   MedicationCatalogSortField,
 } from "@/shared/types/MedicationViewTypes";
 import AddMedicationDialog from "./AddMedicationDialog";
+import DeleteDialog from "@/shared/components/DeleteDialog";
+import { deleteMedication } from "@/shared/services";
 
 interface MedicationTableProps {
   medications: MedicationCatalogView[];
@@ -126,6 +128,19 @@ export const MedicationTable = memo<MedicationTableProps>(
         onRowClick?.(medication);
       },
       [onRowClick]
+    );
+
+    const handleDeleteMedication = useCallback(
+      async (item: MedicationCatalogView) => {
+        try {
+          await deleteMedication(item.id);
+
+          handleRefresh();
+        } catch {
+          alert("No se pudo borrar, intenta de nuevo");
+        }
+      },
+      []
     );
 
     return (
@@ -284,6 +299,12 @@ export const MedicationTable = memo<MedicationTableProps>(
                         medicationId={medication.id}
                         onMedicationAdded={handleRefresh}
                         edit
+                      />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <DeleteDialog
+                        onConfirm={() => handleDeleteMedication(medication)}
+                        name={"Medicamento " + medication.tradeName}
                       />
                     </TableCell>
                   </TableRow>
