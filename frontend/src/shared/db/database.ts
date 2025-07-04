@@ -6,6 +6,8 @@ import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { userSchema } from "./models/user.model";
 import type { UserDocument } from "./models/user.model";
+import { clientSchema } from "./models/client.model";
+import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
 import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
@@ -48,6 +50,7 @@ const setupRxDBPlugins = async () => {
 // Tipos para las colecciones
 export interface DatabaseCollections {
   users: RxCollection<UserDocument>;
+  clients: RxCollection<Client>;
   active_ingredients: RxCollection<ActiveIngredient>;
   medication_categories: RxCollection<MedicationCategory>;
   pharmaceutical_forms: RxCollection<PharmaceuticalFormDoc>;
@@ -97,6 +100,9 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
       await db.addCollections({
         users: {
           schema: userSchema,
+        },
+        clients: {
+          schema: clientSchema,
         },
         active_ingredients: {
           schema: activeIngredientSchema,

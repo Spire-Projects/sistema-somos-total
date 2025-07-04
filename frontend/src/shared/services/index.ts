@@ -6,3 +6,6 @@ export * from './ManufacturerService';
 export * from './MedicationService';
 export * from './MedicationBatchService';
 export * from './BatchService';
+
+// Exportar servicios de clientes
+export * from './ClientService';
