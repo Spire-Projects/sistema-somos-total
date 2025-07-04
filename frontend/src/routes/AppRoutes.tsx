@@ -11,6 +11,7 @@ import { ReportsPage } from '../features/reports/components/ReportsPage';
 import { SettingsPage } from '../features/settings/components/SettingsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { useAppSelector } from '../shared/store/hooks';
+import { DailyCashClosuresPage } from '@/features/dailyCashClosure/DayliCashClosurePage';
 
 export const AppRoutes = () => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -38,6 +39,7 @@ export const AppRoutes = () => {
         <Route path="reports" element={<ProtectedRoute allowedRoles={["admin"]}><ReportsPage /></ProtectedRoute>} />
         <Route path="users" element={<ProtectedRoute allowedRoles={["admin"]}><UserManager /></ProtectedRoute>} />
         <Route path="settings" element={<ProtectedRoute allowedRoles={["admin"]}><SettingsPage /></ProtectedRoute>} />
+        <Route path="dailyCash" element={<ProtectedRoute allowedRoles={["admin"]}><DailyCashClosuresPage /></ProtectedRoute>} />
       </Route>
       
       {/* Ruta fallback */}

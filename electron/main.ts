@@ -78,19 +78,14 @@ function createWindow(): void {
 
 async function initializeApp(): Promise<void> {
   try {
-    console.log('🚀 Inicializando FarmaApp...');
-    
     if (isDev && !app.isPackaged) {
       console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5173');
       console.log('💡 Asegúrate de ejecutar "npm run dev:frontend" en otra terminal');
     } else {
-      console.log('📦 Modo producción: Usando archivos compilados');
     }
     
     // Crear ventana principal
     createWindow();
-    
-    console.log('✅ FarmaApp inicializada correctamente');
   } catch (error) {
     console.error('❌ Error al inicializar FarmaApp:', error);
     app.quit();

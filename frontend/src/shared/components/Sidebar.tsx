@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   X,
+  Book,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -80,6 +81,13 @@ const menuItems: MenuItem[] = [
     icon: Users,
     href: "/users",
     color: "text-cyan-600",
+    roles: ["admin"],
+  },
+  {
+    title: "Arqueo de Caja",
+    icon: Book,
+    href: "/dailyCash",
+    color: "text-orange-600",
     roles: ["admin"],
   },
   {
