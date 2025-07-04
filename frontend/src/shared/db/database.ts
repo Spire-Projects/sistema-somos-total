@@ -10,6 +10,7 @@ import { clientSchema } from "./models/client.model";
 import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
+import { saleSchema } from "./models/sale.model";
 import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
 import { manufacturerSchema } from "./models/manufacturer.model";
 import { medicationSchema } from "./models/medication.model";
@@ -22,6 +23,7 @@ import type {
   Medication,
   MedicationBatch,
   GenericNameDoc,
+  Sale,
 } from "../types/Medication";
 import { config } from "../config/config";
 import { genericNameSchema } from "./models/genericName.model";
@@ -63,6 +65,7 @@ export interface DatabaseCollections {
   medications: RxCollection<Medication>;
   medication_batches: RxCollection<MedicationBatch>;
   daily_cash_closures: RxCollection<DailyCashClosure>;
+  sales: RxCollection<Sale>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -133,6 +136,9 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
+        },
+        sales: {
+          schema: saleSchema,
         },
       });
 
