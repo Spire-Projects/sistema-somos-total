@@ -33,8 +33,9 @@ export const ClientsPage = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   // Debounce de la búsqueda para evitar consultas excesivas
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 400); // Reducido de 500ms a 400ms
 
+  // Memoizar la función de carga para evitar recreaciones innecesarias
   const loadClients = useCallback(async (page: number, size: number, search: string) => {
     setLoading(true);
     try {
@@ -50,7 +51,7 @@ export const ClientsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Sin dependencias porque getAllClientsPaginated es estable
 
   // Cargar clientes cuando cambie la página, tamaño o búsqueda
   useEffect(() => {
