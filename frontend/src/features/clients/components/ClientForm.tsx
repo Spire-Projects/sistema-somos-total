@@ -25,6 +25,8 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
     formState: { errors },
   } = form;
 
+  const isEditMode = mode === "edit";
+
   return (
     <div className="grid gap-4">
       {/* Información básica */}
@@ -33,7 +35,7 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
           <Label htmlFor="name">Nombre completo *</Label>
           <Input
             id="name"
-            placeholder="Juan Pérez"
+            placeholder={isEditMode ? "Editar nombre del cliente" : "Juan Pérez"}
             autoComplete="name"
             {...register("name")}
             className={errors.name ? "border-red-500" : ""}
@@ -91,7 +93,9 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="loyaltyPoints">Puntos de fidelidad iniciales</Label>
+          <Label htmlFor="loyaltyPoints">
+            {isEditMode ? "Puntos de fidelidad actuales" : "Puntos de fidelidad iniciales"}
+          </Label>
           <Input
             id="loyaltyPoints"
             type="number"
@@ -105,6 +109,11 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
           />
           {errors.loyaltyPoints && (
             <p className="text-sm text-red-500">{errors.loyaltyPoints.message}</p>
+          )}
+          {!isEditMode && (
+            <p className="text-xs text-gray-500">
+              Los puntos se pueden ajustar después de crear el cliente
+            </p>
           )}
         </div>
       </div>

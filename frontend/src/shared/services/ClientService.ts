@@ -14,15 +14,15 @@ const getRepository = () => getClientRepository();
 export const createClient = async (clientData: CreateClientData): Promise<Client> => {
   const repository = getRepository();
   
-  // Validar que no exista un cliente con el mismo email o NIT solo si están presentes
-  if (clientData.email && clientData.email.trim()) {
+  // Validar que no exista un cliente con el mismo email o NIT solo si están presentes y no están vacíos
+  if (clientData.email && clientData.email.trim() !== "") {
     const existingEmail = await repository.findByEmail(clientData.email);
     if (existingEmail) {
       throw new Error('Ya existe un cliente con este email');
     }
   }
 
-  if (clientData.nit && clientData.nit.trim()) {
+  if (clientData.nit && clientData.nit.trim() !== "") {
     const existingNit = await repository.findByNit(clientData.nit);
     if (existingNit) {
       throw new Error('Ya existe un cliente con este NIT');
@@ -32,6 +32,11 @@ export const createClient = async (clientData: CreateClientData): Promise<Client
   const now = new Date().toISOString();
   return await repository.create({
     ...clientData,
+    // Asegurar que los campos opcionales sean strings vacíos en lugar de undefined
+    email: clientData.email?.trim() || "",
+    nit: clientData.nit?.trim() || "",
+    phone: clientData.phone?.trim() || "",
+    address: clientData.address?.trim() || "",
     createdAt: now,
     updatedAt: now,
     loyaltyPoints: clientData.loyaltyPoints || 0,
@@ -91,15 +96,15 @@ export const getAllClientsPaginated = async (
 export const updateClient = async (id: string, updateData: UpdateClientData): Promise<Client | null> => {
   const repository = getRepository();
   
-  // Si se está actualizando email o NIT, validar que no existan duplicados solo si están presentes
-  if (updateData.email && updateData.email.trim()) {
+  // Si se está actualizando email o NIT, validar que no existan duplicados solo si están presentes y no están vacíos
+  if (updateData.email && updateData.email.trim() !== "") {
     const existingEmail = await repository.findByEmail(updateData.email);
     if (existingEmail && existingEmail.id !== id) {
       throw new Error('Ya existe un cliente con este email');
     }
   }
 
-  if (updateData.nit && updateData.nit.trim()) {
+  if (updateData.nit && updateData.nit.trim() !== "") {
     const existingNit = await repository.findByNit(updateData.nit);
     if (existingNit && existingNit.id !== id) {
       throw new Error('Ya existe un cliente con este NIT');
@@ -108,6 +113,11 @@ export const updateClient = async (id: string, updateData: UpdateClientData): Pr
 
   return await repository.update(id, {
     ...updateData,
+    // Asegurar que los campos opcionales sean strings vacíos en lugar de undefined
+    email: updateData.email?.trim() || "",
+    nit: updateData.nit?.trim() || "",
+    phone: updateData.phone?.trim() || "",
+    address: updateData.address?.trim() || "",
     updatedAt: new Date().toISOString()
   });
 };

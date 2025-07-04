@@ -88,10 +88,10 @@ export const AddClientDialog = ({
         // Modo edición
         const updateData: UpdateClientData = {
           name: data.name,
-          email: data.email || "undefined",
-          nit: data.nit || "undefined",
-          phone: data.phone || "undefined",
-          address: data.address || "undefined",
+          email: data.email?.trim() || "",
+          nit: data.nit?.trim() || "",
+          phone: data.phone?.trim() || "",
+          address: data.address?.trim() || "",
           loyaltyPoints: data.loyaltyPoints || 0,
         };
 
@@ -101,10 +101,10 @@ export const AddClientDialog = ({
         // Modo creación
         const clientData: CreateClientData = {
           name: data.name,
-          email: data.email || "undefined",
-          nit: data.nit || "undefined",
-          phone: data.phone || "undefined",
-          address: data.address || "undefined",
+          email: data.email?.trim() || "",
+          nit: data.nit?.trim() || "",
+          phone: data.phone?.trim() || "",
+          address: data.address?.trim() || "",
           loyaltyPoints: data.loyaltyPoints || 0,
         };
 
