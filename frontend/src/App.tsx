@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { Toaster } from 'sonner';
-import { AppRoutes } from './routes/AppRoutes';
-import { useAppDispatch } from './shared/store/hooks';
-import { loadUserFromStorage } from './shared/store/authSlice';
-import { initDatabase } from './shared/db/database';
-import { startAllReplications } from './shared/db/replication/startReplications';
+import { useEffect } from "react";
+import { Toaster } from "sonner";
+import { AppRoutes } from "./routes/AppRoutes";
+import { useAppDispatch } from "./shared/store/hooks";
+import { loadUserFromStorage } from "./shared/store/authSlice";
+// import { initDatabase } from "./shared/db/database";
+// import { startAllReplications } from "./shared/db/replication/startReplications";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -25,12 +25,7 @@ function App() {
   return (
     <div>
       <AppRoutes />
-      <Toaster 
-        position="top-right"
-        richColors
-        closeButton
-        duration={4000}
-      />
+      <Toaster position="top-right" richColors closeButton duration={4000} />
     </div>
   );
 }
