@@ -11,6 +11,7 @@ import CustomDialog from "@/shared/components/CustomDialog";
 import { getAllClientsPaginated, deleteClient } from "@/shared/services/ClientService";
 import { useDebounce } from "../hooks/useDebounce";
 import type { Client } from "@/shared/types/Client";
+import { Button } from "@/shared/components/ui/button";
 
 interface PaginationData {
   startIndex: number;
@@ -171,12 +172,13 @@ export const ClientsPage = () => {
                 }
               </p>
               {!searchQuery && (
-                <button
+                <Button
+                  variant="default"
                   onClick={handleCreateClick}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Agregar Cliente
-                </button>
+                </Button>
               )}
             </div>
           ) : (
