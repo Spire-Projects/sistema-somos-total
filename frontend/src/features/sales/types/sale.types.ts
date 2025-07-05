@@ -33,6 +33,8 @@ export interface SaleState {
   total: number; // Total final a cobrar
   clientId?: string;
   clientName?: string;
+  medicId?: string;
+  medicName?: string;
 }
 
 export interface NewSaleFormData {

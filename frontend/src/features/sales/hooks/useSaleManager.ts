@@ -235,6 +235,15 @@ export const useSaleManager = () => {
     }));
   }, []);
 
+  // Establecer médico
+  const setMedic = useCallback((medicId?: string, medicName?: string) => {
+    setSaleState(prev => ({
+      ...prev,
+      medicId,
+      medicName
+    }));
+  }, []);
+
   return {
     saleState,
     addMedicationToSale,
@@ -243,7 +252,8 @@ export const useSaleManager = () => {
     setClientDiscount,
     removeItem,
     clearSale,
-    setClient
+    setClient,
+    setMedic
   };
 };
 

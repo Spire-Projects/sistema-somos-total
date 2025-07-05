@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +6,15 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog.tsx";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { Separator } from "@/shared/components/ui/separator.tsx";
-import { ShoppingCart, User, Receipt } from 'lucide-react';
+import { ShoppingCart, Receipt } from 'lucide-react';
 import MedicationSearch from './MedicationSearch';
 import SaleItemsTable from './SaleItemsTable';
+import SaleClientAndSummary from './SaleClientAndSummary';
 import { useSaleManager } from '../hooks/useSaleManager';
-import { formatCurrency } from '@/shared/services/BatchService';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
+import type { Client } from '@/shared/types/Client';
+import type { Medic } from '@/shared/types/Sales';
 
 interface NewSaleDialogProps {
   open: boolean;
@@ -23,10 +22,6 @@ interface NewSaleDialogProps {
 }
 
 const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
-  const [discountEditMode, setDiscountEditMode] = useState(false);
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
-  const [discountValue, setDiscountValue] = useState(0);
-
   const {
     saleState,
     addMedicationToSale,
@@ -34,7 +29,9 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
     updateItemDiscount,
     setClientDiscount,
     removeItem,
-    clearSale
+    clearSale,
+    setClient,
+    setMedic
   } = useSaleManager();
 
   // Manejar selección de medicamento desde la búsqueda
@@ -55,14 +52,27 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
     onOpenChange(false);
   };
 
-  // Aplicar descuento personalizado
-  const handleApplyDiscount = () => {
-    if (discountValue > 0) {
-      setClientDiscount(discountType, discountValue);
+  // Manejar selección de cliente
+  const handleClientSelect = (client: Client | null) => {
+    if (client) {
+      setClient(client.id, client.name);
     } else {
-      setClientDiscount('percentage', 0);
+      setClient();
     }
-    setDiscountEditMode(false);
+  };
+
+  // Manejar selección de médico
+  const handleMedicSelect = (medic: Medic | null) => {
+    if (medic) {
+      setMedic(medic.id, medic.fullName);
+    } else {
+      setMedic();
+    }
+  };
+
+  // Manejar cambio de descuento de cliente
+  const handleClientDiscountChange = (type: 'percentage' | 'fixed', value: number) => {
+    setClientDiscount(type, value);
   };
 
   return (
@@ -129,138 +139,14 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
           </div>
 
           {/* Sección de cliente y resumen */}
-          <div className="lg:w-80 flex flex-col gap-4">
-            {/* Información del cliente */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Cliente
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-4 text-gray-500">
-                  <p className="text-sm">Cliente general</p>
-                  <Button variant="outline" size="sm" className="mt-2">
-                    Seleccionar Cliente
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Resumen de venta */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Resumen</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>SUBTOTAL (Bs):</span>
-                  <span>{formatCurrency(saleState.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-blue-600">
-                  <span>MONTO CON DESC (Bs):</span>
-                  <span>{formatCurrency(saleState.amountWithDiscount)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>MONTO SIN DESC (Bs):</span>
-                  <span>{formatCurrency(saleState.amountWithoutDiscount)}</span>
-                </div>
-                
-                {/* Descuento de cliente */}
-                <div className="border-t pt-2">
-                  <div className="flex justify-between text-sm items-center">
-                    <span>DESC. CLIENTE:</span>
-                    <div className="flex items-center gap-2">
-                      {saleState.clientDiscount ? (
-                        <span className="text-orange-600">
-                          {saleState.clientDiscount.type === 'percentage' 
-                            ? `${saleState.clientDiscount.value}%` 
-                            : formatCurrency(saleState.clientDiscount.value)
-                          }
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">Sin descuento</span>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => setDiscountEditMode(!discountEditMode)}
-                      >
-                        {discountEditMode ? 'Cancelar' : 'Editar'}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Controles de edición del descuento */}
-                  {discountEditMode && (
-                    <div className="mt-2 p-2 bg-gray-50 rounded space-y-2">
-                      <div className="flex gap-2">
-                        <Select value={discountType} onValueChange={(value: 'percentage' | 'fixed') => setDiscountType(value)}>
-                          <SelectTrigger className="w-24 h-6 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="percentage">%</SelectItem>
-                            <SelectItem value="fixed">Bs</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          value={discountValue}
-                          onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
-                          placeholder="0"
-                          className="flex-1 h-6 text-xs"
-                          min="0"
-                          step={discountType === 'percentage' ? "1" : "0.01"}
-                          max={discountType === 'percentage' ? 100 : saleState.subtotal}
-                        />
-                        <Button
-                          size="sm"
-                          onClick={handleApplyDiscount}
-                          className="h-6 px-2 text-xs"
-                        >
-                          OK
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-                
-                <div className="flex justify-between text-sm text-green-600 font-medium">
-                  <span>TOTAL AHORRADO (Bs):</span>
-                  <span>{formatCurrency(saleState.totalSaved)}</span>
-                </div>
-                
-                <Separator />
-                <div className="flex justify-between font-bold !text-sm">
-                  <span>TOTAL POR COBRAR (Bs):</span>
-                  <span className="text-green-600">{formatCurrency(saleState.total)}</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Botones de acción */}
-            <div className="space-y-2">
-              <Button 
-                onClick={handleConfirmSale}
-                className="w-full"
-                disabled={saleState.items.length === 0}
-              >
-                Confirmar Venta
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleCancel}
-                className="w-full"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
+          <SaleClientAndSummary
+            saleState={saleState}
+            onClientSelect={handleClientSelect}
+            onMedicSelect={handleMedicSelect}
+            onClientDiscountChange={handleClientDiscountChange}
+            onConfirmSale={handleConfirmSale}
+            onCancel={handleCancel}
+          />
         </div>
       </DialogContent>
     </Dialog>
