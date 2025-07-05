@@ -6,6 +6,7 @@ import type {
 } from '../../types/MedicationViewTypes';
 import type { RxCollection } from 'rxdb';
 import { config } from '@/shared/config/config';
+import { findGenericNameById } from '@/shared/services/GenericNameService';
 
 export interface IMedicationRepository {
   // CRUD básico existente
@@ -297,7 +298,24 @@ export class LocalMedicationDB implements IMedicationRepository {
       limit: size
     }).exec();
 
-    const items = docs.map((doc: any) => JSON.parse(JSON.stringify(doc.toJSON())) as Medication);
+    const rawItems = docs.map((doc: any) => JSON.parse(JSON.stringify(doc.toJSON())) as Medication);
+
+    const items = await Promise.all(
+      rawItems.map(async (med) => {
+        if (med.genericName) {
+          const generic = await findGenericNameById(med.genericName);
+          return {
+            ...med,
+            genericName: generic?.name || "Desconocido",
+          };
+        }
+        return {
+          ...med,
+          genericName: "Sin genérico",
+        };
+      })
+    );
+
     const totalPages = Math.ceil(totalItems / size);
 
     return {

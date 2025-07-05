@@ -206,7 +206,7 @@ export const UserDialog: React.FC<UserDialogProps> = ({
               <Label htmlFor="active">Estado</Label>
               <Select 
                 value={formData.active ? 'active' : 'inactive'} 
-                onValueChange={(value) => setFormData({ ...formData, active: value === 'active' })}
+                onValueChange={(value: string) => setFormData({ ...formData, active: value === 'active' })}
                 disabled={loading}
               >
                 <SelectTrigger>

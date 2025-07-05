@@ -10,7 +10,6 @@ import { clientSchema } from "./models/client.model";
 import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
-import { saleSchema } from "./models/sale.model";
 import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
 import { manufacturerSchema } from "./models/manufacturer.model";
 import { medicationSchema } from "./models/medication.model";
@@ -30,6 +29,7 @@ import { genericNameSchema } from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
 import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
+import { saleSchema } from "./models/sale.model";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -139,7 +139,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
         },
-        sales: {
+         sales: {
           schema: saleSchema,
         },
         medics: {

@@ -1,11 +1,11 @@
 import { memo, useCallback } from 'react';
 import { Filter, RotateCcw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { Select } from '@/shared/components/ui/select';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Badge } from '@/shared/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import type { MedicationCatalogFilters } from '@/shared/types/MedicationViewTypes';
 
 interface MedicationFiltersProps {
@@ -23,13 +23,18 @@ const STOCK_STATUS_OPTIONS = [
   { value: 'overstocked', label: 'Exceso de stock' }
 ];
 
+const AVAILABILITY_OPTIONS = [
+  { value: '', label: 'Todos' },
+  { value: 'true', label: 'Con stock' },
+  { value: 'false', label: 'Sin stock' }
+];
+
 export const MedicationFilters = memo<MedicationFiltersProps>(({
   filters,
   onChange,
   onClear,
   disabled = false
 }) => {
-  // Count active filters
   const activeFilterCount = Object.values(filters).filter(value => 
     value !== undefined && value !== '' && value !== null
   ).length;
@@ -107,35 +112,48 @@ export const MedicationFilters = memo<MedicationFiltersProps>(({
             )}
           </div>
 
-          {/* Stock Status Filter */}
+          {/* Stock Status Filter - RadioGroup */}
           <div className="space-y-2">
             <Label className="text-xs font-medium">Estado de Stock</Label>
-            <Select 
-              value={filters.stockStatus || ''} 
+            <RadioGroup 
+              value={filters.stockStatus || ''}
               onValueChange={handleStockStatusChange}
+              className="flex flex-col space-y-1"
             >
               {STOCK_STATUS_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`stock-status-${option.value}`} />
+                  <Label 
+                    htmlFor={`stock-status-${option.value}`} 
+                    className="text-sm cursor-pointer"
+                  >
+                    {option.label}
+                  </Label>
+                </div>
               ))}
-            </Select>
+            </RadioGroup>
           </div>
 
-          {/* Has Stock Filter */}
+          {/* Has Stock Filter - RadioGroup */}
           <div className="space-y-2">
             <Label className="text-xs font-medium">Disponibilidad</Label>
-            <Select 
-              value={
-                filters.hasStock === true ? 'true' : 
-                filters.hasStock === false ? 'false' : ''
-              } 
+            <RadioGroup
+              value={filters.hasStock === true ? 'true' : filters.hasStock === false ? 'false' : ''}
               onValueChange={handleHasStockChange}
+              className="flex flex-col space-y-1"
             >
-              <option value="">Todos</option>
-              <option value="true">Con stock</option>
-              <option value="false">Sin stock</option>
-            </Select>
+              {AVAILABILITY_OPTIONS.map(option => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`availability-${option.value}`} />
+                  <Label 
+                    htmlFor={`availability-${option.value}`} 
+                    className="text-sm cursor-pointer"
+                  >
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
 
           {/* Stock Range */}

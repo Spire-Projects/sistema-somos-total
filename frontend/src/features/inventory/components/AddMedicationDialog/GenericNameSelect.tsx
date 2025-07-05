@@ -1,11 +1,12 @@
-// components/GenericNameSelect.tsx
 import { memo, useCallback, useEffect, useState } from "react";
 import CreatableSelect from "@/shared/components/CreatableSelect";
 import type { GenericNameDoc } from "@/shared/types/Medication";
 import {
   createGenericName,
+  deleteGenericName,
   findGenericNameById,
   findGenericNamesPaginated,
+  updateGenericName,
 } from "@/shared/services/GenericNameService";
 
 interface GenericNameSelectProps {
@@ -69,6 +70,43 @@ const GenericNameSelect = memo(
       []
     );
 
+    const handleEditGenericName = useCallback(
+      async (updated: GenericNameDoc): Promise<GenericNameDoc | null> => {
+        try {
+          const edited = await updateGenericName(updated.id, {
+            name: updated.name,
+          });
+
+          if (!edited) return null;
+
+          setInitialGenericNames((prev) =>
+            prev.map((item) => (item.id === edited.id ? edited : item))
+          );
+
+          return edited;
+        } catch (error) {
+          alert("Error, intenta de nuevo.");
+          throw error;
+        }
+      },
+      []
+    );
+
+    const handleDeleteGenericName = useCallback(
+      async (item: GenericNameDoc) => {
+        try {
+          await deleteGenericName(item.id);
+
+          setInitialGenericNames((prev) =>
+            prev.filter((i) => i.id !== item.id)
+          );
+        } catch {
+          alert("Error, intenta de nuevo.");
+        }
+      },
+      []
+    );
+
     return (
       <div className="space-y-2">
         <CreatableSelect<GenericNameDoc>
@@ -81,6 +119,8 @@ const GenericNameSelect = memo(
           }}
           searchFunction={searchGenericNames}
           onAddValue={handleCreateGenericName}
+          onEditValue={handleEditGenericName}
+          onDeleteValue={handleDeleteGenericName}
           displayField="name"
           valueField="id"
           placeholder="Ej: Paracetamol, Amoxicilina, Ibuprofeno"

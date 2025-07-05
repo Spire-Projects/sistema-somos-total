@@ -5,9 +5,11 @@ import {
 } from "@/shared/components/ui/popover";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useKeyboardNavigation } from "@/shared/hooks/useKeyboardNavigation";
+import EditDialog from "./EditDialog";
+import DeleteDialog from "./DeleteDialog";
 
 interface CreatableSelectProps<T> {
   label: string;
@@ -21,6 +23,8 @@ interface CreatableSelectProps<T> {
   valueField: keyof T; // Campo único para identificar (ej: 'id')
   disabled?: boolean; // Si se quiere deshabilitar el select
   hideLabel?: boolean; // Si se quiere ocultar la etiqueta
+  onEditValue?: (item: T) => Promise<T | null>;
+  onDeleteValue?: (item: T) => Promise<void>;
 }
 
 // Hook personalizado para debounce
@@ -48,6 +52,8 @@ const CreatableSelect = <T,>({
   placeholder,
   searchFunction,
   onAddValue,
+  onEditValue,
+  onDeleteValue,
   displayField,
   valueField,
   disabled = false,
@@ -65,11 +71,13 @@ const CreatableSelect = <T,>({
   // Scroll hacia el elemento destacado
   useEffect(() => {
     if (highlightedIndex >= 0 && listRef.current) {
-      const highlightedElement = listRef.current.children[highlightedIndex] as HTMLElement;
+      const highlightedElement = listRef.current.children[
+        highlightedIndex
+      ] as HTMLElement;
       if (highlightedElement) {
         highlightedElement.scrollIntoView({
-          block: 'nearest',
-          behavior: 'smooth'
+          block: "nearest",
+          behavior: "smooth",
         });
       }
     }
@@ -79,15 +87,17 @@ const CreatableSelect = <T,>({
   const debouncedSearch = useDebounce(search, 300);
 
   // Memoizar valores calculados
-  const displayText = useMemo(() => 
-    selectedValue ? String(selectedValue[displayField]) : "", 
+  const displayText = useMemo(
+    () => (selectedValue ? String(selectedValue[displayField]) : ""),
     [selectedValue, displayField]
   );
 
-  const exactMatch = useMemo(() => 
-    filteredValues.some(
-      (item) => String(item[displayField]).toLowerCase() === search.toLowerCase()
-    ), 
+  const exactMatch = useMemo(
+    () =>
+      filteredValues.some(
+        (item) =>
+          String(item[displayField]).toLowerCase() === search.toLowerCase()
+      ),
     [filteredValues, search, displayField]
   );
 
@@ -136,7 +146,7 @@ const CreatableSelect = <T,>({
       const newItem = await onAddValue(search.trim());
       onChange(newItem);
       setSearch("");
-      setFilteredValues(prev => [...prev, newItem]);
+      setFilteredValues((prev) => [...prev, newItem]);
       setOpen(false);
     } catch (error) {
       console.error("Error creando elemento:", error);
@@ -146,11 +156,14 @@ const CreatableSelect = <T,>({
     }
   }, [onAddValue, search, onChange]);
 
-  const handleSelect = useCallback((item: T) => {
-    onChange(item);
-    setSearch("");
-    setOpen(false);
-  }, [onChange]);
+  const handleSelect = useCallback(
+    (item: T) => {
+      onChange(item);
+      setSearch("");
+      setOpen(false);
+    },
+    [onChange]
+  );
 
   // Navegación con teclado usando hook personalizado
   const { handleKeyDown } = useKeyboardNavigation({
@@ -167,13 +180,16 @@ const CreatableSelect = <T,>({
     canCreate: Boolean(onAddValue),
   });
 
-  const handleSearch = useCallback((query: string) => {
-    setSearch(query);
-    setHighlightedIndex(-1);
-    if (!open) {
-      setOpen(true);
-    }
-  }, [open]);
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearch(query);
+      setHighlightedIndex(-1);
+      if (!open) {
+        setOpen(true);
+      }
+    },
+    [open]
+  );
 
   // Resetear estado cuando se abre/cierra el popover
   useEffect(() => {
@@ -192,9 +208,9 @@ const CreatableSelect = <T,>({
 
   return (
     <div className="space-y-2">
-        {!hideLabel && 
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-        }
+      {!hideLabel && (
+        <label className="text-sm font-medium text-gray-700">{label}</label>
+      )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -206,18 +222,29 @@ const CreatableSelect = <T,>({
             disabled={disabled}
             onClick={() => !disabled && setOpen(!open)}
           >
-            <span className={`truncate text-left ${!displayText ? 'text-gray-400' : ''}`}>
-              {displayText || placeholder || `Seleccionar ${label.toLowerCase()}`}
+            <span
+              className={`truncate text-left ${
+                !displayText ? "text-gray-400" : ""
+              }`}
+            >
+              {displayText ||
+                placeholder ||
+                `Seleccionar ${label.toLowerCase()}`}
             </span>
-            <ChevronDown className={`ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform ${open ? 'rotate-180' : ''}`} />
+            <ChevronDown
+              className={`ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform ${
+                open ? "rotate-180" : ""
+              }`}
+            />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] p-0"
+          align="start"
+        >
           {disabled ? (
             <div className="p-2">
-              <div className="px-2 py-1.5 text-sm">
-                {displayText}
-              </div>
+              <div className="px-2 py-1.5 text-sm">{displayText}</div>
             </div>
           ) : (
             <>
@@ -238,26 +265,84 @@ const CreatableSelect = <T,>({
                 </div>
               ) : (
                 <div ref={listRef} className="max-h-[200px] overflow-auto">
-                  {filteredValues.map((item, index) => (
-                    <button
-                      key={String(item[valueField])}
-                      className={`w-full px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2 ${
-                        highlightedIndex === index ? "bg-accent text-accent-foreground" : ""
-                      } ${
-                        selectedValue && String(selectedValue[valueField]) === String(item[valueField])
-                          ? "bg-accent/50"
-                          : ""
-                      }`}
-                      onClick={() => handleSelect(item)}
-                    >
-                      {selectedValue && String(selectedValue[valueField]) === String(item[valueField]) && (
-                        <Check className="h-4 w-4" />
-                      )}
-                      <span className="flex-1 truncate">
-                        {String(item[displayField])}
-                      </span>
-                    </button>
-                  ))}
+                  {filteredValues.map((item, index) => {
+                    return (
+                      <div
+                        key={String(item[valueField])}
+                        className={`flex items-center justify-between px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground ${
+                          highlightedIndex === index
+                            ? "bg-accent text-accent-foreground"
+                            : ""
+                        } ${
+                          selectedValue &&
+                          String(selectedValue[valueField]) ===
+                            String(item[valueField])
+                            ? "bg-accent/50"
+                            : ""
+                        }`}
+                      >
+                        <button
+                          className="flex-1 text-left truncate"
+                          onClick={() => handleSelect(item)}
+                        >
+                          {String(item[displayField])}
+                        </button>
+
+                        <div className="flex gap-1 items-center ml-2">
+                          {onEditValue && (
+                            <EditDialog
+                              currentName={String(item[displayField])}
+                              onConfirm={async (newName) => {
+                                const updated = await onEditValue({
+                                  ...item,
+                                  [displayField]: newName,
+                                });
+                                if (!updated) return;
+                                setFilteredValues((prev) =>
+                                  prev.map((v) =>
+                                    String(v[valueField]) ===
+                                    String(updated[valueField])
+                                      ? updated
+                                      : v
+                                  )
+                                );
+                                if (
+                                  selectedValue &&
+                                  String(selectedValue[valueField]) ===
+                                    String(updated[valueField])
+                                ) {
+                                  onChange(updated);
+                                }
+                              }}
+                            />
+                          )}
+                          {onDeleteValue && (
+                            <DeleteDialog
+                              name={String(item[displayField])}
+                              onConfirm={async () => {
+                                await onDeleteValue(item);
+                                setFilteredValues((prev) =>
+                                  prev.filter(
+                                    (v) =>
+                                      String(v[valueField]) !==
+                                      String(item[valueField])
+                                  )
+                                );
+                                if (
+                                  selectedValue &&
+                                  String(selectedValue[valueField]) ===
+                                    String(item[valueField])
+                                ) {
+                                  onChange(null as any); // Limpiar selección si se borró
+                                }
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
                   {search && !exactMatch && onAddValue && (
                     <div className="p-2 border-t">
                       <Button
