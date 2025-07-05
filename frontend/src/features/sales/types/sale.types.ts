@@ -21,9 +21,16 @@ export interface SaleItem {
 
 export interface SaleState {
   items: SaleItem[];
-  subtotal: number;
-  tax: number;
-  total: number;
+  subtotal: number; // Suma total con precio final (con descuento por producto)
+  amountWithDiscount: number; // Suma de productos que tienen descuento
+  amountWithoutDiscount: number; // Suma de productos sin descuento
+  clientDiscount?: {
+    type: 'percentage' | 'fixed';
+    value: number;
+    amount: number;
+  };
+  totalSaved: number; // Total ahorrado
+  total: number; // Total final a cobrar
   clientId?: string;
   clientName?: string;
 }

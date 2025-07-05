@@ -7,7 +7,9 @@ export const useSaleManager = () => {
   const [saleState, setSaleState] = useState<SaleState>({
     items: [],
     subtotal: 0,
-    tax: 0,
+    amountWithDiscount: 0,
+    amountWithoutDiscount: 0,
+    totalSaved: 0,
     total: 0
   });
 
@@ -55,7 +57,7 @@ export const useSaleManager = () => {
         setSaleState(prev => ({
           ...prev,
           items: updatedItems,
-          ...calculateTotals(updatedItems)
+          ...calculateTotals(updatedItems, prev.clientDiscount)
         }));
       } else {
         // Crear nuevo item para este lote
@@ -89,7 +91,7 @@ export const useSaleManager = () => {
       setSaleState(prev => ({
         ...prev,
         items: updatedItems,
-        ...calculateTotals(updatedItems)
+        ...calculateTotals(updatedItems, prev.clientDiscount)
       }));
     }
 
@@ -127,7 +129,7 @@ export const useSaleManager = () => {
     setSaleState(prev => ({
       ...prev,
       items: updatedItems,
-      ...calculateTotals(updatedItems)
+      ...calculateTotals(updatedItems, prev.clientDiscount)
     }));
 
     // Advertir si se limitó la cantidad por stock
@@ -167,7 +169,7 @@ export const useSaleManager = () => {
     setSaleState(prev => ({
       ...prev,
       items: updatedItems,
-      ...calculateTotals(updatedItems)
+      ...calculateTotals(updatedItems, prev.clientDiscount)
     }));
   }, [saleState.items]);
 
@@ -177,7 +179,7 @@ export const useSaleManager = () => {
     setSaleState(prev => ({
       ...prev,
       items: updatedItems,
-      ...calculateTotals(updatedItems)
+      ...calculateTotals(updatedItems, prev.clientDiscount)
     }));
   }, [saleState.items]);
 
@@ -186,8 +188,41 @@ export const useSaleManager = () => {
     setSaleState({
       items: [],
       subtotal: 0,
-      tax: 0,
+      amountWithDiscount: 0,
+      amountWithoutDiscount: 0,
+      totalSaved: 0,
       total: 0
+    });
+  }, []);
+
+  // Establecer descuento de cliente
+  const setClientDiscount = useCallback((type: 'percentage' | 'fixed', value: number) => {
+    setSaleState(prev => {
+      const newState = { ...prev };
+      
+      if (value > 0) {
+        const subtotalForDiscount = prev.subtotal;
+        let discountAmount = 0;
+        
+        if (type === 'percentage') {
+          discountAmount = (subtotalForDiscount * value) / 100;
+        } else {
+          discountAmount = Math.min(value, subtotalForDiscount); // No puede ser mayor al subtotal
+        }
+        
+        newState.clientDiscount = {
+          type,
+          value,
+          amount: discountAmount
+        };
+      } else {
+        newState.clientDiscount = undefined;
+      }
+      
+      return {
+        ...newState,
+        ...calculateTotals(prev.items, newState.clientDiscount)
+      };
     });
   }, []);
 
@@ -205,6 +240,7 @@ export const useSaleManager = () => {
     addMedicationToSale,
     updateItemQuantity,
     updateItemDiscount,
+    setClientDiscount,
     removeItem,
     clearSale,
     setClient
@@ -212,14 +248,41 @@ export const useSaleManager = () => {
 };
 
 // Helper para calcular totales
-const calculateTotals = (items: SaleItem[]) => {
+const calculateTotals = (items: SaleItem[], clientDiscount?: SaleState['clientDiscount']) => {
+  // Calcular subtotal (suma de precios finales con descuentos por producto)
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const tax = subtotal * 0.13; // 13% IVA (ajustar según legislación)
-  const total = subtotal + tax;
+  
+  // Calcular montos con y sin descuento por producto
+  const amountWithDiscount = items
+    .filter(item => (item.discount || 0) > 0)
+    .reduce((sum, item) => sum + item.total, 0);
+  
+  const amountWithoutDiscount = items
+    .filter(item => (item.discount || 0) === 0)
+    .reduce((sum, item) => sum + item.total, 0);
+  
+  // Calcular total de descuentos por producto
+  const totalProductDiscounts = items.reduce((sum, item) => {
+    if (item.discount && item.listPrice) {
+      return sum + (item.discount * item.quantity);
+    }
+    return sum;
+  }, 0);
+  
+  // Calcular descuento de cliente
+  const clientDiscountAmount = clientDiscount?.amount || 0;
+  
+  // Total ahorrado = descuentos por producto + descuento de cliente
+  const totalSaved = totalProductDiscounts + clientDiscountAmount;
+  
+  // Total a cobrar = subtotal - descuento de cliente
+  const total = subtotal - clientDiscountAmount;
 
   return {
     subtotal,
-    tax,
+    amountWithDiscount,
+    amountWithoutDiscount,
+    totalSaved,
     total
   };
 };
