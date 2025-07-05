@@ -10,7 +10,7 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Info, Trash2, Minus, Plus, Calendar, Package2 } from 'lucide-react';
-import { formatCurrency, formatDate, getBatchStatus, getBatchStatusColor, getBatchStatusText } from '@/shared/services/BatchService';
+import { formatCurrency, formatDate } from '@/shared/services/BatchService';
 import type { SaleItem } from '../types/sale.types';
 import MedicationDetailModal from './MedicationDetailModal.tsx';
 
@@ -43,12 +43,12 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="w-12 text-center">No.</TableHead>
-              <TableHead className="min-w-[200px]">Nombre Item</TableHead>
-              <TableHead className="w-24 text-center">Cantidad</TableHead>
-              <TableHead className="w-16 text-center">Detalle</TableHead>
-              <TableHead className="w-24 text-right">Precio/Unidad</TableHead>
-              <TableHead className="w-24 text-right">Subtotal</TableHead>
+              <TableHead className="w-12 text-center border-r border-gray-200">No.</TableHead>
+              <TableHead className="min-w-[200px] border-r border-gray-200">Nombre Item</TableHead>
+              <TableHead className="w-24 text-center border-r border-gray-200">Cantidad</TableHead>
+              <TableHead className="w-16 text-center border-r border-gray-200">Detalle</TableHead>
+              <TableHead className="w-24 text-right border-r border-gray-200">Precio/Unidad</TableHead>
+              <TableHead className="w-24 text-right border-r border-gray-200">Subtotal</TableHead>
               <TableHead className="w-16 text-center">Eliminar</TableHead>
             </TableRow>
           </TableHeader>
@@ -56,12 +56,12 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
             {items.map((item, index) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 {/* No. */}
-                <TableCell className="text-center font-medium text-sm">
+                <TableCell className="text-center font-medium text-sm border-r border-gray-200">
                   {index + 1}
                 </TableCell>
 
                 {/* Nombre Item */}
-                <TableCell>
+                <TableCell className="border-r border-gray-200">
                   <div className="space-y-1">
                     <p className="font-medium text-sm text-gray-900">
                       {item.medication.comercialName}
@@ -85,20 +85,11 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
                         {formatDate(item.batchInfo.expirationDate)}
                       </span>
                     </div>
-                    {/* Estado del lote */}
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${getBatchStatusColor(getBatchStatus(item.batchInfo.expirationDate))}`}>
-                        {getBatchStatusText(getBatchStatus(item.batchInfo.expirationDate))}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {item.batchInfo.daysToExpiration} días restantes
-                      </span>
-                    </div>
                   </div>
                 </TableCell>
 
                 {/* Cantidad */}
-                <TableCell>
+                <TableCell className="border-r border-gray-200">
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
@@ -135,7 +126,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
                 </TableCell>
 
                 {/* Detalle */}
-                <TableCell className="text-center">
+                <TableCell className="text-center border-r border-gray-200">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -147,12 +138,12 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
                 </TableCell>
 
                 {/* Precio por Unidad */}
-                <TableCell className="text-right font-medium text-sm">
+                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
                   {formatCurrency(item.unitPrice)}
                 </TableCell>
 
                 {/* Subtotal */}
-                <TableCell className="text-right font-medium text-sm">
+                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
                   {formatCurrency(item.totalPrice)}
                 </TableCell>
 

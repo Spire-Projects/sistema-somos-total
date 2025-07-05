@@ -49,7 +49,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[1400px] max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[1400px] min-h-[80vh] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-lg md:text-xl flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
