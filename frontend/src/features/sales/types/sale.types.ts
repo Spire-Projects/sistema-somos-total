@@ -6,7 +6,13 @@ export interface SaleItem {
   quantity: number;
   unitPrice: number; // Precio por unidad
   totalPrice: number; // quantity * unitPrice
-  batchId?: string; // ID del lote específico seleccionado
+  batchId: string; // ID del lote específico seleccionado (ahora obligatorio)
+  batchInfo: {
+    batchId: string; // Código del lote (user-defined)
+    expirationDate: string;
+    availableStock: number; // Stock disponible en este lote específico
+    daysToExpiration: number;
+  };
   addedAt: string; // Timestamp de cuando se agregó
 }
 

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Separator } from "@/shared/components/ui/separator.tsx";
 import { ShoppingCart, User, Receipt } from 'lucide-react';
 import MedicationSearch from './MedicationSearch';
-import SaleItemRow from './SaleItemRow';
+import SaleItemsTable from './SaleItemsTable';
 import { useSaleManager } from '../hooks/useSaleManager';
 import { formatCurrency } from '@/shared/services/BatchService';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
@@ -49,7 +49,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[1400px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-lg md:text-xl flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
@@ -91,7 +91,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="overflow-auto max-h-[300px]">
+              <CardContent className="overflow-auto max-h-[400px]">
                 {saleState.items.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Receipt className="h-12 w-12 mx-auto mb-2 text-gray-300" />
@@ -99,16 +99,11 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
                     <p className="text-sm">Busca y selecciona medicamentos para agregar</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {saleState.items.map((item) => (
-                      <SaleItemRow
-                        key={item.id}
-                        item={item}
-                        onUpdateQuantity={updateItemQuantity}
-                        onRemove={removeItem}
-                      />
-                    ))}
-                  </div>
+                  <SaleItemsTable
+                    items={saleState.items}
+                    onUpdateQuantity={updateItemQuantity}
+                    onRemove={removeItem}
+                  />
                 )}
               </CardContent>
             </Card>

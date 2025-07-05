@@ -10,7 +10,7 @@ interface MedicationSearchItemProps {
 }
 
 const MedicationSearchItem = memo(({ medication, onAddToSale }: MedicationSearchItemProps) => {
-  // Para obtener el precio, necesitamos buscar en activeBatches el lote más próximo a vencer
+  // Para obtener el precio, usamos el primer lote (más próximo a vencer) de activeBatches
   const price = medication.activeBatches?.[0]?.sellingPrice || 0;
   
   const handleAddClick = () => {
