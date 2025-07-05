@@ -22,12 +22,14 @@ import type {
   Medication,
   MedicationBatch,
   GenericNameDoc,
-  Sale,
 } from "../types/Medication";
+import type { Sale, Medic } from "../types/Sales";
 import { config } from "../config/config";
 import { genericNameSchema } from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
+import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
+import { saleSchema } from "./models/sale.model";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -65,6 +67,7 @@ export interface DatabaseCollections {
   medication_batches: RxCollection<MedicationBatch>;
   daily_cash_closures: RxCollection<DailyCashClosure>;
   sales: RxCollection<Sale>;
+  medics: RxCollection<Medic>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -136,9 +139,12 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
         },
-    /*     sales: {
+         sales: {
           schema: saleSchema,
-        }, */
+        },
+        medics: {
+          schema: medicSchema,
+        },
       });
 
       dbInstance = db;

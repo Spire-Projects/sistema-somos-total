@@ -1,48 +1,91 @@
-import { useEffect, useState } from 'react';
+import { memo } from 'react';
+import { Loader2, Receipt } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import SaleRow from './SaleRow';
+import type { Sale } from '@/shared/types/Sales';
 
-export const SalesTable = () => {
-  const [sales, setSales] = useState([]);
+interface SalesTableProps {
+  sales: Sale[];
+  isLoading: boolean;
+  error: string | null;
+}
 
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        
-      } catch (error) {
-        console.error('Error al obtener las ventas:', error);
-      }
-    };
-
-    fetchSales();
-  }, []);
+const SalesTable = memo(({ sales, isLoading, error }: SalesTableProps) => {
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-red-600">
+            <p className="text-sm">Error al cargar las ventas:</p>
+            <p className="text-xs mt-1">{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="bg-white p-6 rounded-md shadow-md">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">Ventas Realizadas</h2>
-
-      <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2">Producto</th>
-            <th className="border border-gray-300 px-4 py-2">Cantidad</th>
-            <th className="border border-gray-300 px-4 py-2">Precio</th>
-            <th className="border border-gray-300 px-4 py-2">Cliente</th>
-            <th className="border border-gray-300 px-4 py-2">Método de Pago</th>
-            <th className="border border-gray-300 px-4 py-2">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sales.map((sale, index) => (
-            <tr key={index}>
- {/*              <td className="border border-gray-300 px-4 py-2">{sale.items[0]?.medicationId || 'N/A'}</td>
-              <td className="border border-gray-300 px-4 py-2">{sale.items[0]?.quantity || 'N/A'}</td>
-              <td className="border border-gray-300 px-4 py-2">{sale.items[0]?.unitPrice || 'N/A'}</td>
-              <td className="border border-gray-300 px-4 py-2">{sale.client}</td>
-              <td className="border border-gray-300 px-4 py-2">{sale.paymentMethod}</td>
-              <td className="border border-gray-300 px-4 py-2">{sale.total}</td> */}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Receipt className="h-5 w-5" />
+          Ventas Registradas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400" />
+            <p className="text-sm text-gray-500 mt-2">Cargando ventas...</p>
+          </div>
+        ) : sales.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            <Receipt className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+            <p className="text-sm">No se encontraron ventas</p>
+            <p className="text-xs mt-1">Intenta ajustar los filtros de búsqueda</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm w-10"></th>
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm">
+                    Venta
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm">
+                    Cliente
+                  </th>
+                  <th className="text-center p-3 font-medium text-gray-700 text-sm">
+                    Items
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm">
+                    Pago
+                  </th>
+                  <th className="text-right p-3 font-medium text-gray-700 text-sm">
+                    Total
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm">
+                    Estado
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm">
+                    Vendedor
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.map((sale) => (
+                  <SaleRow key={sale.id} sale={sale} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
-};
+});
+
+SalesTable.displayName = 'SalesTable';
+
+export default SalesTable;

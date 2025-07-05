@@ -341,12 +341,13 @@ export const countMedicationsWithFilters = async (
 const createMedicationCatalogView = async (
   medication: Medication
 ): Promise<MedicationCatalogView> => {
-  // Obtener datos agregados de lotes
-  const [totalActiveStock, activeBatchCount, oldestActiveBatch] =
+  // Obtener datos agregados de lotes y todos los lotes activos
+  const [totalActiveStock, activeBatchCount, oldestActiveBatch, activeBatches] =
     await Promise.all([
       medicationBatchDB.getTotalActiveStockByMedicationId(medication.id),
       medicationBatchDB.getActiveBatchCountByMedicationId(medication.id),
       medicationBatchDB.getOldestActiveBatchByMedicationId(medication.id),
+      medicationBatchDB.findActiveBatchesByMedicationId(medication.id),
     ]);
 
   // Calcular estado de stock
@@ -356,6 +357,21 @@ const createMedicationCatalogView = async (
   const daysToExpiration = oldestActiveBatch
     ? calculateDaysToExpiration(oldestActiveBatch.expirationDate)
     : null;
+
+  // Transformar los lotes activos para la vista, ordenados por fecha de vencimiento
+  const activeBatchesView = activeBatches
+    .map((batch) => ({
+      id: batch.id,
+      batchId: batch.batchId,
+      expirationDate: batch.expirationDate,
+      quantity: batch.quantity,
+      daysToExpiration: calculateDaysToExpiration(batch.expirationDate),
+      purchasePrice: batch.purchasePrice,
+      sellingPrice: batch.sellingPrice,
+      purchaseDate: batch.purchaseDate || '',
+      supplier: batch.supplier || '',
+    }))
+    .sort((a, b) => a.daysToExpiration - b.daysToExpiration); // Ordenar por fecha de vencimiento más próxima
 
   return {
     id: medication.id,
@@ -386,6 +402,9 @@ const createMedicationCatalogView = async (
           daysToExpiration: daysToExpiration || 0,
         }
       : undefined,
+
+    // Todos los lotes activos con precios, ordenados por vencimiento
+    activeBatches: activeBatchesView,
 
     createdAt: medication.createdAt,
   };
