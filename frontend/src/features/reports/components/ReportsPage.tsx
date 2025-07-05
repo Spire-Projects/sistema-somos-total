@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { 
+import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
@@ -9,9 +9,14 @@ import {
   ArcElement,
   Title,
   Tooltip,
-  Legend
-} from 'chart.js';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+  Legend,
+} from "chart.js";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shared/components/ui/tabs";
 import { BarChart3, LineChart, PieChart } from "lucide-react";
 
 // Componentes
@@ -46,21 +51,23 @@ ChartJS.register(
 
 export const ReportsPage = () => {
   const [dateFrom, setDateFrom] = useState<string>(
-    new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]
+    new Date(new Date().setDate(new Date().getDate() - 30))
+      .toISOString()
+      .split("T")[0]
   );
   const [dateTo, setDateTo] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0]
   );
 
   // Cargar datos
   const { sales, isLoading, error } = useSalesData(dateFrom, dateTo);
-  
+
   // Procesar datos
   const salesSummary = useSalesSummary(sales);
   const topProducts = useTopProducts(sales);
   const dailySales = useDailySales(sales);
   const paymentMethodSummary = usePaymentMethods(sales);
-  
+
   // Manejadores de eventos
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateFrom(e.target.value);
@@ -76,15 +83,18 @@ export const ReportsPage = () => {
         {/* Encabezado */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Reportes y Análisis</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Reportes y Análisis
+            </h1>
             <p className="text-gray-500 mt-1">
-              Estadísticas de ventas, productos populares y rendimiento del negocio
+              Estadísticas de ventas, productos populares y rendimiento del
+              negocio
             </p>
           </div>
         </div>
 
         {/* Filtros de fecha */}
-        <DateRangeFilter 
+        <DateRangeFilter
           dateFrom={dateFrom}
           dateTo={dateTo}
           onDateFromChange={handleDateFromChange}
@@ -92,7 +102,7 @@ export const ReportsPage = () => {
         />
 
         {/* Tarjetas de resumen */}
-        <SummaryCards 
+        <SummaryCards
           isLoading={isLoading}
           salesSummary={salesSummary}
           dailySales={dailySales}
@@ -119,27 +129,27 @@ export const ReportsPage = () => {
           </TabsList>
 
           <TabsContent value="products">
-            <TopProductsChart 
+            <TopProductsChart
               isLoading={isLoading}
               hasData={sales.length > 0}
               topProducts={topProducts}
             />
-            
+
             {!isLoading && <TopProductsTable topProducts={topProducts} />}
           </TabsContent>
 
           <TabsContent value="sales">
-            <DailySalesChart 
+            <DailySalesChart
               isLoading={isLoading}
               hasData={sales.length > 0}
               dailySales={dailySales}
             />
-            
+
             {!isLoading && <DailySalesTable dailySales={dailySales} />}
           </TabsContent>
 
           <TabsContent value="payment">
-            <PaymentMethodChart 
+            <PaymentMethodChart
               isLoading={isLoading}
               hasData={sales.length > 0}
               paymentMethodSummary={paymentMethodSummary}

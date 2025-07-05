@@ -1,4 +1,9 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/shared/components/ui/card";
 import { formatCurrency } from "@/shared/services/BatchService";
 import type { DailySales } from "./types/Types";
 
@@ -8,7 +13,7 @@ interface DailySalesTableProps {
 
 export const DailySalesTable = ({ dailySales }: DailySalesTableProps) => {
   if (dailySales.length === 0) return null;
-  
+
   return (
     <Card className="mt-4">
       <CardHeader>
@@ -28,10 +33,16 @@ export const DailySalesTable = ({ dailySales }: DailySalesTableProps) => {
             <tbody>
               {dailySales.map((day) => (
                 <tr key={day.date} className="border-b hover:bg-gray-50">
-                  <td className="py-2 px-2">{new Date(day.date).toLocaleDateString('es-ES')}</td>
-                  <td className="py-2 px-2 text-right">{formatCurrency(day.total)}</td>
+                  <td className="py-2 px-2">
+                    {new Date(day.date).toLocaleDateString("es-ES")}
+                  </td>
+                  <td className="py-2 px-2 text-right">
+                    {formatCurrency(day.total)}
+                  </td>
                   <td className="py-2 px-2 text-right">{day.count}</td>
-                  <td className="py-2 px-2 text-right">{formatCurrency(day.total / day.count)}</td>
+                  <td className="py-2 px-2 text-right">
+                    {formatCurrency(day.total / day.count)}
+                  </td>
                 </tr>
               ))}
             </tbody>

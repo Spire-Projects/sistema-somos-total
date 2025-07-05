@@ -1,4 +1,10 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/shared/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Bar } from "react-chartjs-2";
 import type { TopProductItem } from "./types/Types";
@@ -9,18 +15,24 @@ interface TopProductsChartProps {
   topProducts: TopProductItem[];
 }
 
-export const TopProductsChart = ({ isLoading, hasData, topProducts }: TopProductsChartProps) => {
+export const TopProductsChart = ({
+  isLoading,
+  hasData,
+  topProducts,
+}: TopProductsChartProps) => {
   const chartData = {
-    labels: topProducts.map(p => p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name),
+    labels: topProducts.map((p) =>
+      p.name.length > 15 ? p.name.substring(0, 15) + "..." : p.name
+    ),
     datasets: [
       {
-        label: 'Unidades vendidas',
-        data: topProducts.map(p => p.quantity),
-        backgroundColor: 'rgba(53, 162, 235, 0.7)',
-        borderColor: 'rgb(53, 162, 235)',
-        borderWidth: 1
-      }
-    ]
+        label: "Unidades vendidas",
+        data: topProducts.map((p) => p.quantity),
+        backgroundColor: "rgba(53, 162, 235, 0.7)",
+        borderColor: "rgb(53, 162, 235)",
+        borderWidth: 1,
+      },
+    ],
   };
 
   return (
@@ -37,28 +49,30 @@ export const TopProductsChart = ({ isLoading, hasData, topProducts }: TopProduct
             <Skeleton className="w-full h-full" />
           </div>
         ) : !hasData ? (
-          <p className="text-gray-500 py-12 text-center">No hay datos de ventas en el período seleccionado</p>
+          <p className="text-gray-500 py-12 text-center">
+            No hay datos de ventas en el período seleccionado
+          </p>
         ) : (
           <div className="h-[400px]">
-            <Bar 
-              data={chartData} 
+            <Bar
+              data={chartData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                   legend: { display: false },
-                  tooltip: { mode: 'index' }
+                  tooltip: { mode: "index" },
                 },
                 scales: {
                   y: {
                     beginAtZero: true,
-                    title: { 
+                    title: {
                       display: true,
-                      text: 'Unidades vendidas'
-                    }
-                  }
-                }
-              }} 
+                      text: "Unidades vendidas",
+                    },
+                  },
+                },
+              }}
             />
           </div>
         )}

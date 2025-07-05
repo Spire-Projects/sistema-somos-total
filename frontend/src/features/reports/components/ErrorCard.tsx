@@ -6,7 +6,7 @@ interface ErrorCardProps {
 
 export const ErrorCard = ({ message }: ErrorCardProps) => {
   if (!message) return null;
-  
+
   return (
     <Card className="border-red-200 bg-red-50">
       <CardContent className="p-4">

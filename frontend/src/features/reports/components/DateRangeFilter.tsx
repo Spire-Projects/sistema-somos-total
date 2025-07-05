@@ -10,7 +10,12 @@ interface DateRangeFilterProps {
   onDateToChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const DateRangeFilter = ({ dateFrom, dateTo, onDateFromChange, onDateToChange }: DateRangeFilterProps) => {
+export const DateRangeFilter = ({
+  dateFrom,
+  dateTo,
+  onDateFromChange,
+  onDateToChange,
+}: DateRangeFilterProps) => {
   return (
     <Card>
       <CardContent className="p-4">
@@ -19,7 +24,7 @@ export const DateRangeFilter = ({ dateFrom, dateTo, onDateFromChange, onDateToCh
             <Calendar className="h-4 w-4" />
             Rango de fechas para el análisis:
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 flex-1">
             <div className="space-y-1">
               <Label htmlFor="dateFrom" className="text-xs text-gray-600">
@@ -34,7 +39,7 @@ export const DateRangeFilter = ({ dateFrom, dateTo, onDateFromChange, onDateToCh
                 max={dateTo}
               />
             </div>
-            
+
             <div className="space-y-1">
               <Label htmlFor="dateTo" className="text-xs text-gray-600">
                 Hasta

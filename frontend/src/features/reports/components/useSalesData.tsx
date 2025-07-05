@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { findSalesByDateRange } from "@/shared/services/SalesService";
 import type { Sale } from "@/shared/types/Sales";
 
@@ -12,11 +12,14 @@ export function useSalesData(dateFrom: string, dateTo: string) {
       setIsLoading(true);
       setError(null);
       try {
-        const salesData = await findSalesByDateRange(dateFrom, dateTo + 'T23:59:59');
+        const salesData = await findSalesByDateRange(
+          dateFrom,
+          dateTo + "T23:59:59"
+        );
         setSales(salesData);
       } catch (err) {
-        console.error('Error al cargar ventas:', err);
-        setError('Error al cargar los datos de ventas');
+        console.error("Error al cargar ventas:", err);
+        setError("Error al cargar los datos de ventas");
       } finally {
         setIsLoading(false);
       }
