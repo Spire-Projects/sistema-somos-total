@@ -65,7 +65,7 @@ const SaleItemRow = memo(({ item, onUpdateQuantity, onRemove }: SaleItemRowProps
 
       <div className="text-right min-w-[60px]">
         <p className="text-sm font-medium text-gray-900">
-          {formatCurrency(item.totalPrice)}
+          {formatCurrency(item.total)}
         </p>
       </div>
 

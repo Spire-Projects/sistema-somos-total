@@ -1,11 +1,13 @@
 import type { MedicationBatch } from './Medication';
 
 export interface SaleItem {
-  batchId: string;
-  medicationId: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
+  batchId: string; // batch identifier for the medication
+  medicationId: string; // medication identifier
+  quantity: number; // quantity of the medication sold
+  unitPrice: number; // final price with discount applied
+  listPrice?: number; // optional list price of the medication
+  discount?: number; // optional discount applied to the medication
+  total: number; // total price for the quantity sold
 }
 
 export interface Medic {
@@ -20,10 +22,12 @@ export interface Medic {
   updatedBy?: string; // ID of the user who last updated the medic
 }
 
-export interface Sale {
+export interface  Sale {
   id: string; // Unique identifier for the sale
   items: SaleItem[]; // Array of items sold in the sale
   total: number; // Total amount of the sale
+  totalWithoutDiscount?: number; // Total amount without discount, optional
+  totalDiscount?: number; // Total discount applied to the sale, optional
   client?: string;  // ID of the client, can be null or empty string if no client
   paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia';
   createdAt: string; // ISO date string

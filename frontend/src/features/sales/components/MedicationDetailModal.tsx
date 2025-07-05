@@ -178,7 +178,7 @@ const MedicationDetailModal = memo(({ open, onOpenChange, medicationItem }: Medi
               </div>
               <div>
                 <span className="font-medium text-gray-700">Subtotal:</span>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(medicationItem.totalPrice)}</p>
+                <p className="text-lg font-bold text-green-600">{formatCurrency(medicationItem.total)}</p>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Precio Unitario:</span>

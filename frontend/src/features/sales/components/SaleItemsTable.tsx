@@ -17,10 +17,11 @@ import MedicationDetailModal from './MedicationDetailModal.tsx';
 interface SaleItemsTableProps {
   items: SaleItem[];
   onUpdateQuantity: (itemId: string, quantity: number) => void;
+  onUpdateDiscount: (itemId: string, discount: number) => void;
   onRemove: (itemId: string) => void;
 }
 
-const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTableProps) => {
+const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemove }: SaleItemsTableProps) => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedMedication, setSelectedMedication] = useState<SaleItem | null>(null);
 
@@ -37,6 +38,13 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
     }
   };
 
+  // Manejar cambio de descuento
+  const handleDiscountChange = (itemId: string, newDiscount: number) => {
+    if (newDiscount >= 0) {
+      onUpdateDiscount(itemId, newDiscount);
+    }
+  };
+
   return (
     <>
       <div className="border rounded-lg overflow-hidden">
@@ -45,10 +53,12 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
             <TableRow className="bg-gray-50">
               <TableHead className="w-12 text-center border-r border-gray-200">No.</TableHead>
               <TableHead className="min-w-[200px] border-r border-gray-200">Nombre Item</TableHead>
-              <TableHead className="w-24 text-center border-r border-gray-200">Cantidad</TableHead>
+              <TableHead className="w-20 text-center border-r border-gray-200">Cantidad</TableHead>
+              <TableHead className="w-20 text-right border-r border-gray-200">Precio Lista</TableHead>
+              <TableHead className="w-20 text-right border-r border-gray-200">Descuento</TableHead>
+              <TableHead className="w-20 text-right border-r border-gray-200">Precio Venta</TableHead>
+              <TableHead className="w-20 text-right border-r border-gray-200">Subtotal</TableHead>
               <TableHead className="w-16 text-center border-r border-gray-200">Detalle</TableHead>
-              <TableHead className="w-24 text-right border-r border-gray-200">Precio/Unidad</TableHead>
-              <TableHead className="w-24 text-right border-r border-gray-200">Subtotal</TableHead>
               <TableHead className="w-16 text-center">Eliminar</TableHead>
             </TableRow>
           </TableHeader>
@@ -121,8 +131,40 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 text-center">
-                    Stock lote: {item.batchInfo.availableStock}
+                    Stock: {item.batchInfo.availableStock}
                   </p>
+                </TableCell>
+
+                {/* Precio Lista */}
+                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
+                  {item.listPrice ? formatCurrency(item.listPrice) : formatCurrency(item.unitPrice + (item.discount || 0))}
+                </TableCell>
+
+                {/* Descuento */}
+                <TableCell className="text-center border-r border-gray-200">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500">Bs</span>
+                    <Input
+                      type="number"
+                      value={item.discount || ''}
+                      onChange={(e) => handleDiscountChange(item.id, parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      className="w-14 h-6 text-center text-xs p-1 border-gray-300"
+                      min="0"
+                      max={item.listPrice || item.unitPrice + (item.discount || 0)}
+                      step="0.01"
+                    />
+                  </div>
+                </TableCell>
+
+                {/* Precio Venta */}
+                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
+                  {formatCurrency(item.unitPrice)}
+                </TableCell>
+
+                {/* Subtotal */}
+                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
+                  {formatCurrency(item.total)}
                 </TableCell>
 
                 {/* Detalle */}
@@ -135,16 +177,6 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onRemove }: SaleItemsTab
                   >
                     <Info className="h-4 w-4" />
                   </Button>
-                </TableCell>
-
-                {/* Precio por Unidad */}
-                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
-                  {formatCurrency(item.unitPrice)}
-                </TableCell>
-
-                {/* Subtotal */}
-                <TableCell className="text-right font-medium text-sm border-r border-gray-200">
-                  {formatCurrency(item.totalPrice)}
                 </TableCell>
 
                 {/* Eliminar */}

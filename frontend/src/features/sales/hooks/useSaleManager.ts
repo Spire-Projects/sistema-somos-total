@@ -48,7 +48,7 @@ export const useSaleManager = () => {
         
         if (actualQuantityToAdd > 0) {
           existingItem.quantity += actualQuantityToAdd;
-          existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
+          existingItem.total = existingItem.quantity * existingItem.unitPrice;
           remainingQuantity -= actualQuantityToAdd;
         }
         
@@ -62,9 +62,12 @@ export const useSaleManager = () => {
         const newItem: SaleItem = {
           id: generateId(),
           medication,
+          medicationId: medication.id,
           quantity: quantityFromThisBatch,
-          unitPrice: batch.sellingPrice,
-          totalPrice: quantityFromThisBatch * batch.sellingPrice,
+          listPrice: batch.sellingPrice, // Precio original
+          discount: 0, // Sin descuento inicial
+          unitPrice: batch.sellingPrice, // Precio final (igual al precio lista sin descuento)
+          total: quantityFromThisBatch * batch.sellingPrice,
           batchId: batch.id,
           batchInfo: {
             batchId: batch.batchId,
@@ -115,7 +118,7 @@ export const useSaleManager = () => {
         return {
           ...item,
           quantity: finalQuantity,
-          totalPrice: finalQuantity * item.unitPrice
+          total: finalQuantity * item.unitPrice
         };
       }
       return item;
@@ -131,6 +134,41 @@ export const useSaleManager = () => {
     if (finalQuantity < newQuantity) {
       console.warn(`Cantidad limitada a ${finalQuantity} debido al stock disponible del lote ${itemToUpdate.batchInfo.batchId}`);
     }
+  }, [saleState.items]);
+
+  // Actualizar descuento de un item
+  const updateItemDiscount = useCallback((itemId: string, newDiscount: number) => {
+    const itemToUpdate = saleState.items.find(item => item.id === itemId);
+    if (!itemToUpdate) return;
+
+    // Calcular precio lista si no existe
+    const listPrice = itemToUpdate.listPrice || (itemToUpdate.unitPrice + (itemToUpdate.discount || 0));
+    
+    // Validar que el descuento no sea mayor al precio lista
+    const maxDiscount = listPrice;
+    const finalDiscount = Math.min(Math.max(newDiscount, 0), maxDiscount);
+    
+    // Calcular nuevo precio unitario
+    const newUnitPrice = listPrice - finalDiscount;
+
+    const updatedItems = saleState.items.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          listPrice,
+          discount: finalDiscount,
+          unitPrice: newUnitPrice,
+          total: item.quantity * newUnitPrice
+        };
+      }
+      return item;
+    });
+
+    setSaleState(prev => ({
+      ...prev,
+      items: updatedItems,
+      ...calculateTotals(updatedItems)
+    }));
   }, [saleState.items]);
 
   // Remover item de la venta
@@ -166,6 +204,7 @@ export const useSaleManager = () => {
     saleState,
     addMedicationToSale,
     updateItemQuantity,
+    updateItemDiscount,
     removeItem,
     clearSale,
     setClient
@@ -174,7 +213,7 @@ export const useSaleManager = () => {
 
 // Helper para calcular totales
 const calculateTotals = (items: SaleItem[]) => {
-  const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const tax = subtotal * 0.13; // 13% IVA (ajustar según legislación)
   const total = subtotal + tax;
 

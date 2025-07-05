@@ -14,15 +14,19 @@ export const saleSchema: RxJsonSchema<Sale> = {
         properties: {
           batchId: { type: "string", maxLength: 100 },
           medicationId: { type: "string", maxLength: 100 },
-          quantity: { type: "number" },
-          unitPrice: { type: "number" },
-          total: { type: "number" },
+          quantity: { type: "number", minimum: 1 },
+          unitPrice: { type: "number", minimum: 0 },
+          listPrice: { type: "number", minimum: 0 },
+          discount: { type: "number", minimum: 0 },
+          total: { type: "number", minimum: 0 }
         },
-        required: ["batchId", "medicationId", "quantity", "unitPrice", "total"],
-      },
+        required: ["batchId", "medicationId", "quantity", "unitPrice", "total"]
+      }
     },
     total: { type: "number", minimum: 0 },
-    client: { type: "string", maxLength: 200 },
+    totalWithoutDiscount: { type: "number", minimum: 0 },
+    totalDiscount: { type: "number", minimum: 0 },
+    client: { type: "string", maxLength: 100 },
     paymentMethod: {
       type: "string",
       enum: ["efectivo", "tarjeta", "transferencia"],
@@ -35,7 +39,7 @@ export const saleSchema: RxJsonSchema<Sale> = {
     idMedic: { type: "string", maxLength: 100 },
     factured: { type: "boolean" },
   },
-  required: ["id", "items", "total", "paymentMethod", "createdAt", "createdBy", "factured", "isDeleted", "sincronized"],
+  required: ["id", "items", "total", "paymentMethod", "createdAt", "createdBy", "factured"],
   indexes: [
     "client", 
     "createdAt", 

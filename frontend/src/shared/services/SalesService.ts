@@ -13,14 +13,16 @@ export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<
     id: generateId(),
     items: data.items,
     total: data.total,
+    totalWithoutDiscount: data.totalWithoutDiscount,
+    totalDiscount: data.totalDiscount,
     client: data.client,
     paymentMethod: data.paymentMethod,
     createdBy: data.createdBy,
     createdAt: new Date().toISOString(),
-    isDeleted: data.isDeleted,
-    sincronized: data.sincronized,
+    isDeleted: data.isDeleted || false,
+    sincronized: data.sincronized || false,
     idMedic: data.idMedic,
-    factured: data.factured
+    factured: data.factured || false
   };
 
   return await repository.create(newSale);

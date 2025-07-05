@@ -25,6 +25,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
     saleState,
     addMedicationToSale,
     updateItemQuantity,
+    updateItemDiscount,
     removeItem,
     clearSale
   } = useSaleManager();
@@ -102,6 +103,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
                   <SaleItemsTable
                     items={saleState.items}
                     onUpdateQuantity={updateItemQuantity}
+                    onUpdateDiscount={updateItemDiscount}
                     onRemove={removeItem}
                   />
                 )}

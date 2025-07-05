@@ -3,10 +3,13 @@ import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
 export interface SaleItem {
   id: string; // ID único del item en la venta
   medication: MedicationCatalogView;
-  quantity: number;
-  unitPrice: number; // Precio por unidad
-  totalPrice: number; // quantity * unitPrice
   batchId: string; // ID del lote específico seleccionado (ahora obligatorio)
+  medicationId: string; // ID del medicamento para compatibilidad con la interfaz principal
+  quantity: number;
+  unitPrice: number; // Precio final con descuento aplicado (precio de venta)
+  listPrice?: number; // Precio original del producto
+  discount?: number; // Descuento aplicado en dinero
+  total: number; // quantity * unitPrice (subtotal del item)
   batchInfo: {
     batchId: string; // Código del lote (user-defined)
     expirationDate: string;

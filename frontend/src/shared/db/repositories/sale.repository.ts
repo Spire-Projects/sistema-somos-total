@@ -48,7 +48,8 @@ export class LocalSaleRepository implements ISaleRepository {
         $or: [
           { client: { $regex: q, $options: 'i' } },
           { paymentMethod: { $regex: q, $options: 'i' } },
-          { createdBy: { $regex: q, $options: 'i' } }
+          { createdBy: { $regex: q, $options: 'i' } },
+          { idMedic: { $regex: q, $options: 'i' } }
         ]
       };
     }
@@ -93,23 +94,24 @@ export class LocalSaleRepository implements ISaleRepository {
 
     if (searchQuery && searchQuery.trim() !== '') {
       const q = searchQuery.trim();
-      selector = {
-        $and: [
-          {
-            createdAt: {
-              $gte: dateFrom,
-              $lte: dateTo
+      selector =        {
+          $and: [
+            {
+              createdAt: {
+                $gte: dateFrom,
+                $lte: dateTo
+              }
+            },
+            {
+              $or: [
+                { client: { $regex: q, $options: 'i' } },
+                { paymentMethod: { $regex: q, $options: 'i' } },
+                { createdBy: { $regex: q, $options: 'i' } },
+                { idMedic: { $regex: q, $options: 'i' } }
+              ]
             }
-          },
-          {
-            $or: [
-              { client: { $regex: q, $options: 'i' } },
-              { paymentMethod: { $regex: q, $options: 'i' } },
-              { createdBy: { $regex: q, $options: 'i' } }
-            ]
-          }
-        ]
-      };
+          ]
+        };
     }
 
     const query = db.sales.find({ selector }).sort({ createdAt: 'desc' });
@@ -142,18 +144,19 @@ export class LocalSaleRepository implements ISaleRepository {
 
     if (searchQuery && searchQuery.trim() !== '') {
       const q = searchQuery.trim();
-      selector = {
-        $and: [
-          { factured },
-          {
-            $or: [
-              { client: { $regex: q, $options: 'i' } },
-              { paymentMethod: { $regex: q, $options: 'i' } },
-              { createdBy: { $regex: q, $options: 'i' } }
-            ]
-          }
-        ]
-      };
+      selector =        {
+          $and: [
+            { factured },
+            {
+              $or: [
+                { client: { $regex: q, $options: 'i' } },
+                { paymentMethod: { $regex: q, $options: 'i' } },
+                { createdBy: { $regex: q, $options: 'i' } },
+                { idMedic: { $regex: q, $options: 'i' } }
+              ]
+            }
+          ]
+        };
     }
 
     const query = db.sales.find({ selector }).sort({ createdAt: 'desc' });
@@ -219,7 +222,8 @@ export class LocalSaleRepository implements ISaleRepository {
             $or: [
               { client: { $regex: q, $options: 'i' } },
               { paymentMethod: { $regex: q, $options: 'i' } },
-              { createdBy: { $regex: q, $options: 'i' } }
+              { createdBy: { $regex: q, $options: 'i' } },
+              { idMedic: { $regex: q, $options: 'i' } }
             ]
           }
         ]
@@ -261,7 +265,8 @@ export class LocalSaleRepository implements ISaleRepository {
       $or: [
         { client: { $regex: q, $options: 'i' } },
         { paymentMethod: { $regex: q, $options: 'i' } },
-        { createdBy: { $regex: q, $options: 'i' } }
+        { createdBy: { $regex: q, $options: 'i' } },
+        { idMedic: { $regex: q, $options: 'i' } }
       ]
     };
 
