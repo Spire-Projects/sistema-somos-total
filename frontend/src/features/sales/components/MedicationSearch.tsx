@@ -117,7 +117,7 @@ const MedicationSearch = memo(({
         </PopoverTrigger>
 
         <PopoverContent 
-          className="w-[--radix-popover-trigger-width] p-0" 
+          className="w-full min-w-[800px] max-w-[900px] p-0" 
           align="start"
           sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()} // Prevenir auto-focus en el popover content
@@ -143,7 +143,7 @@ const MedicationSearch = memo(({
             )}
             
             {medications.length > 0 && (
-              <div className="py-1">
+              <div>
                 {medications.map((medication) => (
                   <MedicationSearchItem
                     key={medication.id}
