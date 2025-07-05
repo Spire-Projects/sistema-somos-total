@@ -1,4 +1,4 @@
-import type { RxJsonSchema, RxCollection } from "rxdb";
+/* import type { RxJsonSchema, RxCollection } from "rxdb";
 import type { Sale } from "../../types/Sales";
 
 export const saleSchema: RxJsonSchema<Sale> = {
@@ -35,3 +35,4 @@ export const saleSchema: RxJsonSchema<Sale> = {
 };
 
 export type SaleCollection = RxCollection<Sale>;
+ */

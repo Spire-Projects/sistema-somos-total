@@ -10,7 +10,6 @@ import { clientSchema } from "./models/client.model";
 import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
-import { saleSchema } from "./models/sale.model";
 import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
 import { manufacturerSchema } from "./models/manufacturer.model";
 import { medicationSchema } from "./models/medication.model";
@@ -137,9 +136,9 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
         },
-        sales: {
+    /*     sales: {
           schema: saleSchema,
-        },
+        }, */
       });
 
       dbInstance = db;

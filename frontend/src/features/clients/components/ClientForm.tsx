@@ -35,7 +35,9 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
           <Label htmlFor="name">Nombre completo *</Label>
           <Input
             id="name"
-            placeholder={isEditMode ? "Editar nombre del cliente" : "Juan Pérez"}
+            placeholder={
+              isEditMode ? "Editar nombre del cliente" : "Juan Pérez"
+            }
             autoComplete="name"
             {...register("name")}
             className={errors.name ? "border-red-500" : ""}
@@ -49,9 +51,36 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
           <Label htmlFor="nit">NIT</Label>
           <Input
             id="nit"
+            type="text"
             placeholder="12345678"
             autoComplete="off"
-            {...register("nit")}
+            onKeyPress={(e) => {
+              if (!/^\d$/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            {...register("nit", {
+              validate: {
+                format: (value) => {
+                  if (!value) return true;
+
+                  if (!/^\d+$/.test(value)) {
+                    return "El NIT debe contener solo números";
+                  }
+
+                  if (value.length > 20) {
+                    return "El NIT no puede exceder 20 caracteres";
+                  }
+
+                  if (Number(value) < 0) {
+                    return "El NIT no puede ser negativo";
+                  }
+
+                  return true;
+                },
+              },
+              setValueAs: (value) => (value ? value.trim() : undefined),
+            })}
             className={errors.nit ? "border-red-500" : ""}
           />
           {errors.nit && (
@@ -94,7 +123,9 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
 
         <div className="space-y-2">
           <Label htmlFor="loyaltyPoints">
-            {isEditMode ? "Puntos de fidelidad actuales" : "Puntos de fidelidad iniciales"}
+            {isEditMode
+              ? "Puntos de fidelidad actuales"
+              : "Puntos de fidelidad iniciales"}
           </Label>
           <Input
             id="loyaltyPoints"
@@ -108,7 +139,9 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
             className={errors.loyaltyPoints ? "border-red-500" : ""}
           />
           {errors.loyaltyPoints && (
-            <p className="text-sm text-red-500">{errors.loyaltyPoints.message}</p>
+            <p className="text-sm text-red-500">
+              {errors.loyaltyPoints.message}
+            </p>
           )}
           {!isEditMode && (
             <p className="text-xs text-gray-500">
