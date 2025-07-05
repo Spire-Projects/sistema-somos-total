@@ -23,11 +23,12 @@ import type {
   Medication,
   MedicationBatch,
   GenericNameDoc,
-  Sale,
 } from "../types/Medication";
+import type { Sale, Medic } from "../types/Sales";
 import { config } from "../config/config";
 import { genericNameSchema } from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
+import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
 
 // Configurar plugins según entorno
@@ -66,6 +67,7 @@ export interface DatabaseCollections {
   medication_batches: RxCollection<MedicationBatch>;
   daily_cash_closures: RxCollection<DailyCashClosure>;
   sales: RxCollection<Sale>;
+  medics: RxCollection<Medic>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -139,6 +141,9 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         sales: {
           schema: saleSchema,
+        },
+        medics: {
+          schema: medicSchema,
         },
       });
 

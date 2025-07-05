@@ -138,19 +138,3 @@ export interface BatchStatistics {
   averageSellingPrice: number;
   uniqueSuppliers: number;
 }
-
-export interface Sale {
-  id: string; // Identificador único de la venta
-  items: Array<{
-    batchId: string;
-    medicationId: string;
-    quantity: number;
-    unitPrice: number;
-    total: number;
-  }>;
-  total: number; // Total de la venta
-  client: string; // Cliente asociado
-  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia'; // Método de pago
-  createdAt: number; // Fecha de creación (timestamp)
-  createdBy: string; // Usuario que creó la venta
-}

@@ -1,4 +1,4 @@
-import type { Sale, SaleItem } from '../types/Sales';
+import type { Sale } from '../types/Sales';
 import type { ItemsResponse } from '../types/UtilTypes';
 import { getSaleRepository } from '../db/repositories/sale.repository';
 import { generateId } from '../utils/id.utils';
@@ -16,7 +16,11 @@ export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<
     client: data.client,
     paymentMethod: data.paymentMethod,
     createdBy: data.createdBy,
-    createdAt: Date.now()
+    createdAt: new Date().toISOString(),
+    isDeleted: data.isDeleted,
+    sincronized: data.sincronized,
+    idMedic: data.idMedic,
+    factured: data.factured
   };
 
   return await repository.create(newSale);
@@ -64,4 +68,71 @@ export const findSalesPaginated = async (
   searchQuery?: string
 ): Promise<ItemsResponse<Sale>> => {
   return await repository.findAllPaginated(page, size, searchQuery);
+};
+
+/**
+ * Obtener ventas por rango de fechas
+ */
+export const findSalesByDateRange = async (
+  dateFrom: string,
+  dateTo: string
+): Promise<Sale[]> => {
+  return await repository.findByDateRange(dateFrom, dateTo);
+};
+
+/**
+ * Obtener ventas por rango de fechas paginadas
+ */
+export const findSalesByDateRangePaginated = async (
+  page: number,
+  size: number,
+  dateFrom: string,
+  dateTo: string,
+  searchQuery?: string
+): Promise<ItemsResponse<Sale>> => {
+  return await repository.findByDateRangePaginated(page, size, dateFrom, dateTo, searchQuery);
+};
+
+/**
+ * Obtener ventas por estado de facturación
+ */
+export const findSalesByFacturedStatus = async (factured: boolean): Promise<Sale[]> => {
+  return await repository.findByFacturedStatus(factured);
+};
+
+/**
+ * Obtener ventas por estado de facturación paginadas
+ */
+export const findSalesByFacturedStatusPaginated = async (
+  page: number,
+  size: number,
+  factured: boolean,
+  searchQuery?: string
+): Promise<ItemsResponse<Sale>> => {
+  return await repository.findByFacturedStatusPaginated(page, size, factured, searchQuery);
+};
+
+/**
+ * Obtener ventas por rango de fechas y estado de facturación
+ */
+export const findSalesByDateRangeAndFacturedStatus = async (
+  dateFrom: string,
+  dateTo: string,
+  factured: boolean
+): Promise<Sale[]> => {
+  return await repository.findByDateRangeAndFacturedStatus(dateFrom, dateTo, factured);
+};
+
+/**
+ * Obtener ventas por rango de fechas y estado de facturación paginadas
+ */
+export const findSalesByDateRangeAndFacturedStatusPaginated = async (
+  page: number,
+  size: number,
+  dateFrom: string,
+  dateTo: string,
+  factured: boolean,
+  searchQuery?: string
+): Promise<ItemsResponse<Sale>> => {
+  return await repository.findByDateRangeAndFacturedStatusPaginated(page, size, dateFrom, dateTo, factured, searchQuery);
 };
