@@ -37,7 +37,7 @@ const SaleSummary = memo(({
   return (
     <>
       {/* Resumen de venta */}
-      <Card>
+      <Card className="!gap-0">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Resumen</CardTitle>
         </CardHeader>

@@ -168,7 +168,7 @@ const MedicSection = memo(({
   }, []);
 
   return (
-    <Card>
+    <Card className="!gap-0">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <Stethoscope className="h-3 w-3" />

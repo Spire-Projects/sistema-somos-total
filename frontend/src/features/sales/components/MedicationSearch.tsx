@@ -119,7 +119,7 @@ const MedicationSearch = memo(({
         <PopoverContent 
           className="w-full min-w-[800px] max-w-[900px] p-0" 
           align="start"
-          sideOffset={4}
+          sideOffset={0}
           onOpenAutoFocus={(e) => e.preventDefault()} // Prevenir auto-focus en el popover content
         >
           <div className="max-h-80 overflow-auto">

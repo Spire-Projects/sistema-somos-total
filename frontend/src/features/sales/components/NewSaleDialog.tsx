@@ -89,11 +89,11 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
           {/* Sección de búsqueda de productos y items de venta */}
           <div className="flex-1 flex flex-col gap-4 overflow-hidden">
             {/* Búsqueda de medicamentos */}
-            <Card>
-              <CardHeader className="pb-3">
+            <Card className="!gap-0">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-base">Buscar Medicamentos</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0 !gap-0">
                 <MedicationSearch
                   onMedicationSelect={handleMedicationSelect}
                   placeholder="Buscar por nombre o código de barras..."
