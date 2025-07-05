@@ -750,7 +750,7 @@ export class LocalMedicationBatchRepository
 export class FirestoreMedicationBatchRepository
   implements IMedicationBatchRepository
 {
-  findActiveBatchesByMedicationIdPaginated(medicationId: string, page: number, size: number): Promise<ItemsResponse<MedicationBatch>> {
+  findActiveBatchesByMedicationIdPaginated(_medicationId: string, _page: number, _size: number): Promise<ItemsResponse<MedicationBatch>> {
     throw new Error("Method not implemented.");
   }
   // TODO: Implementar métodos para Firestore si es necesario

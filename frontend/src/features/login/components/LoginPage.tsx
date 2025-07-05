@@ -80,13 +80,6 @@ export const LoginPage = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Credenciales de prueba */}
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md mb-4 text-sm">
-              <h4 className="font-medium mb-1">Credenciales de prueba:</h4>
-              <div className="space-y-1">
-                <p><strong>Email:</strong> admin@farmaapp.com</p>
-                <p><strong>Contraseña:</strong> admin123</p>
-              </div>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
