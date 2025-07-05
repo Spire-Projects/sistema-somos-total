@@ -15,6 +15,7 @@ import StockErrorDialog from './StockErrorDialog';
 import SaleSuccessDialog from './SaleSuccessDialog';
 import { useSaleManager } from '../hooks/useSaleManager';
 import { useSaleProcessor } from '../hooks/useSaleProcessor';
+import { useAppSelector } from '@/shared/store/hooks';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
 import type { Client } from '@/shared/types/Client';
 import type { Medic } from '@/shared/types/Sales';
@@ -25,6 +26,7 @@ interface NewSaleDialogProps {
 }
 
 const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
+  const { user } = useAppSelector((state) => state.auth);
   const [showStockError, setShowStockError] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [stockErrorItems, setStockErrorItems] = useState<Array<{
@@ -43,7 +45,8 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
     removeItem,
     clearSale,
     setClient,
-    setMedic
+    setMedic,
+    setPaymentMethod
   } = useSaleManager();
 
   const {
@@ -68,7 +71,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
 
     try {
       clearError();
-      const result = await processSale(saleState, 'current-user'); // TODO: Obtener usuario actual
+      const result = await processSale(saleState, user?.id || 'anonymous-user');
 
       if (result.success && result.sale) {
         // Venta exitosa
@@ -136,6 +139,11 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
   // Manejar cambio de descuento de cliente
   const handleClientDiscountChange = (type: 'percentage' | 'fixed', value: number) => {
     setClientDiscount(type, value);
+  };
+
+  // Manejar cambio de método de pago
+  const handlePaymentMethodChange = (method: 'efectivo' | 'tarjeta' | 'transferencia') => {
+    setPaymentMethod(method);
   };
 
   return (
@@ -211,6 +219,7 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
               onClientSelect={handleClientSelect}
               onMedicSelect={handleMedicSelect}
               onClientDiscountChange={handleClientDiscountChange}
+              onPaymentMethodChange={handlePaymentMethodChange}
               onConfirmSale={handleConfirmSale}
               onCancel={handleCancel}
               isProcessing={isProcessing}

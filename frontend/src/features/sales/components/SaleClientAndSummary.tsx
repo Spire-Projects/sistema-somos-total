@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import ClientSection from "./ClientSection";
 import MedicSection from "./MedicSection";
+import PaymentMethodSelector from "./PaymentMethodSelector";
 import SaleSummary from "./SaleSummary";
 import type { SaleState } from '../types/sale.types';
 import type { Client } from '@/shared/types/Client';
@@ -11,6 +12,7 @@ interface SaleClientAndSummaryProps {
   onClientSelect: (client: Client | null) => void;
   onMedicSelect: (medic: Medic | null) => void;
   onClientDiscountChange: (type: 'percentage' | 'fixed', value: number) => void;
+  onPaymentMethodChange: (method: 'efectivo' | 'tarjeta' | 'transferencia') => void;
   onConfirmSale: () => void;
   onCancel: () => void;
   isProcessing?: boolean;
@@ -21,6 +23,7 @@ const SaleClientAndSummary = memo(({
   onClientSelect,
   onMedicSelect,
   onClientDiscountChange,
+  onPaymentMethodChange,
   onConfirmSale,
   onCancel,
   isProcessing = false
@@ -36,6 +39,11 @@ const SaleClientAndSummary = memo(({
     onMedicSelect(medic);
   }, [onMedicSelect]);
 
+  // Manejar cambio de método de pago
+  const handlePaymentMethodChange = useCallback((method: 'efectivo' | 'tarjeta' | 'transferencia') => {
+    onPaymentMethodChange(method);
+  }, [onPaymentMethodChange]);
+
   return (
     <div className="lg:w-80 flex flex-col gap-4 max-h-[calc(100vh-200px)] overflow-y-auto px-2">
       {/* Sección de cliente */}
@@ -50,6 +58,13 @@ const SaleClientAndSummary = memo(({
         selectedMedicId={saleState.medicId}
         selectedMedicName={saleState.medicName}
         onMedicSelect={handleMedicSelect}
+      />
+
+      {/* Selector de método de pago */}
+      <PaymentMethodSelector
+        selectedMethod={saleState.paymentMethod}
+        onPaymentMethodChange={handlePaymentMethodChange}
+        disabled={isProcessing}
       />
 
       {/* Resumen de venta */}

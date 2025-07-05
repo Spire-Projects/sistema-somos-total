@@ -10,7 +10,8 @@ export const useSaleManager = () => {
     amountWithDiscount: 0,
     amountWithoutDiscount: 0,
     totalSaved: 0,
-    total: 0
+    total: 0,
+    paymentMethod: 'efectivo'
   });
 
   // Agregar medicamento a la venta con lógica FIFO automática
@@ -191,7 +192,8 @@ export const useSaleManager = () => {
       amountWithDiscount: 0,
       amountWithoutDiscount: 0,
       totalSaved: 0,
-      total: 0
+      total: 0,
+      paymentMethod: 'efectivo'
     });
   }, []);
 
@@ -244,6 +246,14 @@ export const useSaleManager = () => {
     }));
   }, []);
 
+  // Establecer método de pago
+  const setPaymentMethod = useCallback((paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia') => {
+    setSaleState(prev => ({
+      ...prev,
+      paymentMethod
+    }));
+  }, []);
+
   return {
     saleState,
     addMedicationToSale,
@@ -253,7 +263,8 @@ export const useSaleManager = () => {
     removeItem,
     clearSale,
     setClient,
-    setMedic
+    setMedic,
+    setPaymentMethod
   };
 };
 
