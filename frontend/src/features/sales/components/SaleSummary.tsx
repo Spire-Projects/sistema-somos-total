@@ -12,13 +12,15 @@ interface SaleSummaryProps {
   onClientDiscountChange: (type: 'percentage' | 'fixed', value: number) => void;
   onConfirmSale: () => void;
   onCancel: () => void;
+  isProcessing?: boolean;
 }
 
 const SaleSummary = memo(({
   saleState,
   onClientDiscountChange,
   onConfirmSale,
-  onCancel
+  onCancel,
+  isProcessing = false
 }: SaleSummaryProps) => {
   const [discountEditMode, setDiscountEditMode] = useState(false);
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
@@ -75,6 +77,7 @@ const SaleSummary = memo(({
                   size="sm"
                   className="h-5 px-1 text-xs"
                   onClick={() => setDiscountEditMode(!discountEditMode)}
+                  disabled={isProcessing}
                 >
                   {discountEditMode ? 'Cancelar' : 'Editar'}
                 </Button>
@@ -85,7 +88,11 @@ const SaleSummary = memo(({
             {discountEditMode && (
               <div className="mt-2 p-2 bg-gray-50 rounded space-y-2">
                 <div className="flex gap-2">
-                  <Select value={discountType} onValueChange={(value: 'percentage' | 'fixed') => setDiscountType(value)}>
+                  <Select 
+                    value={discountType} 
+                    onValueChange={(value: 'percentage' | 'fixed') => setDiscountType(value)}
+                    disabled={isProcessing}
+                  >
                     <SelectTrigger className="w-20 h-5 text-xs">
                       <SelectValue />
                     </SelectTrigger>
@@ -103,11 +110,13 @@ const SaleSummary = memo(({
                     min="0"
                     step={discountType === 'percentage' ? "1" : "0.01"}
                     max={discountType === 'percentage' ? 100 : saleState.subtotal}
+                    disabled={isProcessing}
                   />
                   <Button
                     size="sm"
                     onClick={handleApplyDiscount}
                     className="h-5 px-2 text-xs"
+                    disabled={isProcessing}
                   >
                     OK
                   </Button>
@@ -137,15 +146,16 @@ const SaleSummary = memo(({
           onClick={onConfirmSale}
           className="w-full h-8 text-xs"
           size="sm"
-          disabled={saleState.items.length === 0}
+          disabled={isProcessing || saleState.items.length === 0}
         >
-          Confirmar Venta
+          {isProcessing ? 'Procesando...' : 'Confirmar Venta'}
         </Button>
         <Button 
           variant="outline" 
           onClick={onCancel}
           className="w-full h-8 text-xs"
           size="sm"
+          disabled={isProcessing}
         >
           Cancelar
         </Button>

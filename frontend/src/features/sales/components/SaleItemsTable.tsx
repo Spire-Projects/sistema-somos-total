@@ -19,9 +19,10 @@ interface SaleItemsTableProps {
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onUpdateDiscount: (itemId: string, discount: number) => void;
   onRemove: (itemId: string) => void;
+  disabled?: boolean;
 }
 
-const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemove }: SaleItemsTableProps) => {
+const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemove, disabled = false }: SaleItemsTableProps) => {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedMedication, setSelectedMedication] = useState<SaleItem | null>(null);
 
@@ -106,7 +107,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemo
                       size="sm"
                       onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                       className="h-6 w-6 p-0"
-                      disabled={item.quantity <= 1}
+                      disabled={disabled || item.quantity <= 1}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -118,6 +119,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemo
                       className="w-12 h-6 text-center text-xs p-1"
                       min="1"
                       max={item.batchInfo.availableStock}
+                      disabled={disabled}
                     />
                     
                     <Button
@@ -125,7 +127,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemo
                       size="sm"
                       onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                       className="h-6 w-6 p-0"
-                      disabled={item.quantity >= item.batchInfo.availableStock}
+                      disabled={disabled || item.quantity >= item.batchInfo.availableStock}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -153,6 +155,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemo
                       min="0"
                       max={item.listPrice || item.unitPrice + (item.discount || 0)}
                       step="0.01"
+                      disabled={disabled}
                     />
                   </div>
                 </TableCell>
@@ -174,6 +177,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemo
                     size="sm"
                     onClick={() => handleShowDetails(item)}
                     className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                    disabled={disabled}
                   >
                     <Info className="h-4 w-4" />
                   </Button>
@@ -186,6 +190,7 @@ const SaleItemsTable = memo(({ items, onUpdateQuantity, onUpdateDiscount, onRemo
                     size="sm"
                     onClick={() => onRemove(item.id)}
                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                    disabled={disabled}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

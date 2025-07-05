@@ -14,12 +14,14 @@ interface MedicationSearchProps {
   onMedicationSelect: (medication: MedicationCatalogView) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 const MedicationSearch = memo(({ 
   onMedicationSelect, 
   placeholder = "Buscar medicamento por nombre o código de barras...",
-  className = ""
+  className = "",
+  disabled = false
 }: MedicationSearchProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,6 +111,7 @@ const MedicationSearch = memo(({
               onKeyDown={handleKeyDown}
               className="pl-10 pr-4"
               autoComplete="off"
+              disabled={disabled}
             />
             {isLoading && (
               <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin pointer-events-none" />

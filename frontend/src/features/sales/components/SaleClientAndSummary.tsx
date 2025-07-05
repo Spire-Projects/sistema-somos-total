@@ -13,6 +13,7 @@ interface SaleClientAndSummaryProps {
   onClientDiscountChange: (type: 'percentage' | 'fixed', value: number) => void;
   onConfirmSale: () => void;
   onCancel: () => void;
+  isProcessing?: boolean;
 }
 
 const SaleClientAndSummary = memo(({
@@ -21,7 +22,8 @@ const SaleClientAndSummary = memo(({
   onMedicSelect,
   onClientDiscountChange,
   onConfirmSale,
-  onCancel
+  onCancel,
+  isProcessing = false
 }: SaleClientAndSummaryProps) => {
 
   // Manejar selección de cliente
@@ -56,6 +58,7 @@ const SaleClientAndSummary = memo(({
         onClientDiscountChange={onClientDiscountChange}
         onConfirmSale={onConfirmSale}
         onCancel={onCancel}
+        isProcessing={isProcessing}
       />
     </div>
   );
