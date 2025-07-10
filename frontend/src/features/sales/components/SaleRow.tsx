@@ -1,10 +1,12 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Receipt, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDate } from '@/shared/utils/date.utils';
+import { UserService } from '@/shared/services/UserService';
 import SaleDetails from './SaleDetails';
 import type { Sale } from '@/shared/types/Sales';
+import type { AuthUser } from '@/shared/types/User';
 
 interface SaleRowProps {
   sale: Sale;
@@ -27,10 +29,43 @@ PaymentMethodIcon.displayName = 'PaymentMethodIcon';
 
 const SaleRow = memo(({ sale }: SaleRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [createdByUser, setCreatedByUser] = useState<AuthUser | null>(null);
+  const [loadingUser, setLoadingUser] = useState(false);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
   }, []);
+
+  // Cargar información del usuario que creó la venta
+  useEffect(() => {
+    const fetchCreatedByUser = async () => {
+      if (!sale.createdBy) {
+        setLoadingUser(false);
+        return;
+      }
+
+      try {
+        setLoadingUser(true);
+        const response = await UserService.getUserById(sale.createdBy);
+        if (response.success && response.user) {
+          setCreatedByUser(response.user);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchCreatedByUser();
+  }, [sale.createdBy]);
+
+  // Función para mostrar el nombre del usuario
+  const getCreatedByDisplay = () => {
+    if (loadingUser) return '...';
+    if (createdByUser) return createdByUser.fullName;
+    return sale.createdBy || 'Desconocido';
+  };
 
   return (
     <>
@@ -101,7 +136,7 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
 
         <td className="p-3">
           <div className="text-xs text-gray-500">
-            {sale.createdBy}
+            {getCreatedByDisplay()}
           </div>
         </td>
       </tr>

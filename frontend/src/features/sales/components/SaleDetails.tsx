@@ -1,24 +1,120 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDate } from '@/shared/utils/date.utils';
+import { UserService } from '@/shared/services/UserService';
+import { getClientById } from '@/shared/services/ClientService';
+import { findMedicById } from '@/shared/services/MedicService';
 import type { Sale } from '@/shared/types/Sales';
+import type { AuthUser } from '@/shared/types/User';
+import type { Client } from '@/shared/types/Client';
+import type { Medic } from '@/shared/types/Sales';
 
 interface SaleDetailsProps {
   sale: Sale;
 }
 
 const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
-  return (
+  const [createdByUser, setCreatedByUser] = useState<AuthUser | null>(null);
+  const [client, setClient] = useState<Client | null>(null);
+  const [medic, setMedic] = useState<Medic | null>(null);
+  const [loading, setLoading] = useState({
+    user: false,
+    client: false,
+    medic: false
+  });
+
+  // Cargar información del usuario que creó la venta
+  useEffect(() => {
+    const fetchCreatedByUser = async () => {
+      console.log('Cargando usuario creado por:', sale.createdBy);
+      if (!sale.createdBy) return;
+
+      try {
+        setLoading(prev => ({ ...prev, user: true }));
+        const response = await UserService.getUserById(sale.createdBy);
+        console.log('Respuesta del usuario:', response);
+        if (response.success && response.user) {
+          setCreatedByUser(response.user);
+          console.log('Usuario creado por:', response.user);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      } finally {
+        setLoading(prev => ({ ...prev, user: false }));
+      }
+    };
+
+    fetchCreatedByUser();
+  }, [sale.createdBy]);
+
+  // Cargar información del cliente
+  useEffect(() => {
+    const fetchClient = async () => {
+      if (!sale.client) return;
+
+      try {
+        setLoading(prev => ({ ...prev, client: true }));
+        const clientData = await getClientById(sale.client);
+        if (clientData) {
+          setClient(clientData);
+        }
+      } catch (error) {
+        console.error('Error fetching client:', error);
+      } finally {
+        setLoading(prev => ({ ...prev, client: false }));
+      }
+    };
+
+    fetchClient();
+  }, [sale.client]);
+
+  // Cargar información del médico
+  useEffect(() => {
+    const fetchMedic = async () => {
+      if (!sale.idMedic) return;
+
+      try {
+        setLoading(prev => ({ ...prev, medic: true }));
+        const medicData = await findMedicById(sale.idMedic);
+        if (medicData) {
+          setMedic(medicData);
+        }
+      } catch (error) {
+        console.error('Error fetching medic:', error);
+      } finally {
+        setLoading(prev => ({ ...prev, medic: false }));
+      }
+    };
+
+    fetchMedic();
+  }, [sale.idMedic]);
+
+  // Funciones para mostrar la información
+  const getCreatedByDisplay = () => {
+    if (loading.user) return 'Cargando...';
+    if (createdByUser) return createdByUser.fullName;
+    return sale.createdBy || 'Usuario desconocido';
+  };
+
+  const getClientDisplay = () => {
+    if (loading.client) return 'Cargando...';
+    if (client) return client.name;
+    if (sale.client) return sale.client;
+    return 'Cliente general';
+  };
+
+  const getMedicDisplay = () => {
+    if (loading.medic) return 'Cargando...';
+    if (medic) return medic.fullName;
+    if (sale.idMedic) return sale.idMedic;
+    return 'Sin médico asignado';
+  };return (
     <div className="bg-gray-50 p-4 border-t">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {/* Información general */}
         <div className="space-y-2">
           <h4 className="font-semibold text-sm text-gray-900">Información General</h4>
           <div className="space-y-1 text-xs">
-            <div>
-              <span className="text-gray-600">ID:</span>
-              <span className="ml-1 font-mono text-gray-900">{sale.id}</span>
-            </div>
             <div>
               <span className="text-gray-600">Fecha:</span>
               <span className="ml-1">{formatDate(sale.createdAt)}</span>
@@ -29,7 +125,7 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
             </div>
             <div>
               <span className="text-gray-600">Creado por:</span>
-              <span className="ml-1">{sale.createdBy}</span>
+              <span className="ml-1">{getCreatedByDisplay()}</span>
             </div>
           </div>
         </div>
@@ -40,11 +136,11 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
           <div className="space-y-1 text-xs">
             <div>
               <span className="text-gray-600">Cliente:</span>
-              <span className="ml-1">{sale.client || 'Cliente general'}</span>
+              <span className="ml-1">{getClientDisplay()}</span>
             </div>
             <div>
               <span className="text-gray-600">Médico:</span>
-              <span className="ml-1">{sale.idMedic || 'Sin médico asignado'}</span>
+              <span className="ml-1">{getMedicDisplay()}</span>
             </div>
             <div>
               <span className="text-gray-600">Facturado:</span>
@@ -59,18 +155,18 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
         <div className="space-y-2">
           <h4 className="font-semibold text-sm text-gray-900">Totales</h4>
           <div className="space-y-1 text-xs">
-            {sale.totalWithoutDiscount && (
+           
               <div>
                 <span className="text-gray-600">Subtotal:</span>
-                <span className="ml-1">{formatCurrency(sale.totalWithoutDiscount)}</span>
+                <span className="ml-1">{formatCurrency(sale.totalWithoutDiscount?? 0)}</span>
               </div>
-            )}
-            {sale.totalDiscount && sale.totalDiscount > 0 && (
+            
+            
               <div>
                 <span className="text-gray-600">Descuento:</span>
-                <span className="ml-1 text-red-600">-{formatCurrency(sale.totalDiscount)}</span>
+                <span className="ml-1 text-red-600">-{formatCurrency(sale.totalDiscount?? 0)}</span>
               </div>
-            )}
+            
             <div>
               <span className="text-gray-600 font-semibold">Total:</span>
               <span className="ml-1 font-semibold text-green-600">{formatCurrency(sale.total)}</span>

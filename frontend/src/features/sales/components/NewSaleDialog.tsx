@@ -23,9 +23,10 @@ import type { Medic } from '@/shared/types/Sales';
 interface NewSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaleSuccess?: () => void;
 }
 
-const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
+const NewSaleDialog = memo(({ open, onOpenChange, onSaleSuccess }: NewSaleDialogProps) => {
   const { user } = useAppSelector((state) => state.auth);
   const [showStockError, setShowStockError] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -77,6 +78,14 @@ const NewSaleDialog = memo(({ open, onOpenChange }: NewSaleDialogProps) => {
         // Venta exitosa
         setShowSuccessDialog(true);
         clearSale(); // Limpiar el estado de la venta
+        
+        // Actualizar la lista de ventas después de un pequeño delay
+        // para que el usuario vea el diálogo de éxito
+        if (onSaleSuccess) {
+          setTimeout(() => {
+            onSaleSuccess();
+          }, 500);
+        }
       } else if (result.failedItems && result.failedItems.length > 0) {
         // Error de stock
         setStockErrorItems(result.failedItems);
