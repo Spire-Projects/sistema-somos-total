@@ -6,7 +6,7 @@ import type {
 } from '../../types/MedicationViewTypes';
 import type { RxCollection } from 'rxdb';
 import { config } from '@/shared/config/config';
-import { findGenericNameById } from '@/shared/services/GenericNameService';
+import { findGenericNameById, searchGenericNames } from '@/shared/services/GenericNameService';
 
 export interface IMedicationRepository {
   // CRUD básico existente
@@ -175,20 +175,35 @@ export class LocalMedicationDB implements IMedicationRepository {
   }
 
   async search(query: string): Promise<Medication[]> {
+    if (!query.trim()) {
+      return this.findAll();
+    }
+
     const collection = await this.getCollection();
+    const trimmedQuery = query.trim();
+    
+    // 1. Buscar GenericNames que coincidan con el query
+    const matchingGenericNames = await searchGenericNames(trimmedQuery);
+    const genericNameIds = matchingGenericNames.map(g => g.id);
+
+    // 2. Construir condiciones de búsqueda híbrida
+    const searchConditions: any[] = [
+      { comercialName: { $regex: trimmedQuery, $options: 'i' } },
+      { tradeName: { $regex: trimmedQuery, $options: 'i' } },
+      { description: { $regex: trimmedQuery, $options: 'i' } },
+      { barcode: { $eq: trimmedQuery } }
+    ];
+
+    // 3. Agregar búsqueda por genericName IDs solo si hay coincidencias
+    if (genericNameIds.length > 0) {
+      searchConditions.push({ genericName: { $in: genericNameIds } });
+    }
+
     const docs = await collection.find({
       selector: {
         $and: [
           { isDeleted: { $ne: true } },
-          {
-            $or: [
-            {comercialName: { $regex: query, $options: 'i' } },
-              { tradeName: { $regex: query, $options: 'i' } },
-              { genericName: { $regex: query, $options: 'i' } },
-              { description: { $regex: query, $options: 'i' } },
-              { barcode: { $eq: query } }
-            ]
-          }
+          { $or: searchConditions }
         ]
       }
     }).exec();
@@ -229,18 +244,29 @@ export class LocalMedicationDB implements IMedicationRepository {
         selector.pharmaceuticalFormId = filters.pharmaceuticalFormId;
       }
 
-      // Filtro de búsqueda por texto
+      // Filtro de búsqueda híbrida por texto
       if (filters.searchQuery) {
+        const trimmedQuery = filters.searchQuery.trim();
+        
+        // Buscar GenericNames que coincidan con el query
+        const matchingGenericNames = await searchGenericNames(trimmedQuery);
+        const genericNameIds = matchingGenericNames.map(g => g.id);
+
+        // Construir condiciones de búsqueda híbrida
+        const searchConditions: any[] = [
+          { comercialName: { $regex: trimmedQuery, $options: 'i' } },
+          { tradeName: { $regex: trimmedQuery, $options: 'i' } },
+          { description: { $regex: trimmedQuery, $options: 'i' } },
+          { barcode: { $eq: trimmedQuery } }
+        ];
+
+        // Agregar búsqueda por genericName IDs solo si hay coincidencias
+        if (genericNameIds.length > 0) {
+          searchConditions.push({ genericName: { $in: genericNameIds } });
+        }
+
         selector.$and = selector.$and || [];
-        selector.$and.push({
-          $or: [
-            { comercialName: { $regex: filters.searchQuery, $options: 'i' } },
-            { tradeName: { $regex: filters.searchQuery, $options: 'i' } },
-            { genericName: { $regex: filters.searchQuery, $options: 'i' } },
-            { description: { $regex: filters.searchQuery, $options: 'i' } },
-            { barcode: { $eq: filters.searchQuery } }
-          ]
-        });
+        selector.$and.push({ $or: searchConditions });
       }
 
       // Filtros de fecha
@@ -328,7 +354,8 @@ export class LocalMedicationDB implements IMedicationRepository {
   }
 
   /**
-   * Búsqueda de medicamentos con paginación
+   * Búsqueda híbrida de medicamentos con paginación
+   * Busca tanto por nombres genéricos como por otros campos del medicamento
    */
   async searchMedicationsPaginated(
     query: string, 
@@ -336,13 +363,95 @@ export class LocalMedicationDB implements IMedicationRepository {
     size: number,
     filters?: MedicationCatalogFilters
   ): Promise<ItemsResponse<Medication>> {
-    // Crear filtros combinando la búsqueda con los filtros adicionales
-    const combinedFilters: MedicationCatalogFilters = {
-      ...filters,
-      searchQuery: query
+    if (!query.trim()) {
+      // Si no hay query, usar filtros normales
+      return this.findAllPaginatedWithFilters(page, size, filters);
+    }
+
+    const collection = await this.getCollection();
+    const skip = (page - 1) * size;
+    const trimmedQuery = query.trim();
+
+    // 1. Buscar GenericNames que coincidan con el query
+    const matchingGenericNames = await searchGenericNames(trimmedQuery);
+    const genericNameIds = matchingGenericNames.map(g => g.id);
+
+    // 2. Construir selector base
+    const baseSelector: any = { isDeleted: false };
+    
+    // 3. Aplicar filtros adicionales si existen
+    if (filters) {
+      if (filters.categoryId) {
+        baseSelector.categoryId = filters.categoryId;
+      }
+      if (filters.manufacturerId) {
+        baseSelector.manufacturerId = filters.manufacturerId;
+      }
+      if (filters.pharmaceuticalFormId) {
+        baseSelector.pharmaceuticalFormId = filters.pharmaceuticalFormId;
+      }
+      // Omitir searchQuery ya que lo manejamos de forma híbrida
+    }
+
+    // 4. Construir condiciones de búsqueda híbrida
+    const searchConditions: any[] = [
+      { tradeName: { $regex: trimmedQuery, $options: 'i' } },
+      { comercialName: { $regex: trimmedQuery, $options: 'i' } },
+      { description: { $regex: trimmedQuery, $options: 'i' } },
+      { barcode: { $eq: trimmedQuery } }
+    ];
+
+    // 5. Agregar búsqueda por genericName IDs solo si hay coincidencias
+    if (genericNameIds.length > 0) {
+      searchConditions.push({ genericName: { $in: genericNameIds } });
+    }
+
+    // 6. Combinar selector base con condiciones de búsqueda
+    const finalSelector = {
+      ...baseSelector,
+      $or: searchConditions
     };
 
-    return this.findAllPaginatedWithFilters(page, size, combinedFilters);
+    // 7. Obtener total de elementos
+    const allDocs = await collection.find({ selector: finalSelector }).exec();
+    const totalItems = allDocs.length;
+
+    // 8. Obtener elementos paginados
+    const docs = await collection.find({
+      selector: finalSelector,
+      sort: [{ tradeName: 'asc' }],
+      skip,
+      limit: size
+    }).exec();
+
+    // 9. Procesar resultados y resolver nombres genéricos
+    const rawItems = docs.map((doc: any) => JSON.parse(JSON.stringify(doc.toJSON())) as Medication);
+
+    const items = await Promise.all(
+      rawItems.map(async (med) => {
+        if (med.genericName) {
+          const generic = await findGenericNameById(med.genericName);
+          return {
+            ...med,
+            genericName: generic?.name || "Desconocido",
+          };
+        }
+        return {
+          ...med,
+          genericName: "Sin genérico",
+        };
+      })
+    );
+
+    const totalPages = Math.ceil(totalItems / size);
+
+    return {
+      items,
+      page,
+      size,
+      totalItems,
+      totalPages
+    };
   }
 
   /**
