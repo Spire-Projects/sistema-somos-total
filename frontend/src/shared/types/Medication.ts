@@ -2,7 +2,7 @@ export interface Medication {
   id: string; // unique identifier for the medication
   comercialName: string; // comercial name from the manufacter
   tradeName: string; // e.g., "Aspirin 500mg"
-  genericName: string; // e.g., "Acetylsalicylic Acid"
+  genericName: string; // ID that references GenericNameDoc.id (e.g., "generic-123")
   activeIngredientIds: string[]; // list of ActiveIngredient IDs
   pharmaceuticalFormId: string; // reference to PharmaceuticalFormDoc
   concentration: string; // e.g., "500mg"

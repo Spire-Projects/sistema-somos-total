@@ -25,8 +25,8 @@ const SalesTable = memo(({ sales, isLoading, error }: SalesTableProps) => {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
+    <Card className='!gap-0'>
+      <CardHeader className="pb-0">
         <CardTitle className="text-lg flex items-center gap-2">
           <Receipt className="h-5 w-5" />
           Ventas Registradas

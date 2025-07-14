@@ -21,7 +21,8 @@ export const SalesPage = () => {
     setDateRange,
     clearFilters,
     changePage,
-    changeItemsPerPage
+    changeItemsPerPage,
+    refetch
   } = useSalesSearch(300);
 
   // Manejar cambio en el input de búsqueda
@@ -107,6 +108,7 @@ export const SalesPage = () => {
       <NewSaleDialog 
         open={dialogOpen} 
         onOpenChange={setDialogOpen}
+        onSaleSuccess={refetch}
       />
     </div>
   );

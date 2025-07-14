@@ -29,35 +29,35 @@ const MedicationSearchItem = memo(({ medication, onAddToSale }: MedicationSearch
       <div className="w-full">
         {/* Nombres del medicamento */}
         <div className="space-y-1 mb-2">
-          <p className="font-medium text-sm text-gray-900">
+          <p className="font-medium text-sm text-gray-900 truncate">
             {medication.comercialName}
           </p>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-gray-600 truncate">
             {medication.tradeName}
           </p>
           {medication.genericName && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 truncate">
               Genérico: {medication.genericName}
             </p>
           )}
         </div>
 
-        {/* Información adicional en una fila */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
+        {/* Información adicional - Layout responsivo */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-1 text-xs text-gray-600">
-              <Package className="h-3 w-3" />
-              <span>Stock total: {medication.totalActiveStock}</span>
+              <Package className="h-3 w-3 flex-shrink-0" />
+              <span className="whitespace-nowrap">Stock: {medication.totalActiveStock}</span>
             </div>
             
             {medication.concentration && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 truncate">
                 {medication.concentration}
               </div>
             )}
           </div>
           
-          <div className="text-sm text-green-600 font-semibold">
+          <div className="text-sm text-green-600 font-semibold whitespace-nowrap">
             {formatCurrency(price)}
           </div>
         </div>
@@ -67,15 +67,15 @@ const MedicationSearchItem = memo(({ medication, onAddToSale }: MedicationSearch
           <div className="bg-amber-50 border border-amber-200 rounded-md p-2 mb-2">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 flex-shrink-0"></div>
-              <div className="text-xs text-amber-800">
+              <div className="text-xs text-amber-800 min-w-0">
                 <p className="font-medium">Stock limitado en lote actual</p>
-                <p>
+                <p className="break-words">
                   Solo quedan <span className="font-semibold">{nearestBatch.quantity} unidades</span> 
                   {nextBatch && (
-                    <>
+                    <span className="block sm:inline">
                       {' '}• Siguiente lote: <span className="font-semibold">{formatCurrency(nextBatch.sellingPrice)}</span>
                       {' '}({nextBatch.quantity} unidades)
-                    </>
+                    </span>
                   )}
                 </p>
               </div>
@@ -86,7 +86,7 @@ const MedicationSearchItem = memo(({ medication, onAddToSale }: MedicationSearch
         {/* Código de barras si existe */}
         {medication.barcode && (
           <div className="mt-2">
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded truncate block max-w-fit">
               CB: {medication.barcode}
             </span>
           </div>

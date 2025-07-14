@@ -17,6 +17,70 @@ import {
   getStockStatus,
   calculateDaysToExpiration,
 } from "../types/MedicationViewTypes";
+import { findMedicationCategoryById } from "./MedicationCategoryService";
+import { findManufacturerById } from "./ManufacturerService";
+import { findPharmaceuticalFormById } from "./PharmaceuticalFormService";
+
+// Cache opcional para optimizar consultas repetidas
+const entityNameCache = new Map<string, string>();
+
+/**
+ * 🔧 HELPER: Obtener nombre de categoría con cache
+ */
+const getCategoryName = async (categoryId: string): Promise<string> => {
+  const cacheKey = `category_${categoryId}`;
+  
+  if (entityNameCache.has(cacheKey)) {
+    return entityNameCache.get(cacheKey)!;
+  }
+
+  const category = await findMedicationCategoryById(categoryId);
+  const name = category?.name || "Sin categoría";
+  
+  entityNameCache.set(cacheKey, name);
+  return name;
+};
+
+/**
+ * 🔧 HELPER: Obtener nombre de fabricante con cache
+ */
+const getManufacturerName = async (manufacturerId: string): Promise<string> => {
+  const cacheKey = `manufacturer_${manufacturerId}`;
+  
+  if (entityNameCache.has(cacheKey)) {
+    return entityNameCache.get(cacheKey)!;
+  }
+
+  const manufacturer = await findManufacturerById(manufacturerId);
+  const name = manufacturer?.name || "Sin fabricante";
+  
+  entityNameCache.set(cacheKey, name);
+  return name;
+};
+
+/**
+ * 🔧 HELPER: Obtener nombre de forma farmacéutica con cache
+ */
+const getPharmaceuticalFormName = async (pharmaceuticalFormId: string): Promise<string> => {
+  const cacheKey = `pharmaceutical_form_${pharmaceuticalFormId}`;
+  
+  if (entityNameCache.has(cacheKey)) {
+    return entityNameCache.get(cacheKey)!;
+  }
+
+  const pharmaceuticalForm = await findPharmaceuticalFormById(pharmaceuticalFormId);
+  const name = pharmaceuticalForm?.name || "Sin forma";
+  
+  entityNameCache.set(cacheKey, name);
+  return name;
+};
+
+/**
+ * 🔧 HELPER: Limpiar cache (útil para testing o cuando se actualicen datos)
+ */
+export const clearEntityNameCache = (): void => {
+  entityNameCache.clear();
+};
 
 // Crear una sola instancia del repositorio para todo el servicio
 const medicationDB = getMedicationRepository();
@@ -350,6 +414,19 @@ const createMedicationCatalogView = async (
       medicationBatchDB.findActiveBatchesByMedicationId(medication.id),
     ]);
 
+  // Resolver nombres de entidades relacionadas en paralelo con cache
+  const [categoryName, manufacturerName, pharmaceuticalFormName] = await Promise.all([
+    medication.categoryId 
+      ? getCategoryName(medication.categoryId)
+      : Promise.resolve("Sin categoría"),
+    medication.manufacturerId 
+      ? getManufacturerName(medication.manufacturerId)
+      : Promise.resolve("Sin fabricante"),
+    medication.pharmaceuticalFormId 
+      ? getPharmaceuticalFormName(medication.pharmaceuticalFormId)
+      : Promise.resolve("Sin forma"),
+  ]);
+
   // Calcular estado de stock
   const stockStatus = getStockStatus(totalActiveStock);
 
@@ -382,10 +459,10 @@ const createMedicationCatalogView = async (
     presentation: medication.presentation,
     barcode: medication.barcode,
 
-    // Datos resueltos (por ahora usamos IDs, luego se pueden resolver)
-    manufacturerName: medication.manufacturerId || "Unknown", // TODO: resolver nombre
-    categoryName: medication.categoryId || "Unknown", // TODO: resolver nombre
-    pharmaceuticalFormName: medication.pharmaceuticalFormId || "Unknown", // TODO: resolver nombre
+    // Datos resueltos - nombres reales obtenidos de servicios
+    manufacturerName,
+    categoryName,
+    pharmaceuticalFormName,
 
     totalActiveStock,
     activeBatchCount,
