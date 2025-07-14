@@ -95,10 +95,10 @@ const MedicationSearch = memo(({
   }, [searchQuery, medications.length, isLoading, error]);
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative w-full ${className}`}>
       <Popover open={isOpen} onOpenChange={handleOpenChange} modal={false}>
         <PopoverTrigger asChild>
-          <div className="relative">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             <Input
               ref={inputRef}
@@ -109,7 +109,7 @@ const MedicationSearch = memo(({
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
-              className="pl-10 pr-4"
+              className="pl-10 pr-4 w-full"
               autoComplete="off"
               disabled={disabled}
             />
@@ -120,7 +120,7 @@ const MedicationSearch = memo(({
         </PopoverTrigger>
 
         <PopoverContent 
-          className="w-full min-w-[800px] max-w-[900px] p-0" 
+          className="w-[calc(100vw-2rem)] sm:w-auto sm:min-w-[600px] sm:max-w-[90vw] lg:max-w-[800px] p-0" 
           align="start"
           sideOffset={0}
           onOpenAutoFocus={(e) => e.preventDefault()} // Prevenir auto-focus en el popover content
@@ -146,7 +146,7 @@ const MedicationSearch = memo(({
             )}
             
             {medications.length > 0 && (
-              <div>
+              <div className="w-full">
                 {medications.map((medication) => (
                   <MedicationSearchItem
                     key={medication.id}
