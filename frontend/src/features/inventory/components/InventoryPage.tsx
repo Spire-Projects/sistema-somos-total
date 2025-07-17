@@ -1,12 +1,17 @@
 import { useCallback, memo } from "react";
-import { Warehouse } from "lucide-react";
+import { Warehouse, Download } from "lucide-react";
 import { AddMedicationDialog } from "./AddMedicationDialog";
 import { MedicationSearch } from "./MedicationSearch";
 import { MedicationFilters } from "./MedicationFilters";
 import { MedicationTable } from "./MedicationTable";
 import { DataPagination } from "@/shared/components/DataPagination";
+import { ExportModal } from "@/shared/components/ExportModal";
 import { useMedicationCatalog } from "../hooks/useMedicationCatalog";
+import { useExcelExport } from "@/shared/hooks/useExcelExport";
 import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
+import type { ExportFieldConfig } from "@/shared/types/ExportTypes";
+import { Button } from "@/shared/components/ui/button";
+import { getMedicationCatalogExport } from "@/shared/services/MedicationService";
 
 const InventoryPageComponent = () => {
   const {
@@ -29,6 +34,41 @@ const InventoryPageComponent = () => {
     refresh,
   } = useMedicationCatalog({
     initialPageSize: 10,
+  });
+
+  // Configuración de campos disponibles para exportación
+  const exportFields: ExportFieldConfig<MedicationCatalogView>[] = [
+    { key: 'comercialName', label: 'Nombre Comercial', selected: true },
+    { key: 'tradeName', label: 'Nombre de Marca', selected: true },
+    { key: 'genericName', label: 'Nombre Genérico', selected: true },
+    { key: 'manufacturerName', label: 'Fabricante', selected: true },
+    { key: 'categoryName', label: 'Categoría', selected: true },
+    { key: 'pharmaceuticalFormName', label: 'Forma Farmacéutica', selected: true },
+    { key: 'concentration', label: 'Concentración', selected: true },
+    { key: 'presentation', label: 'Presentación', selected: true },
+    { key: 'totalActiveStock', label: 'Stock Total', selected: true },
+    { key: 'activeBatchCount', label: 'Lotes Activos', selected: true },
+    { key: 'stockStatus', label: 'Estado de Stock', selected: false },
+    { key: 'barcode', label: 'Código de Barras', selected: false },
+    { key: 'createdAt', label: 'Fecha de Creación', selected: false, format: (value) => new Date(value).toLocaleDateString() },
+  ];
+
+  // Hook para exportación
+  const {
+    isExporting,
+    isModalOpen,
+    openExportModal,
+    closeExportModal,
+    handleExport
+  } = useExcelExport({
+    title: 'Catálogo de Medicamentos',
+    dataExtractor: getMedicationCatalogExport,
+    defaultFields: exportFields,
+    fileName: 'catalogo_medicamentos',
+    getAdditionalMetadata: () => ({
+      searchQuery,
+      ...filters
+    })
   });
 
   const handleMedicationAdded = useCallback(() => {
@@ -109,6 +149,15 @@ const InventoryPageComponent = () => {
           onClear={clearFilters}
           disabled={loading}
         />
+        <Button 
+          variant={"outline"}
+          size="sm"
+          onClick={openExportModal}
+          disabled={loading}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar catálogo
+          </Button>
       </div>
 
       {/* Results Summary */}
@@ -173,6 +222,16 @@ const InventoryPageComponent = () => {
           />
         </div>
       )}
+
+      {/* Modal de Exportación */}
+      <ExportModal<MedicationCatalogView>
+        open={isModalOpen}
+        onOpenChange={closeExportModal}
+        title="Exportar Catálogo de Medicamentos"
+        fields={exportFields}
+        onExport={handleExport}
+        isExporting={isExporting}
+      />
     </div>
   );
 };

@@ -568,3 +568,40 @@ export const getActiveBatchesForMedication = async (
     }))
     .sort((a, b) => a.daysToExpiration - b.daysToExpiration);
 };
+
+/**
+ * Obtener medicamentos del catálogo para exportación con rango de fechas
+ */
+export const getMedicationCatalogExport = async (
+  dateRange: { from: Date; to: Date },
+  _selectedFields?: string[] // Parámetro no utilizado por ahora
+): Promise<MedicationCatalogView[]> => {
+  try {
+    // Crear filtros para obtener medicamentos en el rango de fechas
+    const filters: MedicationCatalogFilters = {
+      createdFrom: dateRange.from.toISOString(),
+      createdTo: dateRange.to.toISOString()
+    };
+
+    // Obtener todos los medicamentos sin paginación (usando un tamaño grande)
+    const result = await medicationDB.findAllPaginatedWithFilters(
+      1, // página 1
+      10000, // tamaño grande para obtener todos
+      filters
+    );
+
+    // Convertir cada medicamento a vista de catálogo
+    const catalogViews: MedicationCatalogView[] = await Promise.all(
+      result.items.map(async (medication) => {
+        return await createMedicationCatalogView(medication);
+      })
+    );
+
+    // Nota: selectedFields se puede usar en el futuro para filtrar campos específicos
+    // Por ahora retornamos todos los campos disponibles
+    return catalogViews;
+  } catch (error) {
+    console.error('Error getting medication catalog for export:', error);
+    throw new Error('Error al obtener datos para exportación');
+  }
+};
