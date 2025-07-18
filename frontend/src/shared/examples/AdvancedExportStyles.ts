@@ -58,15 +58,7 @@ export const advancedMedicationExportFields: ExportFieldConfig<MedicationCatalog
     label: 'Estado de Stock', 
     selected: true,
     width: 15,
-    format: (value) => {
-      const statusMap = {
-        'out_of_stock': 'Sin Stock',
-        'low_stock': 'Stock Bajo',
-        'in_stock': 'En Stock',
-        'overstocked': 'Exceso Stock'
-      };
-      return statusMap[value as keyof typeof statusMap] || value;
-    }
+    format: (value) => ExcelExporter.translateValue('stockStatus', value)
   },
   { 
     key: 'createdAt', 
@@ -74,7 +66,28 @@ export const advancedMedicationExportFields: ExportFieldConfig<MedicationCatalog
     selected: false,
     width: 15,
     format: (value) => new Date(value).toLocaleDateString('es-ES')
-  }
+  },
+  { 
+    key: 'status', 
+    label: 'Estado General', 
+    selected: false,
+    width: 12,
+    format: (value) => ExcelExporter.translateValue('status', value)
+  },
+  { 
+    key: 'paymentMethod', 
+    label: 'Método de Pago', 
+    selected: false,
+    width: 15,
+    format: (value) => ExcelExporter.translateValue('paymentMethod', value)
+  },
+  { 
+    key: 'userRole', 
+    label: 'Rol de Usuario', 
+    selected: false,
+    width: 15,
+    format: (value) => ExcelExporter.translateValue('userRole', value)
+  },
 ];
 
 /**

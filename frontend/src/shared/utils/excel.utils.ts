@@ -93,33 +93,7 @@ export class ExcelExporter {
       this.addInfoRow(worksheet, 'Exportado por:', metadata.exportedBy);
     }
 
-    // Línea en blanco
-    worksheet.addRow(['', '']);
 
-    // Título de filtros
-    const filtersRow = worksheet.addRow(['FILTROS APLICADOS', '']);
-    worksheet.mergeCells(`A${filtersRow.number}:B${filtersRow.number}`);
-    filtersRow.getCell(1).style = {
-      font: { bold: true, size: 14, color: { argb: '1F4E79' } },
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E7F3FF' } },
-      alignment: { horizontal: 'center', vertical: 'middle' },
-      border: {
-        top: { style: 'medium', color: { argb: '1F4E79' } },
-        bottom: { style: 'medium', color: { argb: '1F4E79' } },
-        left: { style: 'medium', color: { argb: '1F4E79' } },
-        right: { style: 'medium', color: { argb: '1F4E79' } }
-      }
-    };
-    filtersRow.height = 25;
-
-    // Filtros aplicados
-    if (metadata.filters && Object.keys(metadata.filters).length > 0) {
-      Object.entries(metadata.filters).forEach(([key, value]) => {
-        this.addInfoRow(worksheet, key, String(value));
-      });
-    } else {
-      this.addInfoRow(worksheet, 'Sin filtros aplicados', '');
-    }
   }
 
   /**
@@ -162,7 +136,7 @@ export class ExcelExporter {
     // Filtrar solo campos seleccionados
     const selectedFields = config.fields.filter(field => field.selected);
     
-    // Configurar columnas
+    // Configurar columnas con ancho inicial
     worksheet.columns = selectedFields.map(field => ({
       key: String(field.key),
       header: field.label,
@@ -218,6 +192,9 @@ export class ExcelExporter {
     // Aplicar formato condicional si está configurado
     this.applyConditionalFormatting(worksheet, data, selectedFields);
 
+    // Auto-ajustar ancho de columnas después de agregar todos los datos
+    this.autoFitColumns(worksheet, selectedFields);
+
     // Aplicar autofilter
     if (data.length > 0) {
       worksheet.autoFilter = {
@@ -271,6 +248,81 @@ export class ExcelExporter {
                 },
                 font: {
                   color: { argb: 'FFCC0000' }
+                }
+              }
+            }
+          ]
+        });
+      }
+      
+      // Formato condicional para estado de stock (en español)
+      if (String(field.key).includes('stockStatus') || String(field.key).includes('estado')) {
+        // Sin Stock - Rojo
+        worksheet.addConditionalFormatting({
+          ref: `${columnLetter}2:${columnLetter}${data.length + 1}`,
+          rules: [
+            {
+              type: 'containsText',
+              operator: 'containsText',
+              priority: 3,
+              text: 'Sin Stock',
+              style: {
+                fill: {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  bgColor: { argb: 'FFFFE6E6' }
+                },
+                font: {
+                  color: { argb: 'FFCC0000' },
+                  bold: true
+                }
+              }
+            }
+          ]
+        });
+
+        // Stock Bajo - Amarillo
+        worksheet.addConditionalFormatting({
+          ref: `${columnLetter}2:${columnLetter}${data.length + 1}`,
+          rules: [
+            {
+              type: 'containsText',
+              operator: 'containsText',
+              priority: 4,
+              text: 'Stock Bajo',
+              style: {
+                fill: {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  bgColor: { argb: 'FFFFF2CC' }
+                },
+                font: {
+                  color: { argb: 'FFBF9000' },
+                  bold: true
+                }
+              }
+            }
+          ]
+        });
+
+        // En Stock - Verde
+        worksheet.addConditionalFormatting({
+          ref: `${columnLetter}2:${columnLetter}${data.length + 1}`,
+          rules: [
+            {
+              type: 'containsText',
+              operator: 'containsText',
+              priority: 5,
+              text: 'En Stock',
+              style: {
+                fill: {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  bgColor: { argb: 'FFE6F7E6' }
+                },
+                font: {
+                  color: { argb: 'FF00AA00' },
+                  bold: true
                 }
               }
             }
@@ -427,5 +479,154 @@ export class ExcelExporter {
     }
 
     return style;
+  }
+
+  /**
+   * Auto-ajustar el ancho de las columnas basado en el contenido
+   */
+  private static autoFitColumns<T>(
+    worksheet: ExcelJS.Worksheet,
+    selectedFields: ExportFieldConfig<T>[]
+  ): void {
+    selectedFields.forEach((field, colIndex) => {
+      const column = worksheet.getColumn(colIndex + 1);
+      let maxLength = 0;
+
+      // Verificar el largo del header (con peso extra porque suele ser importante)
+      const headerLength = field.label.length;
+      maxLength = Math.max(maxLength, headerLength + 1); // +1 para dar espacio extra al header
+
+      // Verificar el largo del contenido en cada fila
+      column.eachCell((cell, rowNumber) => {
+        if (cell.value && rowNumber > 1) { // Saltar el header (rowNumber 1)
+          let cellLength = 0;
+          
+          // Manejar diferentes tipos de valores
+          if (typeof cell.value === 'number') {
+            // Para números, calcular ancho basado en formato
+            cellLength = this.calculateNumberWidth(cell.value);
+          } else if (cell.value instanceof Date) {
+            // Para fechas, usar formato estándar
+            cellLength = 20; // dd/mm/yyyy hh:mm formato
+          } else {
+            // Para texto, usar la longitud del string
+            cellLength = String(cell.value).length;
+          }
+          
+          maxLength = Math.max(maxLength, cellLength);
+        }
+      });
+
+      // Calcular el ancho final con límites sensatos
+      let calculatedWidth = maxLength + 2; // +2 para padding
+
+      // Aplicar límites según el tipo de contenido probable
+      const fieldKey = String(field.key).toLowerCase();
+      
+      if (fieldKey.includes('id') || fieldKey.includes('codigo')) {
+        // IDs y códigos: más estrecho
+        calculatedWidth = Math.min(Math.max(calculatedWidth, 8), 20);
+      } else if (fieldKey.includes('nombre') || fieldKey.includes('descripcion') || fieldKey.includes('observacion')) {
+        // Nombres y descripciones: más ancho
+        calculatedWidth = Math.min(Math.max(calculatedWidth, 15), 60);
+      } else if (fieldKey.includes('precio') || fieldKey.includes('total') || fieldKey.includes('importe')) {
+        // Campos monetarios: ancho medio
+        calculatedWidth = Math.min(Math.max(calculatedWidth, 12), 18);
+      } else if (fieldKey.includes('fecha') || fieldKey.includes('date')) {
+        // Fechas: ancho fijo
+        calculatedWidth = Math.min(Math.max(calculatedWidth, 16), 22);
+      } else {
+        // Otros campos: límites generales
+        calculatedWidth = Math.min(Math.max(calculatedWidth, 10), 40);
+      }
+      
+      // Si el campo tiene un ancho específico configurado, respetarlo como mínimo
+      const finalWidth = field.width ? Math.max(field.width, calculatedWidth) : calculatedWidth;
+      
+      column.width = finalWidth;
+    });
+  }
+
+  /**
+   * Calcular ancho necesario para números (considerando formato)
+   */
+  private static calculateNumberWidth(value: number): number {
+    const stringValue = String(value);
+    
+    // Para números con decimales, agregar espacio extra
+    if (stringValue.includes('.')) {
+      return stringValue.length + 2;
+    }
+    
+    // Para números enteros grandes, usar formato con separadores
+    if (Math.abs(value) >= 1000) {
+      return stringValue.length + Math.floor(stringValue.length / 3); // Espacio para separadores de miles
+    }
+    
+    return stringValue.length;
+  }
+
+  /**
+   * Traducciones estándar para valores comunes en la aplicación
+   */
+  static getTranslations() {
+    return {
+      // Estados de stock
+      stockStatus: {
+        'out_of_stock': 'Sin Stock',
+        'low_stock': 'Stock Bajo', 
+        'in_stock': 'En Stock',
+        'overstocked': 'Exceso Stock'
+      },
+      
+      // Estados generales
+      status: {
+        'active': 'Activo',
+        'inactive': 'Inactivo',
+        'pending': 'Pendiente',
+        'completed': 'Completado',
+        'cancelled': 'Cancelado',
+        'in_progress': 'En Proceso'
+      },
+      
+      // Tipos de medicamentos
+      medicationType: {
+        'prescription': 'Con Receta',
+        'over_the_counter': 'Venta Libre',
+        'controlled': 'Controlado',
+        'generic': 'Genérico',
+        'brand': 'Marca'
+      },
+      
+      // Métodos de pago
+      paymentMethod: {
+        'cash': 'Efectivo',
+        'card': 'Tarjeta',
+        'transfer': 'Transferencia',
+        'check': 'Cheque'
+      },
+      
+      // Roles de usuario
+      userRole: {
+        'admin': 'Administrador',
+        'cashier': 'Cajero',
+        'pharmacist': 'Farmacéutico',
+        'manager': 'Gerente'
+      }
+    };
+  }
+
+  /**
+   * Función helper para traducir valores usando las traducciones estándar
+   */
+  static translateValue(category: string, value: string): string {
+    const translations = this.getTranslations();
+    const categoryTranslations = translations[category as keyof typeof translations];
+    
+    if (categoryTranslations && categoryTranslations[value as keyof typeof categoryTranslations]) {
+      return categoryTranslations[value as keyof typeof categoryTranslations];
+    }
+    
+    return value; // Retorna el valor original si no hay traducción
   }
 }

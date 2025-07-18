@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { ExcelExporter } from '@/shared/utils/excel.utils';
+import type { RootState } from '@/shared/store/store';
 import type {
   ExportConfig,
   ExportFieldConfig,
@@ -27,6 +29,9 @@ interface UseExcelExportReturn<T> {
 /**
  * Hook reutilizable para exportación a Excel
  * 
+ * Obtiene automáticamente el nombre del usuario desde Redux para incluirlo
+ * en los metadatos del archivo exportado.
+ * 
  * @example
  * ```tsx
  * const {
@@ -53,6 +58,9 @@ export function useExcelExport<T>({
 }: UseExcelExportProps<T>): UseExcelExportReturn<T> {
   const [isExporting, setIsExporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Obtener información del usuario desde Redux
+  const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const openExportModal = useCallback(() => {
     setIsModalOpen(true);
@@ -83,7 +91,7 @@ export function useExcelExport<T>({
         },
         totalItems: exportData.length,
         exportDate: new Date().toLocaleDateString(),
-        exportedBy: 'Usuario', // TODO: Obtener del estado de autenticación
+        exportedBy: currentUser?.fullName || 'Usuario',
         ...(getAdditionalMetadata ? { filters: getAdditionalMetadata() } : {})
       };
 

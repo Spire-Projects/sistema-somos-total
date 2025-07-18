@@ -49,12 +49,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
 
             {/* Right side - Notifications and User Info */}
             <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
-              <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                  1
-                </span>
-              </button>
+              
 
               <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-gray-200">
                 {/* Desktop/Tablet: Mostrar nombre completo */}

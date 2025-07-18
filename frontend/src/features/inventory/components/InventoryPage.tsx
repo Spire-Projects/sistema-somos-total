@@ -8,6 +8,7 @@ import { DataPagination } from "@/shared/components/DataPagination";
 import { ExportModal } from "@/shared/components/ExportModal";
 import { useMedicationCatalog } from "../hooks/useMedicationCatalog";
 import { useExcelExport } from "@/shared/hooks/useExcelExport";
+import { ExcelExporter } from "@/shared/utils/excel.utils";
 import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
 import type { ExportFieldConfig } from "@/shared/types/ExportTypes";
 import { Button } from "@/shared/components/ui/button";
@@ -48,7 +49,7 @@ const InventoryPageComponent = () => {
     { key: 'presentation', label: 'Presentación', selected: true },
     { key: 'totalActiveStock', label: 'Stock Total', selected: true },
     { key: 'activeBatchCount', label: 'Lotes Activos', selected: true },
-    { key: 'stockStatus', label: 'Estado de Stock', selected: false },
+    { key: 'stockStatus', label: 'Estado de Stock', selected: false, format: (value) => ExcelExporter.translateValue('stockStatus', value) },
     { key: 'barcode', label: 'Código de Barras', selected: false },
     { key: 'createdAt', label: 'Fecha de Creación', selected: false, format: (value) => new Date(value).toLocaleDateString() },
   ];
@@ -156,7 +157,7 @@ const InventoryPageComponent = () => {
           disabled={loading}
           >
             <Download className="h-4 w-4 mr-2" />
-            Exportar catálogo
+            Exportar Inventario
           </Button>
       </div>
 
@@ -227,7 +228,7 @@ const InventoryPageComponent = () => {
       <ExportModal<MedicationCatalogView>
         open={isModalOpen}
         onOpenChange={closeExportModal}
-        title="Exportar Catálogo de Medicamentos"
+        title="Inventario de Medicamentos"
         fields={exportFields}
         onExport={handleExport}
         isExporting={isExporting}
