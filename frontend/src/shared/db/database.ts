@@ -11,7 +11,7 @@ import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
 import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
-import { manufacturerSchema } from "./models/manufacturer.model";
+import { manufacturerSchema, manufacturerMigrationStrategies } from "./models/manufacturer.model";
 import { medicationSchema } from "./models/medication.model";
 import { medicationBatchSchema } from "./models/medicationBatch.model";
 import type {
@@ -25,7 +25,7 @@ import type {
 } from "../types/Medication";
 import type { Sale, Medic } from "../types/Sales";
 import { config } from "../config/config";
-import { genericNameSchema } from "./models/genericName.model";
+import { genericNameSchema, genericNameMigrationStrategies } from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
 import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
@@ -120,6 +120,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         generic_names: {
           schema: genericNameSchema,
+          migrationStrategies: genericNameMigrationStrategies,
         },
         medication_categories: {
           schema: medicationCategorySchema,
@@ -129,6 +130,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         manufacturers: {
           schema: manufacturerSchema,
+          migrationStrategies: manufacturerMigrationStrategies,
         },
         medications: {
           schema: medicationSchema,

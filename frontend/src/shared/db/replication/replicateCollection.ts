@@ -11,13 +11,32 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   collectionRx: RxCollection<T>
 ) => {
   const converter: FirestoreDataConverter<T> = {
-    toFirestore: (data: T) => data,
+    toFirestore: (data: T) => {
+      // Crear copia limpia del documento
+      const cleanData: any = {};
+      
+      // Copiar solo los campos que no son null, undefined o internos de RxDB
+      Object.keys(data).forEach(key => {
+        if (
+          data[key] !== null && 
+          data[key] !== undefined && 
+          key !== '_deleted' && 
+          key !== '_rev'
+        ) {
+          cleanData[key] = data[key];
+        }
+      });
+      
+      return cleanData;
+    },
     fromFirestore: (snap) => snap.data() as T,
   };
 
   const colRef = fbCollection(firestore, name).withConverter(converter);
 
-  return replicateFirestore<T>({
+  console.log(`🔄 Iniciando replicación para colección: ${name}`);
+
+  const replicationState = replicateFirestore<T>({
     replicationIdentifier: `sync-${name}`,
     collection: collectionRx,
     firestore: {
@@ -32,10 +51,24 @@ export const replicateCollection = <T extends { [key: string]: any }>(
     },
     push: {
       batchSize: 10,
-      // Opcional:
-      // filter: async (doc) => true
     },
     live: true,
     serverTimestampField: "_serverUpdatedAt",
   });
+
+  // Manejar errores de replicación
+  replicationState.error$.subscribe((error) => {
+    console.error(`❌ Error en replicación de ${name}:`, error);
+  });
+
+  // Log de eventos exitosos
+  replicationState.received$.subscribe((docs) => {
+    console.log(`⬇️ ${name}: Recibidos ${docs.length} documentos`);
+  });
+
+  replicationState.sent$.subscribe((docs) => {
+    console.log(`⬆️ ${name}: Enviados ${docs.length} documentos`);
+  });
+
+  return replicationState;
 };

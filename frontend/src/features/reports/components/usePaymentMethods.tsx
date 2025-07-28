@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { Sale } from "@/shared/types/Sales";
-import type { PaymentMethodSummary } from "./types/Types";
 
 export function usePaymentMethods(sales: Sale[]) {
   return useMemo(() => {

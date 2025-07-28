@@ -2,15 +2,21 @@ import type { DatabaseCollections } from "../database";
 import { replicateCollection } from "./replicateCollection";
 
 export const startAllReplications = (collections: DatabaseCollections) => {
-  replicateCollection("medications", collections.medications);
-  replicateCollection("active_ingredients", collections.active_ingredients);
+  console.log("🔄 Iniciando todas las replicaciones...");
+  
+  // Replicaciones en orden de dependencias (colecciones base primero)
+  replicateCollection("generic_names", collections.generic_names);
   replicateCollection("manufacturers", collections.manufacturers);
+  replicateCollection("active_ingredients", collections.active_ingredients);
   replicateCollection(
     "medication_categories",
     collections.medication_categories
   );
   replicateCollection("pharmaceutical_forms", collections.pharmaceutical_forms);
-  replicateCollection("generic_names", collections.generic_names);
+  replicateCollection("medications", collections.medications);
+ 
   replicateCollection("users", collections.users);
   replicateCollection("medication_batches", collections.medication_batches);
+  
+  console.log("✅ Todas las replicaciones iniciadas");
 };

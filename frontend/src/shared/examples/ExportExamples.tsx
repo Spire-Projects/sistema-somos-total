@@ -23,7 +23,7 @@ interface Sale {
 }
 
 // Función extractora de datos para ventas
-const getSalesExport: DataExtractor<Sale> = async (dateRange, selectedFields) => {
+const getSalesExport: DataExtractor<Sale> = async (dateRange) => {
   // Aquí iría la lógica para obtener las ventas del rango de fechas
   // Por ejemplo, usando un servicio similar al de medicamentos
   
@@ -154,7 +154,7 @@ interface Customer {
   lastPurchaseDate: string;
 }
 
-const getCustomersExport: DataExtractor<Customer> = async (dateRange, selectedFields) => {
+const getCustomersExport: DataExtractor<Customer> = async () => {
   // Lógica similar para obtener clientes
   // Filtrar por fecha de registro en el rango especificado
   return []; // Retornar datos de clientes

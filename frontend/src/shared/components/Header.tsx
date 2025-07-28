@@ -1,5 +1,5 @@
 import { useAppSelector } from "../store/hooks";
-import { Bell, ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { useLocation } from "react-router";
 
 interface HeaderProps {

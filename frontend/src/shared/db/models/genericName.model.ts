@@ -2,7 +2,7 @@ import type { RxJsonSchema, RxCollection } from "rxdb";
 import type { GenericNameDoc } from "../../types/Medication";
 
 export const genericNameSchema: RxJsonSchema<GenericNameDoc> = {
-  version: 0,
+  version: 1,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -58,6 +58,17 @@ export const genericNameSchema: RxJsonSchema<GenericNameDoc> = {
     "isDeleted",
   ],
   indexes: ["name", "createdAt", "isDeleted"],
+};
+
+// Estrategias de migración para GenericName
+export const genericNameMigrationStrategies = {
+  // Migración de versión 0 a 1: no se requieren cambios adicionales
+  // ya que los campos updatedAt y updatedBy ya existen
+  1: (oldDoc: any) => {
+    return {
+      ...oldDoc
+    };
+  }
 };
 
 export type GenericNameCollection = RxCollection<GenericNameDoc>;

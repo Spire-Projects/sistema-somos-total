@@ -5,20 +5,34 @@ import { useAppDispatch } from "./shared/store/hooks";
 import { loadUserFromStorage } from "./shared/store/authSlice";
 import { initDatabase } from "./shared/db/database";
 import { startAllReplications } from "./shared/db/replication/startReplications";
+import { verifyAndRunMigrations, manualMigrationIfNeeded } from "./shared/db/migration/migrationHelper";
 
 function App() {
   const dispatch = useAppDispatch();
 
-  //TODO: Descomentar cuando se necesite la replicación
-  /*
+
+  
   useEffect(() => {
     const init = async () => {
-      const db = await initDatabase();
-      //startAllReplications(db);
+      try {
+        console.log("🚀 Inicializando aplicación...");
+        const db = await initDatabase();
+        
+        // Verificar y ejecutar migraciones
+        await verifyAndRunMigrations(db);
+        await manualMigrationIfNeeded(db);
+        
+        // Iniciar replicaciones después de las migraciones
+        startAllReplications(db);
+        
+        console.log("✅ Aplicación inicializada correctamente");
+      } catch (error) {
+        console.error("❌ Error inicializando aplicación:", error);
+      }
     };
     init();
   }, []);
-*/
+
   useEffect(() => {
     // Cargar usuario del localStorage al iniciar la app
     dispatch(loadUserFromStorage());

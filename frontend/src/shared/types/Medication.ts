@@ -74,6 +74,8 @@ export interface Manufacturer {
   contactEmail?: string; // e.g., "test@test.com"
   createdAt?: string; // e.g., "2023-10-01T12:00:00Z"
   createdBy?: string; // e.g., "user123" - ID of the user who created this manufacturer
+  updatedAt?: string; // timestamp when the manufacturer was last updated
+  updatedBy?: string; // ID of the user who last updated this manufacturer
   sincronized?: boolean; // indicates if the manufacturer is synchronized with the server
   isDeleted?: boolean; // indicates if the manufacturer is deleted
 }
