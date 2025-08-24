@@ -125,7 +125,7 @@ const MedicationSearch = memo(({
           sideOffset={0}
           onOpenAutoFocus={(e) => e.preventDefault()} // Prevenir auto-focus en el popover content
         >
-          <div className="max-h-80 overflow-auto">
+          <div className="max-h-80 overflow-auto" onWheel={(e) => e.stopPropagation()}>
             {error && (
               <div className="p-3 text-center text-sm text-red-600">
                 {error}
