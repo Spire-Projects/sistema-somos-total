@@ -5,7 +5,6 @@ interface SyncStatus {
   isOnline: boolean;
   lastSyncTime: Date | null;
   isSyncing: boolean;
-  pendingChanges: number;
   error: string | null;
   lastSyncType: 'manual' | 'automatic';
   formattedLastSync: string;
@@ -16,7 +15,6 @@ export const useSyncStatus = () => {
     isOnline: navigator.onLine,
     lastSyncTime: null,
     isSyncing: false,
-    pendingChanges: 0,
     error: null,
     lastSyncType: 'automatic',
     formattedLastSync: 'Nunca'
@@ -38,8 +36,8 @@ export const useSyncStatus = () => {
 
   const checkSyncStatus = useCallback(async () => {
     try {
-      const [pendingChanges, lastSyncTime, lastSyncType, errorMessage] = await Promise.all([
-        syncService.getPendingChangesCount(),
+      const [ lastSyncTime, lastSyncType, errorMessage] = await Promise.all([
+        
         Promise.resolve(syncService.getLastSyncTime()),
         Promise.resolve(syncService.getLastSyncType()),
         Promise.resolve(syncService.getLastErrorMessage())
@@ -47,7 +45,6 @@ export const useSyncStatus = () => {
 
       setSyncStatus(prev => ({
         ...prev,
-        pendingChanges,
         lastSyncTime,
         lastSyncType,
         formattedLastSync: syncService.formatLastSyncTime(),

@@ -5,7 +5,7 @@ import { useAppDispatch } from "./shared/store/hooks";
 import { loadUserFromStorage } from "./shared/store/authSlice";
 import { initDatabase } from "./shared/db/database";
 import { startAllReplications } from "./shared/db/replication/startReplications";
-import { verifyAndRunMigrations, manualMigrationIfNeeded } from "./shared/db/migration/migrationHelper";
+import { verifyAndRunMigrations } from "./shared/db/migration/migrationHelper";
 import { syncService } from "./shared/services/SyncService";
 
 function App() {
@@ -21,7 +21,7 @@ function App() {
         
         // Verificar y ejecutar migraciones
         await verifyAndRunMigrations(db);
-        await manualMigrationIfNeeded(db);
+        //await manualMigrationIfNeeded(db);
         
         // Inicializar servicio de sincronización
         await syncService.initialize();

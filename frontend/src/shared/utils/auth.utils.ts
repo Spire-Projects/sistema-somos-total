@@ -1,12 +1,9 @@
 import CryptoJS from 'crypto-js';
-import { SignJWT, jwtVerify } from 'jose';
 import type {  UserDocument } from '../db/models/user.model';
 import type { AuthUser } from '../types/User';
 
-// Clave secreta para JWT (convertir a Uint8Array)
-const JWT_SECRET = new TextEncoder().encode(
-  import.meta.env.VITE_JWT_SECRET || 'your-secret-key-change-in-production'
-);
+// Clave secreta para JWT
+const JWT_SECRET = import.meta.env.VITE_JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Hash de contraseña usando crypto-js
 export async function hashPassword(password: string): Promise<string> {
@@ -19,27 +16,63 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return hashedPassword === hash;
 }
 
-// Generar JWT token usando jose
+// Generar JWT token usando crypto-js (más compatible)
 export async function generateToken(user: AuthUser): Promise<string> {
-  const payload = {
-    id: user.id,
-    email: user.email,
-    role: user.role
-  };
-  
-  const jwt = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('24h')
-    .sign(JWT_SECRET);
+  try {
+    const header = {
+      alg: 'HS256',
+      typ: 'JWT'
+    };
     
-  return jwt;
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
+    };
+    
+    // Codificar header y payload en base64
+    const encodedHeader = btoa(JSON.stringify(header));
+    const encodedPayload = btoa(JSON.stringify(payload));
+    
+    // Crear signature
+    const dataToSign = `${encodedHeader}.${encodedPayload}`;
+    const signature = CryptoJS.HmacSHA256(dataToSign, JWT_SECRET).toString(CryptoJS.enc.Base64url);
+    
+    return `${dataToSign}.${signature}`;
+  } catch (error) {
+    console.error('Error generando token:', error);
+    throw new Error('Error generando token de autenticación');
+  }
 }
 
-// Verificar JWT token usando jose
+// Verificar JWT token usando crypto-js
 export async function verifyToken(token: string): Promise<AuthUser | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+    
+    const [encodedHeader, encodedPayload, signature] = parts;
+    
+    // Verificar signature
+    const dataToSign = `${encodedHeader}.${encodedPayload}`;
+    const expectedSignature = CryptoJS.HmacSHA256(dataToSign, JWT_SECRET).toString(CryptoJS.enc.Base64url);
+    
+    if (signature !== expectedSignature) {
+      return null;
+    }
+    
+    // Decodificar payload
+    const payload = JSON.parse(atob(encodedPayload));
+    
+    // Verificar expiración
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return null;
+    }
+    
     return {
       id: payload.id as string,
       email: payload.email as string,

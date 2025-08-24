@@ -9,7 +9,7 @@ export const DashboardPage = () => {
     isOnline, 
     lastSyncTime, 
     isSyncing, 
-    pendingChanges, 
+   // pendingChanges, 
     error, 
     lastSyncType,
     formattedLastSync,
@@ -86,13 +86,6 @@ export const DashboardPage = () => {
                 </div>
               </div>
 
-          
-
-              {error && (
-                <div className="text-red-600 text-xs mt-2 p-2 bg-red-50 rounded">
-                  {error}
-                </div>
-              )}
 
               <button
                 onClick={forceSyncronization}

@@ -39,22 +39,30 @@ export const LoginPage = () => {
     setIsLoading(true);
     setError(null);
 
-    const response = await UserService.login(formData);
+    try {
+      console.log('🔑 Intentando login con:', formData.email);
+      const response = await UserService.login(formData);
 
-    if (response.success && response.user && response.token) {
-      dispatch(
-        loginSuccess({
-          user: response.user,
-          token: response.token,
-        })
-      );
-    } else {
-      setError(
-        response.error || 'Credenciales inválidas. Por favor, inténtalo de nuevo.'
-      );
+      if (response.success && response.user && response.token) {
+        console.log('✅ Login exitoso, redirigiendo...');
+        dispatch(
+          loginSuccess({
+            user: response.user,
+            token: response.token,
+          })
+        );
+      } else {
+        console.log('❌ Login fallido:', response.error);
+        setError(
+          response.error || 'Credenciales inválidas. Por favor, inténtalo de nuevo.'
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado en login:', error);
+      setError('Error de conexión. Por favor, inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -138,7 +138,7 @@ export const ClientsPage = () => {
         <div className="flex items-center space-x-2">
           <UserCog className="w-6 h-6 text-blue-600" />
           <div>
-            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
+            <p className="text-3xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
               Gestión de Clientes
             </p>
             <p className="text-gray-600">
