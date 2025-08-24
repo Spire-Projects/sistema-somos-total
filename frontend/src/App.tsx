@@ -6,6 +6,7 @@ import { loadUserFromStorage } from "./shared/store/authSlice";
 import { initDatabase } from "./shared/db/database";
 import { startAllReplications } from "./shared/db/replication/startReplications";
 import { verifyAndRunMigrations, manualMigrationIfNeeded } from "./shared/db/migration/migrationHelper";
+import { syncService } from "./shared/services/SyncService";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -22,8 +23,11 @@ function App() {
         await verifyAndRunMigrations(db);
         await manualMigrationIfNeeded(db);
         
-        // TODO: Uncomment to enable replications
-       // startAllReplications(db);
+        // Inicializar servicio de sincronización
+        await syncService.initialize();
+        
+        // Iniciar replicaciones automáticas
+        startAllReplications(db);
         
         console.log("✅ Aplicación inicializada correctamente");
       } catch (error) {

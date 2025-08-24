@@ -17,6 +17,7 @@ export const startAllReplications = (collections: DatabaseCollections) => {
  
   replicateCollection("users", collections.users);
   replicateCollection("medication_batches", collections.medication_batches);
+  replicateCollection("clients", collections.clients);
   
   console.log("✅ Todas las replicaciones iniciadas");
 };

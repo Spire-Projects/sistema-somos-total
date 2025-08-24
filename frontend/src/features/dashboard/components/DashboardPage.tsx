@@ -1,8 +1,20 @@
 import { useAppSelector } from "../../../shared/store/hooks";
 import { Link } from "react-router";
+import { useSyncStatus } from "@/shared/hooks/useSyncStatus";
+import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 
 export const DashboardPage = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const { 
+    isOnline, 
+    lastSyncTime, 
+    isSyncing, 
+    pendingChanges, 
+    error, 
+    lastSyncType,
+    formattedLastSync,
+    forceSyncronization 
+  } = useSyncStatus();
 
   return (
     <div className="space-y-6">
@@ -45,15 +57,51 @@ export const DashboardPage = () => {
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-yellow-800 mb-2">Estado del Sistema</h3>
-            <div className="space-y-2 text-sm">
-              <p className="flex justify-between">
-                <span>Conexión:</span>
-                <span className="text-green-600 font-medium">Conectado</span>
-              </p>
-              <p className="flex justify-between">
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2">
+                  {isOnline ? (
+                    <Wifi className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <WifiOff className="h-4 w-4 text-red-600" />
+                  )}
+                  Conexión:
+                </span>
+                <span className={`font-medium ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
+                  {isOnline ? 'Conectado' : 'Desconectado'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
                 <span>Última sincronización:</span>
-                <span>Hace 5 min</span>
-              </p>
+                <div className="text-right">
+                  <div className={lastSyncTime ? 'text-gray-700' : 'text-orange-600'}>
+                    {formattedLastSync}
+                  </div>
+                  {lastSyncTime && (
+                    <div className="text-xs text-gray-500">
+                      {lastSyncType === 'manual' ? '🔄 Manual' : '⚡ Automática'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+          
+
+              {error && (
+                <div className="text-red-600 text-xs mt-2 p-2 bg-red-50 rounded">
+                  {error}
+                </div>
+              )}
+
+              <button
+                onClick={forceSyncronization}
+                disabled={isSyncing || !isOnline}
+                className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Sincronizando...' : 'Sincronizar Ahora'}
+              </button>
             </div>
           </div>
         </div>

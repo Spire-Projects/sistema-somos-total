@@ -5,6 +5,7 @@ import {
   type FirestoreDataConverter,
 } from "firebase/firestore";
 import { firestore } from "@/shared/config/firebase";
+import { syncService } from "../../services/SyncService";
 
 export const replicateCollection = <T extends { [key: string]: any }>(
   name: string,
@@ -59,15 +60,29 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   // Manejar errores de replicación
   replicationState.error$.subscribe((error) => {
     console.error(`❌ Error en replicación de ${name}:`, error);
+    syncService.onSynchronizationError(name, error);
   });
 
-  // Log de eventos exitosos
+  // Detectar cuando la replicación está activa
+  replicationState.active$.subscribe((active) => {
+    console.log(`🔄 ${name}: Replicación ${active ? 'activa' : 'pausada'}`);
+    if (active) {
+      syncService.onSynchronizationStart(name);
+    }
+  });
+
+  // Log de eventos de recepción
   replicationState.received$.subscribe((docs) => {
     console.log(`⬇️ ${name}: Recibidos ${docs.length} documentos`);
+    // Siempre notificar, incluso si docs.length === 0 (significa que verificó y está al día)
+    syncService.onSynchronizationActivity(name, 'received', docs.length);
   });
 
+  // Log de eventos de envío
   replicationState.sent$.subscribe((docs) => {
     console.log(`⬆️ ${name}: Enviados ${docs.length} documentos`);
+    // Siempre notificar, incluso si docs.length === 0 (significa que verificó y está al día)
+    syncService.onSynchronizationActivity(name, 'sent', docs.length);
   });
 
   return replicationState;
