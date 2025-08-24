@@ -605,3 +605,14 @@ export const getMedicationCatalogExport = async (
     throw new Error('Error al obtener datos para exportación');
   }
 };
+
+
+export const getMedicationViewById = async (
+  id: string
+): Promise<MedicationCatalogView | null> => {
+  const medication = await findMedicationById(id);
+  if (!medication) return null;
+
+  // Crear vista de catálogo para el medicamento
+  return await createMedicationCatalogView(medication);
+}

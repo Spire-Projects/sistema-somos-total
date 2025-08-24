@@ -29,7 +29,7 @@ import { genericNameSchema, genericNameMigrationStrategies } from "./models/gene
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
 import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
-import { saleSchema } from "./models/sale.model";
+import { saleMigrationStrategies, saleSchema } from "./models/sale.model";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -143,6 +143,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
          sales: {
           schema: saleSchema,
+          migrationStrategies: saleMigrationStrategies,
         },
         medics: {
           schema: medicSchema,

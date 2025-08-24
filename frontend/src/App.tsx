@@ -22,8 +22,8 @@ function App() {
         await verifyAndRunMigrations(db);
         await manualMigrationIfNeeded(db);
         
-        // Iniciar replicaciones después de las migraciones
-        startAllReplications(db);
+        // TODO: Uncomment to enable replications
+       // startAllReplications(db);
         
         console.log("✅ Aplicación inicializada correctamente");
       } catch (error) {

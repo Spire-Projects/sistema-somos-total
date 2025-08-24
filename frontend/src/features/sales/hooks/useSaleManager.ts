@@ -247,7 +247,7 @@ export const useSaleManager = () => {
   }, []);
 
   // Establecer método de pago
-  const setPaymentMethod = useCallback((paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia') => {
+  const setPaymentMethod = useCallback((paymentMethod: 'efectivo' | 'qr' | 'transferencia') => {
     setSaleState(prev => ({
       ...prev,
       paymentMethod

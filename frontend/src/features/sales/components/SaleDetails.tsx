@@ -8,6 +8,9 @@ import type { Sale } from '@/shared/types/Sales';
 import type { AuthUser } from '@/shared/types/User';
 import type { Client } from '@/shared/types/Client';
 import type { Medic } from '@/shared/types/Sales';
+import { findMedicationById, getMedicationViewById } from '@/shared/services';
+import type { Medication } from '@/shared/types/Medication';
+import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
 
 interface SaleDetailsProps {
   sale: Sale;
@@ -17,6 +20,7 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
   const [createdByUser, setCreatedByUser] = useState<AuthUser | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [medic, setMedic] = useState<Medic | null>(null);
+
   const [loading, setLoading] = useState({
     user: false,
     client: false,
@@ -88,6 +92,42 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
 
     fetchMedic();
   }, [sale.idMedic]);
+
+  // Cargar información del medicamento
+  const [medicationsMap, setMedicationsMap] = useState<Record<string, MedicationCatalogView | null>>({});
+  const [medicationsLoading, setMedicationsLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchMedications = async () => {
+      setMedicationsLoading(true);
+      const map: Record<string, MedicationCatalogView | null> = {};
+
+      try {
+        for (const item of sale.items) {
+          try {
+            const med = await getMedicationViewById(item.medicationId);
+            map[item.medicationId] = med ?? null;
+          } catch (err) {
+            console.error('Error fetching medication', item.medicationId, err);
+            map[item.medicationId] = null;
+          }
+        }
+      } finally {
+        if (mounted) {
+          setMedicationsMap(map);
+          setMedicationsLoading(false);
+        }
+      }
+    };
+
+    if (sale.items && sale.items.length > 0) {
+      fetchMedications();
+    }
+
+    return () => { mounted = false; };
+  }, [sale.items]);
 
   // Funciones para mostrar la información
   const getCreatedByDisplay = () => {
@@ -197,29 +237,34 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sale.items.map((item, index) => (
-                <tr key={`${item.batchId}-${index}`} className="hover:bg-gray-50">
-                  <td className="p-2">
-                    <div>
-                      <div className="font-medium">{item.medicationId}</div>
-                      <div className="text-gray-500">Lote: {item.batchId}</div>
-                    </div>
-                  </td>
-                  <td className="p-2 text-right">{item.quantity}</td>
-                  <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                  {sale.items.some(i => i.listPrice) && (
-                    <td className="p-2 text-right">
-                      {item.listPrice ? formatCurrency(item.listPrice) : '-'}
+              {sale.items.map((item, index) => {
+                const medication = medicationsMap[item.medicationId];
+                const medicationLabel = medication?.comercialName || "nada" || (medicationsLoading ? 'Cargando...' : 'Medicamento desconocido');
+                
+                return (
+                  <tr key={`${item.batchId}-${index}`} className="hover:bg-gray-50">
+                    <td className="p-2">
+                      <div>
+                        <div className="font-medium">{medicationLabel}</div>
+                        <div className="text-gray-500">Lote: {item.batchId}</div>
+                      </div>
                     </td>
-                  )}
-                  {sale.items.some(i => i.discount) && (
-                    <td className="p-2 text-right text-red-600">
-                      {item.discount ? `-${formatCurrency(item.discount)}` : '-'}
-                    </td>
-                  )}
-                  <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
-                </tr>
-              ))}
+                    <td className="p-2 text-right">{item.quantity}</td>
+                    <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
+                    {sale.items.some(i => i.listPrice) && (
+                      <td className="p-2 text-right">
+                        {item.listPrice ? formatCurrency(item.listPrice) : '-'}
+                      </td>
+                    )}
+                    {sale.items.some(i => i.discount) && (
+                      <td className="p-2 text-right text-red-600">
+                        {item.discount ? `-${formatCurrency(item.discount)}` : '-'}
+                      </td>
+                    )}
+                    <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

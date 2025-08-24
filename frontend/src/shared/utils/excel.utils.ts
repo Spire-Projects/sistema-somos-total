@@ -601,7 +601,7 @@ export class ExcelExporter {
       // Métodos de pago
       paymentMethod: {
         'cash': 'Efectivo',
-        'card': 'Tarjeta',
+        'qr': 'QR',
         'transfer': 'Transferencia',
         'check': 'Cheque'
       },

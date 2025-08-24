@@ -16,7 +16,7 @@ const PaymentMethodIcon = memo(({ method }: { method: string }) => {
   switch (method) {
     case 'efectivo':
       return <Banknote className="h-3 w-3" />;
-    case 'tarjeta':
+    case 'qr':
       return <CreditCard className="h-3 w-3" />;
     case 'transferencia':
       return <Smartphone className="h-3 w-3" />;
@@ -136,7 +136,7 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
 
         <td className="p-3">
           <div className="text-xs text-gray-500">
-            {getCreatedByDisplay()}
+            {createdByUser?.fullName || 'Desconocido'}
           </div>
         </td>
       </tr>

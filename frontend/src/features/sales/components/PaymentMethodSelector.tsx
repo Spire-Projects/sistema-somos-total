@@ -1,11 +1,11 @@
 import React from 'react';
 import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
-import { CreditCard, DollarSign, ArrowLeftRight } from 'lucide-react';
+import { QrCode, DollarSign, ArrowLeftRight } from 'lucide-react';
 
 interface PaymentMethodSelectorProps {
-  selectedMethod: 'efectivo' | 'tarjeta' | 'transferencia';
-  onPaymentMethodChange: (method: 'efectivo' | 'tarjeta' | 'transferencia') => void;
+  selectedMethod: 'efectivo' | 'qr' | 'transferencia';
+  onPaymentMethodChange: (method: 'efectivo' | 'qr' | 'transferencia') => void;
   disabled?: boolean;
 }
 
@@ -21,9 +21,9 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       icon: DollarSign
     },
     { 
-      id: 'tarjeta' as const, 
-      label: 'Tarjeta', 
-      icon: CreditCard
+      id: 'qr' as const, 
+      label: 'QR', 
+      icon: QrCode
     },
     { 
       id: 'transferencia' as const, 

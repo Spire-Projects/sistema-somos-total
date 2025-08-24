@@ -1,8 +1,8 @@
- import type { RxJsonSchema, RxCollection } from "rxdb";
+import type { RxJsonSchema, RxCollection } from "rxdb";
 import type { Sale } from "../../types/Sales";
 
 export const saleSchema: RxJsonSchema<Sale> = {
-  version: 0,
+  version: 1,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -29,7 +29,7 @@ export const saleSchema: RxJsonSchema<Sale> = {
     client: { type: "string", maxLength: 100 },
     paymentMethod: {
       type: "string",
-      enum: ["efectivo", "tarjeta", "transferencia"],
+      enum: ["efectivo", "qr", "transferencia"],
       maxLength: 30,
     },
     createdAt: { type: "string", maxLength: 50 },
@@ -54,5 +54,18 @@ export const saleSchema: RxJsonSchema<Sale> = {
   ],
 };
 
+
+export const saleMigrationStrategies = {
+  // Migration from version 0 to 1: Add 'factured' field y cambiar 'tarjeta' a 'qr' en paymentMethod
+  1: (oldDoc: any) => {
+    let paymentMethod = oldDoc.paymentMethod;
+    if (paymentMethod === 'tarjeta') {
+      paymentMethod = 'qr';
+    }
+    return {
+      ...oldDoc,
+      paymentMethod,
+    };
+  }
+};
 export type SaleCollection = RxCollection<Sale>;
- 

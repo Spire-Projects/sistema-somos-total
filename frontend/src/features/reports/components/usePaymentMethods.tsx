@@ -25,7 +25,7 @@ export function usePaymentMethods(sales: Sale[]) {
     // Traducir nombres de métodos de pago
     const methodNames: Record<string, string> = {
       efectivo: "Efectivo",
-      tarjeta: "Tarjeta",
+      qr: "QR",
       transferencia: "Transferencia",
     };
 
