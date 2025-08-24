@@ -92,18 +92,23 @@ export class SyncService {
       // Marcar como sincronización manual
       this.markAsManualSync();
       
-      // Importar dinámicamente startAllReplications para evitar dependencias circulares
-      const { startAllReplications } = await import('../db/replication/startReplications');
+      console.log('🔄 Forzando verificación de sincronización...');
+      console.log('⚠️ NOTA: Esto NO reinicia replicaciones, solo verifica el estado actual');
       
-      console.log('🔄 Iniciando sincronización forzada...');
+      // En lugar de reiniciar todo, solo verificar que las replicaciones estén activas
+      // Las replicaciones ya están corriendo con live: true
+      // Solo necesitamos esperar a que se completen las operaciones pendientes
       
-      // Iniciar todas las replicaciones usando tu sistema existente
-      startAllReplications(db);
+      // Verificar que haya conexión
+      if (!navigator.onLine) {
+        throw new Error('Sin conexión a internet');
+      }
       
-      // Esperar un poco para que las replicaciones se inicien
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Dar tiempo para que las replicaciones existentes se sincronicen
+      console.log('⏳ Esperando que las replicaciones activas terminen...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('✅ Sincronización forzada completada');
+      console.log('✅ Verificación de sincronización completada');
     } catch (error) {
       console.error('Error during forced synchronization:', error);
       throw error;

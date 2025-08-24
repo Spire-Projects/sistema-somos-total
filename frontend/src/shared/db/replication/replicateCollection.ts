@@ -46,12 +46,12 @@ export const replicateCollection = <T extends { [key: string]: any }>(
       collection: colRef,
     },
     pull: {
-      batchSize: 10,
+      batchSize: 20,
       // Opcional:
       // filter: { fieldPath: 'updatedAt', opStr: '>', value: '...' }
     },
     push: {
-      batchSize: 10,
+      batchSize: 20,
     },
     live: true,
     serverTimestampField: "_serverUpdatedAt",
