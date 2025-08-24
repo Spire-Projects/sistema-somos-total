@@ -153,7 +153,7 @@ export class SaleProcessorService {
       totalWithoutDiscount: saleState.amountWithoutDiscount,
       totalDiscount: saleState.clientDiscount ? this.calculateClientDiscountAmount(saleState) : 0,
       client: saleState.clientName || undefined,
-      paymentMethod: saleState.paymentMethod, // TODO: Agregar selector de método de pago
+      paymentMethod: saleState.paymentMethod,
       createdBy: userId,
       isDeleted: false,
       sincronized: false,
