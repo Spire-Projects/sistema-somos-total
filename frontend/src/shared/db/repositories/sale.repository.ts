@@ -2,9 +2,12 @@ import type { Sale } from '@/shared/types/Sales';
 import type { ItemsResponse } from '@/shared/types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface ISaleRepository {
   create(saleData: Sale): Promise<Sale>;
+  update(id: string, updateData: Partial<Sale>): Promise<Sale>;
   findById(id: string): Promise<Sale | null>;
   findAll(): Promise<Sale[]>;
   findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Sale>>;
@@ -18,23 +21,34 @@ export interface ISaleRepository {
   search(searchText: string): Promise<Sale[]>;
 }
 
-export class LocalSaleRepository implements ISaleRepository {
-  async create(saleData: Sale): Promise<Sale> {
+export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRepository {
+  
+  protected async getCollection(): Promise<RxCollection<Sale>> {
     const db = await initDatabase();
-    const sale = await db.sales.insert(saleData);
-    return JSON.parse(JSON.stringify(sale.toJSON())) as Sale;
+    return db.sales;
+  }
+
+  async create(saleData: Sale): Promise<Sale> {
+    console.log(`🔄 SaleRepository: Creando venta con prioridad`, { id: saleData.id });
+    return await this.createWithPriority(saleData);
+  }
+
+  async update(id: string, updateData: Partial<Sale>): Promise<Sale> {
+    console.log(`🔄 SaleRepository: Actualizando venta ${id} con prioridad`, updateData);
+    return await this.updateWithPriority(id, updateData);
   }
 
   async findById(id: string): Promise<Sale | null> {
-    const db = await initDatabase();
-    const sale = await db.sales.findOne(id).exec();
-    return sale ? JSON.parse(JSON.stringify(sale.toJSON())) as Sale : null;
+    return await super.findById(id);
   }
 
   async findAll(): Promise<Sale[]> {
-    const db = await initDatabase();
-    const sales = await db.sales.find().sort({ createdAt: 'desc' }).exec();
-    return sales.map(s => JSON.parse(JSON.stringify(s.toJSON())) as Sale);
+    return await super.findAll();
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ SaleRepository: Eliminando venta ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
   }
 
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Sale>> {
@@ -246,13 +260,7 @@ export class LocalSaleRepository implements ISaleRepository {
     };
   }
 
-  async delete(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const sale = await db.sales.findOne(id).exec();
-    if (!sale) return false;
-    await sale.remove();
-    return true;
-  }
+
 
   async search(searchText: string): Promise<Sale[]> {
     if (!searchText || searchText.trim() === '') {
@@ -277,6 +285,9 @@ export class LocalSaleRepository implements ISaleRepository {
 
 export class FirestoreSaleRepository implements ISaleRepository {
   async create(_saleData: Sale): Promise<Sale> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async update(_id: string, _updateData: Partial<Sale>): Promise<Sale> {
     throw new Error('Firestore implementation not yet available');
   }
   async findById(_id: string): Promise<Sale | null> {

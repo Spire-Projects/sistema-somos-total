@@ -25,27 +25,51 @@ export interface IClientRepository {
   restore(id: string): Promise<boolean>;
 }
 
-export class LocalClientRepository implements IClientRepository {
-  async create(clientData: Omit<Client, 'id'>): Promise<Client> {
+export class LocalClientRepository extends BaseRepository<Client> implements IClientRepository {
+  
+  protected async getCollection(): Promise<RxCollection<Client>> {
     const db = await initDatabase();
+    return db.clients;
+  }
+
+  async create(clientData: Omit<Client, 'id'>): Promise<Client> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     
-    const client = await db.clients.insert({ 
+    const fullClientData = { 
       id, 
       ...clientData,
       createdAt: now,
       updatedAt: now,
       sincronized: false,
       isDeleted: false
-    });
-    return JSON.parse(JSON.stringify(client.toJSON())) as Client;
+    };
+    
+    console.log(`🔄 ClientRepository: Creando cliente con prioridad`, { id });
+    return await this.createWithPriority(fullClientData as Client);
+  }
+
+  async update(id: string, updateData: Partial<Client>): Promise<Client | null> {
+    console.log(`🔄 ClientRepository: Actualizando cliente ${id} con prioridad`, updateData);
+    try {
+      return await this.updateWithPriority(id, updateData);
+    } catch (error) {
+      console.error(`❌ Error al actualizar cliente ${id}:`, error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ ClientRepository: Eliminando cliente ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
   }
 
   async findById(id: string): Promise<Client | null> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(id).exec();
-    return client ? JSON.parse(JSON.stringify(client.toJSON())) as Client : null;
+    return await super.findById(id);
+  }
+
+  async findAll(): Promise<Client[]> {
+    return await super.findAll();
   }
 
   async findByEmail(email: string): Promise<Client | null> {
@@ -70,17 +94,6 @@ export class LocalClientRepository implements IClientRepository {
       sort: [{ isDeleted: 'asc', nit: 'asc' }]
     }).exec();
     return client ? JSON.parse(JSON.stringify(client.toJSON())) as Client : null;
-  }
-
-  async findAll(): Promise<Client[]> {
-    const db = await initDatabase();
-    const clients = await db.clients.find({
-      selector: { 
-        isDeleted: false 
-      },
-      sort: [{ isDeleted: 'asc', createdAt: 'desc' }]
-    }).exec();
-    return clients.map((client) => JSON.parse(JSON.stringify(client.toJSON())) as Client);
   }
 
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Client>> {
@@ -143,34 +156,6 @@ export class LocalClientRepository implements IClientRepository {
       totalItems,
       totalPages
     };
-  }
-
-  async update(id: string, updateData: Partial<Client>): Promise<Client | null> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(id).exec();
-    if (!client) return null;
-    await client.update({ 
-      $set: { 
-        ...updateData, 
-        updatedAt: new Date().toISOString() 
-      } 
-    });
-    return JSON.parse(JSON.stringify(client.toJSON())) as Client;
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(id).exec();
-    if (!client) return false;
-    
-    // Soft delete
-    await client.update({
-      $set: {
-        isDeleted: true,
-        updatedAt: new Date().toISOString()
-      }
-    });
-    return true;
   }
 
   async addSaleToHistory(clientId: string, saleId: string): Promise<Client | null> {

@@ -80,7 +80,15 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
     const now = new Date();
     const futureTime = new Date(now.getTime() + 2 * 1000); // 2 segundos en el futuro
     
-    const deleteData = {
+    // Usar _deleted para usuarios y isDeleted para otras entidades
+    const deleteData = collection.name === 'users' ? {
+      _deleted: true,
+      deletedAt: new Date().toISOString(),
+      updatedAt: futureTime.toISOString(),
+      _lastModifiedAt: futureTime.toISOString(),
+      _forceLocalPriority: true,
+      sincronized: false
+    } : {
       isDeleted: true,
       deletedAt: new Date().toISOString(),
       updatedAt: futureTime.toISOString(),
@@ -113,8 +121,14 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
    */
   protected async findAll(): Promise<T[]> {
     const collection = await this.getCollection();
+    
+    // Usar _deleted para usuarios y isDeleted para otras entidades
+    const selector = collection.name === 'users' ? 
+      { _deleted: { $eq: false } } : 
+      { isDeleted: { $ne: true } };
+    
     const docs = await collection.find({
-      selector: { isDeleted: { $ne: true } } as any
+      selector: selector as any
     }).exec();
     return docs.map((doc: any) => JSON.parse(JSON.stringify(doc.toJSON())) as T);
   }

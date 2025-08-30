@@ -112,26 +112,33 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
       await db.addCollections({
         users: {
           schema: userSchema,
+          conflictHandler: createLocalPriorityConflictHandler<UserDocument>()
         },
         clients: {
           schema: clientSchema,
+          conflictHandler: createLocalPriorityConflictHandler<Client>()
         },
         active_ingredients: {
           schema: activeIngredientSchema,
+          conflictHandler: createLocalPriorityConflictHandler<ActiveIngredient>()
         },
         generic_names: {
           schema: genericNameSchema,
           migrationStrategies: genericNameMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler<GenericNameDoc>()
         },
         medication_categories: {
           schema: medicationCategorySchema,
+          conflictHandler: createLocalPriorityConflictHandler<MedicationCategory>()
         },
         pharmaceutical_forms: {
           schema: pharmaceuticalFormSchema,
+          conflictHandler: createLocalPriorityConflictHandler<PharmaceuticalFormDoc>()
         },
         manufacturers: {
           schema: manufacturerSchema,
           migrationStrategies: manufacturerMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler<Manufacturer>()
         },
         medications: {
           schema: medicationSchema,
@@ -139,16 +146,20 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         medication_batches: {
           schema: medicationBatchSchema,
+          conflictHandler: createLocalPriorityConflictHandler<MedicationBatch>()
         },
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
+          conflictHandler: createLocalPriorityConflictHandler<DailyCashClosure>()
         },
          sales: {
           schema: saleSchema,
           migrationStrategies: saleMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler<Sale>()
         },
         medics: {
           schema: medicSchema,
+          conflictHandler: createLocalPriorityConflictHandler<Medic>()
         },
       });
 

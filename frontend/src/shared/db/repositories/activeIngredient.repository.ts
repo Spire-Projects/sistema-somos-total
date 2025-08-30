@@ -2,6 +2,8 @@ import type { ActiveIngredient } from '../../types/Medication';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface IActiveIngredientRepository {
   create(ingredientData: Omit<ActiveIngredient, 'id'>): Promise<ActiveIngredient>;
@@ -14,12 +16,41 @@ export interface IActiveIngredientRepository {
   search(searchText: string): Promise<ActiveIngredient[]>;
 }
 
-export class LocalActiveIngredientRepository implements IActiveIngredientRepository {
-  async create(ingredientData: Omit<ActiveIngredient, 'id'>): Promise<ActiveIngredient> {
+export class LocalActiveIngredientRepository extends BaseRepository<ActiveIngredient> implements IActiveIngredientRepository {
+  
+  protected async getCollection(): Promise<RxCollection<ActiveIngredient>> {
     const db = await initDatabase();
+    return db.active_ingredients;
+  }
+
+  async create(ingredientData: Omit<ActiveIngredient, 'id'>): Promise<ActiveIngredient> {
     const id = crypto.randomUUID();
-    const ingredient = await db.active_ingredients.insert({ id, ...ingredientData });
-    return JSON.parse(JSON.stringify(ingredient.toJSON())) as ActiveIngredient;
+    const fullData = { id, ...ingredientData } as ActiveIngredient;
+    console.log(`🔄 ActiveIngredientRepository: Creando principio activo con prioridad`, { id });
+    return await this.createWithPriority(fullData);
+  }
+
+  async update(id: string, updateData: Partial<ActiveIngredient>): Promise<ActiveIngredient | null> {
+    console.log(`🔄 ActiveIngredientRepository: Actualizando principio activo ${id} con prioridad`, updateData);
+    try {
+      return await this.updateWithPriority(id, updateData);
+    } catch (error) {
+      console.error(`❌ Error al actualizar principio activo ${id}:`, error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ ActiveIngredientRepository: Eliminando principio activo ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
+  }
+
+  async findById(id: string): Promise<ActiveIngredient | null> {
+    return await super.findById(id);
+  }
+
+  async findAll(): Promise<ActiveIngredient[]> {
+    return await super.findAll();
   }
 
   async findByName(name: string): Promise<ActiveIngredient | null> {
@@ -28,18 +59,6 @@ export class LocalActiveIngredientRepository implements IActiveIngredientReposit
       selector: { name }
     }).exec();
     return ingredient ? JSON.parse(JSON.stringify(ingredient.toJSON())) as ActiveIngredient : null;
-  }
-
-  async findById(id: string): Promise<ActiveIngredient | null> {
-    const db = await initDatabase();
-    const ingredient = await db.active_ingredients.findOne(id).exec();
-    return ingredient ? JSON.parse(JSON.stringify(ingredient.toJSON())) as ActiveIngredient : null;
-  }
-
-  async findAll(): Promise<ActiveIngredient[]> {
-    const db = await initDatabase();
-    const ingredients = await db.active_ingredients.find().exec();
-    return ingredients.map((ingredient) => JSON.parse(JSON.stringify(ingredient.toJSON())) as ActiveIngredient);
   }
 
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<ActiveIngredient>> {
@@ -78,22 +97,6 @@ export class LocalActiveIngredientRepository implements IActiveIngredientReposit
       totalItems,
       totalPages
     };
-  }
-
-  async update(id: string, updateData: Partial<ActiveIngredient>): Promise<ActiveIngredient | null> {
-    const db = await initDatabase();
-    const ingredient = await db.active_ingredients.findOne(id).exec();
-    if (!ingredient) return null;
-    await ingredient.update({ $set: updateData });
-    return JSON.parse(JSON.stringify(ingredient.toJSON())) as ActiveIngredient;
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const ingredient = await db.active_ingredients.findOne(id).exec();
-    if (!ingredient) return false;
-    await ingredient.remove();
-    return true;
   }
 
   async search(searchText: string): Promise<ActiveIngredient[]> {

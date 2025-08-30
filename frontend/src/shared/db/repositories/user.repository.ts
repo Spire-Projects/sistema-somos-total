@@ -1,6 +1,8 @@
 import type { UserDocument } from '../models/user.model';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface IUserRepository {
   create(userData: Omit<UserDocument, 'id'>): Promise<UserDocument>;
@@ -18,12 +20,41 @@ export interface IUserRepository {
   }>;
 }
 
-export class LocalUserRepository implements IUserRepository {
-  async create(userData: Omit<UserDocument, 'id'>): Promise<UserDocument> {
+export class LocalUserRepository extends BaseRepository<UserDocument> implements IUserRepository {
+  
+  protected async getCollection(): Promise<RxCollection<UserDocument>> {
     const db = await initDatabase();
+    return db.users;
+  }
+
+  async create(userData: Omit<UserDocument, 'id'>): Promise<UserDocument> {
     const id = crypto.randomUUID();
-    const user = await db.users.insert({ id, ...userData });
-    return user.toJSON();
+    const fullData = { id, ...userData } as UserDocument;
+    console.log(`🔄 UserRepository: Creando usuario con prioridad`, { id });
+    return await this.createWithPriority(fullData);
+  }
+
+  async update(id: string, updateData: Partial<UserDocument>): Promise<UserDocument | null> {
+    console.log(`🔄 UserRepository: Actualizando usuario ${id} con prioridad`, updateData);
+    try {
+      return await this.updateWithPriority(id, updateData);
+    } catch (error) {
+      console.error(`❌ Error al actualizar usuario ${id}:`, error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ UserRepository: Eliminando usuario ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
+  }
+
+  async findById(id: string): Promise<UserDocument | null> {
+    return await super.findById(id);
+  }
+
+  async findAll(): Promise<UserDocument[]> {
+    return await super.findAll();
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
@@ -32,9 +63,11 @@ export class LocalUserRepository implements IUserRepository {
     return user ? user.toJSON() : null;
   }
 
-  async findById(id: string): Promise<UserDocument | null> {
+  // Métodos originales comentados para evitar conflictos con BaseRepository
+  /*
+  async findByEmail(email: string): Promise<UserDocument | null> {
     const db = await initDatabase();
-    const user = await db.users.findOne(id).exec();
+    const user = await db.users.findOne({ selector: { email } }).exec();
     return user ? user.toJSON() : null;
   }
 
@@ -59,6 +92,7 @@ export class LocalUserRepository implements IUserRepository {
     await user.remove();
     return true;
   }
+  */
 
   async findByRole(role: string): Promise<UserDocument[]> {
     const db = await initDatabase();

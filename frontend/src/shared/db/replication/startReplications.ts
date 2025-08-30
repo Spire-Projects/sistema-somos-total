@@ -5,8 +5,6 @@ export const startAllReplications = (collections: DatabaseCollections) => {
   console.log("🔄 Iniciando todas las replicaciones...");
    
   replicateCollection("users", collections.users);
-  
-  // Replicaciones en orden de dependencias (colecciones base primero)
   replicateCollection("generic_names", collections.generic_names);
   replicateCollection("manufacturers", collections.manufacturers);
   replicateCollection("active_ingredients", collections.active_ingredients);

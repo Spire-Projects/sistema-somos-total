@@ -2,9 +2,11 @@ import type { PharmaceuticalFormDoc } from '../../types/Medication';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface IPharmaceuticalFormRepository {
-  create(formData: Omit<PharmaceuticalFormDoc, 'id'>): Promise<PharmaceuticalFormDoc>;
+  create(pharmaceuticalFormData: Omit<PharmaceuticalFormDoc, 'id'>): Promise<PharmaceuticalFormDoc>;
   findByName(name: string): Promise<PharmaceuticalFormDoc | null>;
   findById(id: string): Promise<PharmaceuticalFormDoc | null>;
   findAll(): Promise<PharmaceuticalFormDoc[]>;
@@ -14,37 +16,52 @@ export interface IPharmaceuticalFormRepository {
   search(searchText: string): Promise<PharmaceuticalFormDoc[]>;
 }
 
-export class LocalPharmaceuticalFormRepository implements IPharmaceuticalFormRepository {
-  async create(formData: Omit<PharmaceuticalFormDoc, 'id'>): Promise<PharmaceuticalFormDoc> {
+export class LocalPharmaceuticalFormRepository extends BaseRepository<PharmaceuticalFormDoc> implements IPharmaceuticalFormRepository {
+  
+  protected async getCollection(): Promise<RxCollection<PharmaceuticalFormDoc>> {
     const db = await initDatabase();
+    return db.pharmaceutical_forms;
+  }
+
+  async create(pharmaceuticalFormData: Omit<PharmaceuticalFormDoc, 'id'>): Promise<PharmaceuticalFormDoc> {
     const id = crypto.randomUUID();
-    const form = await db.pharmaceutical_forms.insert({ id, ...formData });
-    return JSON.parse(JSON.stringify(form.toJSON())) as PharmaceuticalFormDoc;
+    const fullData = { id, ...pharmaceuticalFormData } as PharmaceuticalFormDoc;
+    console.log(`🔄 PharmaceuticalFormRepository: Creando forma farmacéutica con prioridad`, { id });
+    return await this.createWithPriority(fullData);
+  }
+
+  async update(id: string, updateData: Partial<PharmaceuticalFormDoc>): Promise<PharmaceuticalFormDoc | null> {
+    console.log(`🔄 PharmaceuticalFormRepository: Actualizando forma farmacéutica ${id} con prioridad`, updateData);
+    try {
+      return await this.updateWithPriority(id, updateData);
+    } catch (error) {
+      console.error(`❌ Error al actualizar forma farmacéutica ${id}:`, error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ PharmaceuticalFormRepository: Eliminando forma farmacéutica ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
+  }
+
+  async findById(id: string): Promise<PharmaceuticalFormDoc | null> {
+    return await super.findById(id);
+  }
+
+  async findAll(): Promise<PharmaceuticalFormDoc[]> {
+    return await super.findAll();
   }
 
   async findByName(name: string): Promise<PharmaceuticalFormDoc | null> {
     const db = await initDatabase();
-    const form = await db.pharmaceutical_forms.findOne({ 
+    const pharmaceuticalForm = await db.pharmaceutical_forms.findOne({ 
       selector: { 
         name,
         isDeleted: { $ne: true }
       } 
     }).exec();
-    return form ? JSON.parse(JSON.stringify(form.toJSON())) as PharmaceuticalFormDoc : null;
-  }
-
-  async findById(id: string): Promise<PharmaceuticalFormDoc | null> {
-    const db = await initDatabase();
-    const form = await db.pharmaceutical_forms.findOne(id).exec();
-    return form ? JSON.parse(JSON.stringify(form.toJSON())) as PharmaceuticalFormDoc : null;
-  }
-
-  async findAll(): Promise<PharmaceuticalFormDoc[]> {
-    const db = await initDatabase();
-    const forms = await db.pharmaceutical_forms.find({
-      selector: { isDeleted: { $ne: true } }
-    }).exec();
-    return forms.map((form) => JSON.parse(JSON.stringify(form.toJSON())) as PharmaceuticalFormDoc);
+    return pharmaceuticalForm ? JSON.parse(JSON.stringify(pharmaceuticalForm.toJSON())) as PharmaceuticalFormDoc : null;
   }
 
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<PharmaceuticalFormDoc>> {
@@ -93,6 +110,8 @@ export class LocalPharmaceuticalFormRepository implements IPharmaceuticalFormRep
     };
   }
 
+  // Métodos originales comentados para evitar conflictos con BaseRepository
+  /*
   async update(id: string, updateData: Partial<PharmaceuticalFormDoc>): Promise<PharmaceuticalFormDoc | null> {
     const db = await initDatabase();
     const form = await db.pharmaceutical_forms.findOne(id).exec();
@@ -115,6 +134,7 @@ export class LocalPharmaceuticalFormRepository implements IPharmaceuticalFormRep
     });
     return true;
   }
+  */
 
   async search(searchText: string): Promise<PharmaceuticalFormDoc[]> {
     if (!searchText || searchText.trim() === "") {

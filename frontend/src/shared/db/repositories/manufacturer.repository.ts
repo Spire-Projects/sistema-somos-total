@@ -2,6 +2,8 @@ import type { Manufacturer } from '../../types/Medication';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface IManufacturerRepository {
   create(manufacturerData: Omit<Manufacturer, 'id'>): Promise<Manufacturer>;
@@ -14,12 +16,41 @@ export interface IManufacturerRepository {
   search(searchText: string): Promise<Manufacturer[]>;
 }
 
-export class LocalManufacturerRepository implements IManufacturerRepository {
-  async create(manufacturerData: Omit<Manufacturer, 'id'>): Promise<Manufacturer> {
+export class LocalManufacturerRepository extends BaseRepository<Manufacturer> implements IManufacturerRepository {
+  
+  protected async getCollection(): Promise<RxCollection<Manufacturer>> {
     const db = await initDatabase();
+    return db.manufacturers;
+  }
+
+  async create(manufacturerData: Omit<Manufacturer, 'id'>): Promise<Manufacturer> {
     const id = crypto.randomUUID();
-    const manufacturer = await db.manufacturers.insert({ id, ...manufacturerData });
-    return JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer;
+    const fullData = { id, ...manufacturerData } as Manufacturer;
+    console.log(`🔄 ManufacturerRepository: Creando fabricante con prioridad`, { id });
+    return await this.createWithPriority(fullData);
+  }
+
+  async update(id: string, updateData: Partial<Manufacturer>): Promise<Manufacturer | null> {
+    console.log(`🔄 ManufacturerRepository: Actualizando fabricante ${id} con prioridad`, updateData);
+    try {
+      return await this.updateWithPriority(id, updateData);
+    } catch (error) {
+      console.error(`❌ Error al actualizar fabricante ${id}:`, error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ ManufacturerRepository: Eliminando fabricante ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
+  }
+
+  async findById(id: string): Promise<Manufacturer | null> {
+    return await super.findById(id);
+  }
+
+  async findAll(): Promise<Manufacturer[]> {
+    return await super.findAll();
   }
 
   async findByName(name: string): Promise<Manufacturer | null> {
@@ -31,20 +62,6 @@ export class LocalManufacturerRepository implements IManufacturerRepository {
       } 
     }).exec();
     return manufacturer ? JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer : null;
-  }
-
-  async findById(id: string): Promise<Manufacturer | null> {
-    const db = await initDatabase();
-    const manufacturer = await db.manufacturers.findOne(id).exec();
-    return manufacturer ? JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer : null;
-  }
-
-  async findAll(): Promise<Manufacturer[]> {
-    const db = await initDatabase();
-    const manufacturers = await db.manufacturers.find({
-      selector: { isDeleted: { $ne: true } }
-    }).exec();
-    return manufacturers.map((manufacturer) => JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer);
   }
 
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Manufacturer>> {
@@ -91,29 +108,6 @@ export class LocalManufacturerRepository implements IManufacturerRepository {
       totalItems,
       totalPages
     };
-  }
-
-  async update(id: string, updateData: Partial<Manufacturer>): Promise<Manufacturer | null> {
-    const db = await initDatabase();
-    const manufacturer = await db.manufacturers.findOne(id).exec();
-    if (!manufacturer) return null;
-    await manufacturer.update({ $set: updateData });
-    return JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer;
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const manufacturer = await db.manufacturers.findOne(id).exec();
-    if (!manufacturer) return false;
-    
-    // Soft delete
-    await manufacturer.update({
-      $set: {
-        isDeleted: true,
-        updatedAt: new Date().toISOString()
-      }
-    });
-    return true;
   }
 
   async search(searchText: string): Promise<Manufacturer[]> {

@@ -2,6 +2,8 @@ import type { MedicationCategory } from '../../types/Medication';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface IMedicationCategoryRepository {
   create(categoryData: Omit<MedicationCategory, 'id'>): Promise<MedicationCategory>;
@@ -14,30 +16,49 @@ export interface IMedicationCategoryRepository {
   search(searchText: string): Promise<MedicationCategory[]>;
 }
 
-export class LocalMedicationCategoryRepository implements IMedicationCategoryRepository {
-  async create(categoryData: Omit<MedicationCategory, 'id'>): Promise<MedicationCategory> {
+export class LocalMedicationCategoryRepository extends BaseRepository<MedicationCategory> implements IMedicationCategoryRepository {
+  
+  protected async getCollection(): Promise<RxCollection<MedicationCategory>> {
     const db = await initDatabase();
+    return db.medication_categories;
+  }
+
+  async create(categoryData: Omit<MedicationCategory, 'id'>): Promise<MedicationCategory> {
     const id = crypto.randomUUID();
-    const category = await db.medication_categories.insert({ id, ...categoryData });
-    return category.toJSON();
+    const fullData = { id, ...categoryData } as MedicationCategory;
+    console.log(`🔄 MedicationCategoryRepository: Creando categoría con prioridad`, { id });
+    return await this.createWithPriority(fullData);
+  }
+
+  async update(id: string, updateData: Partial<MedicationCategory>): Promise<MedicationCategory | null> {
+    console.log(`🔄 MedicationCategoryRepository: Actualizando categoría ${id} con prioridad`, updateData);
+    try {
+      return await this.updateWithPriority(id, updateData);
+    } catch (error) {
+      console.error(`❌ Error al actualizar categoría ${id}:`, error);
+      return null;
+    }
+  }
+
+  async delete(id: string): Promise<boolean> {
+    console.log(`🗑️ MedicationCategoryRepository: Eliminando categoría ${id} con prioridad`);
+    return await this.deleteWithPriority(id);
+  }
+
+  async findById(id: string): Promise<MedicationCategory | null> {
+    return await super.findById(id);
+  }
+
+  async findAll(): Promise<MedicationCategory[]> {
+    return await super.findAll();
   }
 
   async findByName(name: string): Promise<MedicationCategory | null> {
     const db = await initDatabase();
-    const category = await db.medication_categories.findOne({ selector: { name } }).exec();
-    return category ? category.toJSON() : null;
-  }
-
-  async findById(id: string): Promise<MedicationCategory | null> {
-    const db = await initDatabase();
-    const category = await db.medication_categories.findOne(id).exec();
-    return category ? category.toJSON() : null;
-  }
-
-  async findAll(): Promise<MedicationCategory[]> {
-    const db = await initDatabase();
-    const categories = await db.medication_categories.find().exec();
-    return categories.map((category) => category.toJSON());
+    const category = await db.medication_categories.findOne({ 
+      selector: { name }
+    }).exec();
+    return category ? JSON.parse(JSON.stringify(category.toJSON())) as MedicationCategory : null;
   }
 
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<MedicationCategory>> {
@@ -78,6 +99,8 @@ export class LocalMedicationCategoryRepository implements IMedicationCategoryRep
     };
   }
 
+  // Métodos originales comentados para evitar conflictos con BaseRepository
+  /*
   async update(id: string, updateData: Partial<MedicationCategory>): Promise<MedicationCategory | null> {
     const db = await initDatabase();
     const category = await db.medication_categories.findOne(id).exec();
@@ -93,6 +116,7 @@ export class LocalMedicationCategoryRepository implements IMedicationCategoryRep
     await category.remove();
     return true;
   }
+  */
 
   async search(searchText: string): Promise<MedicationCategory[]> {
     if (!searchText || searchText.trim() === "") {
