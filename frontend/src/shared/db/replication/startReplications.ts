@@ -3,6 +3,8 @@ import { replicateCollection } from "./replicateCollection";
 
 export const startAllReplications = (collections: DatabaseCollections) => {
   console.log("🔄 Iniciando todas las replicaciones...");
+   
+  replicateCollection("users", collections.users);
   
   // Replicaciones en orden de dependencias (colecciones base primero)
   replicateCollection("generic_names", collections.generic_names);

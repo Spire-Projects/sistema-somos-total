@@ -30,6 +30,7 @@ import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
 import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
 import { saleMigrationStrategies, saleSchema } from "./models/sale.model";
+import { createLocalPriorityConflictHandler } from "./replication/conflictHandler";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -134,6 +135,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         medications: {
           schema: medicationSchema,
+          conflictHandler: createLocalPriorityConflictHandler<Medication>()
         },
         medication_batches: {
           schema: medicationBatchSchema,

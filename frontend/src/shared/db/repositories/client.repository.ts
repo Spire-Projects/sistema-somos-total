@@ -3,6 +3,8 @@ import type { ClientStatistics } from '../models/client.model';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
 
 export interface IClientRepository {
   create(clientData: Omit<Client, 'id'>): Promise<Client>;

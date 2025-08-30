@@ -7,6 +7,7 @@ import type {
 import type { RxCollection } from 'rxdb';
 import { config } from '@/shared/config/config';
 import { findGenericNameById, searchGenericNames } from '@/shared/services/GenericNameService';
+import { BaseRepository } from './BaseRepository';
 
 export interface IMedicationRepository {
   // CRUD básico existente
@@ -44,8 +45,8 @@ export interface IMedicationRepository {
 
 export type MedicationCollection = RxCollection<Medication>;
 
-export class LocalMedicationDB implements IMedicationRepository {
-  private async getCollection(): Promise<MedicationCollection> {
+export class LocalMedicationDB extends BaseRepository<Medication> implements IMedicationRepository {
+  protected async getCollection(): Promise<MedicationCollection> {
     const { getDatabase } = await import('../database');
     const db = getDatabase();
     if (!db) {
@@ -81,9 +82,7 @@ export class LocalMedicationDB implements IMedicationRepository {
   }
 
   async create(data: Omit<Medication, 'id'> & { id: string }): Promise<Medication> {
-    const collection = await this.getCollection();
-    const doc = await collection.insert(data);
-    return JSON.parse(JSON.stringify(doc.toJSON())) as Medication;
+    return await this.createWithPriority(data);
   }
 
   async findById(id: string): Promise<Medication | null> {
@@ -145,33 +144,11 @@ export class LocalMedicationDB implements IMedicationRepository {
   }
 
   async update(id: string, data: Partial<Medication>): Promise<Medication> {
-    const collection = await this.getCollection();
-    const doc = await collection.findOne(id).exec();
-    if (!doc) throw new Error('Medication not found');
-    
-    await doc.update({
-      $set: {
-        ...data,
-        updatedAt: new Date().toISOString()
-      }
-    });
-    
-    return JSON.parse(JSON.stringify(doc.toJSON())) as Medication;
+    return await this.updateWithPriority(id, data);
   }
 
   async delete(id: string): Promise<boolean> {
-    const collection = await this.getCollection();
-    const doc = await collection.findOne(id).exec();
-    if (!doc) return false;
-    
-    // Soft delete
-    await doc.update({
-      $set: {
-        isDeleted: true,
-        updatedAt: new Date().toISOString()
-      }
-    });
-    return true;
+    return await this.deleteWithPriority(id);
   }
 
   async search(query: string): Promise<Medication[]> {

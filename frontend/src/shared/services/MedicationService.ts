@@ -128,7 +128,7 @@ export const createMedication = async (
     warnings: data.warnings,
     sincronized: false,
     isDeleted: false,
-    createdAt: new Date().toISOString(),
+    // Remover createdAt manual - lo maneja automáticamente BaseRepository
     createdBy: data.createdBy,
   };
 
@@ -194,11 +194,19 @@ export const updateMedication = async (
   id: string,
   data: UpdateMedicationData
 ): Promise<Medication> => {
+  console.log(`🔄 MedicationService: Iniciando actualización del medicamento ${id}`, data);
+  
   // Verificar si existe
   const existing = await medicationDB.findById(id);
   if (!existing) {
     throw new Error(`Medication with ID "${id}" not found`);
   }
+
+  console.log(`📋 MedicationService: Medicamento existente encontrado`, {
+    id: existing.id,
+    tradeName: existing.tradeName,
+    updatedAt: existing.updatedAt
+  });
 
   // Si se está cambiando el nombre comercial, verificar que no exista otro con ese nombre
   if (data.tradeName && data.tradeName !== existing.tradeName) {
@@ -223,10 +231,21 @@ export const updateMedication = async (
   const updateData = {
     ...data,
     sincronized: false, // Marcar como no sincronizado al actualizar
-    updatedAt: new Date().toISOString(),
+    // Remover updatedAt manual - lo maneja automáticamente BaseRepository
   };
 
-  return await medicationDB.update(id, updateData);
+  console.log(`📤 MedicationService: Enviando datos de actualización al repositorio`, updateData);
+
+  const result = await medicationDB.update(id, updateData);
+  
+  console.log(`✅ MedicationService: Medicamento actualizado exitosamente`, {
+    id: result.id,
+    tradeName: result.tradeName,
+    updatedAt: result.updatedAt,
+    _lastModifiedAt: (result as any)._lastModifiedAt
+  });
+
+  return result;
 };
 
 /**

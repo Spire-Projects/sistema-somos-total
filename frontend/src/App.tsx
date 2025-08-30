@@ -7,6 +7,7 @@ import { initDatabase } from "./shared/db/database";
 import { startAllReplications } from "./shared/db/replication/startReplications";
 import { verifyAndRunMigrations } from "./shared/db/migration/migrationHelper";
 import { syncService } from "./shared/services/SyncService";
+import { migrateExistingDocuments } from "./shared/db/migration/timestampMigration";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -22,6 +23,15 @@ function App() {
         // Verificar y ejecutar migraciones
         await verifyAndRunMigrations(db);
         //await manualMigrationIfNeeded(db);
+        
+        // Migrar timestamps en Firestore (solo una vez)
+        const migrationKey = 'timestamp_migration_completed';
+        const migrationCompleted = localStorage.getItem(migrationKey);
+        if (!migrationCompleted) {
+          console.log('🔄 Ejecutando migración de timestamps...');
+          await migrateExistingDocuments();
+          localStorage.setItem(migrationKey, 'true');
+        }
         
         // Inicializar servicio de sincronización
         await syncService.initialize();
