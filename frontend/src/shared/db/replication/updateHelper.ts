@@ -5,24 +5,22 @@ import { recordDocumentUpdate } from './conflictResolver';
  * en la sincronización con Firestore
  */
 /**
- * Actualiza un documento con prioridad local usando timestamp futuro
+ * Actualiza un documento con prioridad local usando timestamp actual
  */
 export const updateDocumentWithPriority = async <T extends { [key: string]: any }>(
   doc: T,
   updateData: Partial<T>
 ): Promise<T> => {
   const documentId = (doc as any).id;
-  const now = new Date();
-  // Usar solo 2 segundos en el futuro para minimizar conflictos
-  const futureTime = new Date(now.getTime() + 2 * 1000);
+  const now = new Date().toISOString();
   
   console.log(`🔄 UpdateHelper: Preparando actualización con prioridad para documento ${documentId}`);
   
   const updatedDoc = {
     ...doc,
     ...updateData,
-    updatedAt: futureTime.toISOString(),
-    _lastModifiedAt: futureTime.toISOString(),
+    updatedAt: now,
+    _lastModifiedAt: now,
     _forceLocalPriority: true, // Marca temporal para el conflict handler
   };
   

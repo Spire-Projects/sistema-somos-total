@@ -32,13 +32,13 @@ export const unmarkDocumentAsProcessing = (documentId: string): void => {
 };
 
 /**
- * Verifica si un documento fue actualizado recientemente (cooldown de 2 segundos)
+ * Verifica si un documento fue actualizado recientemente (cooldown de 1 segundo)
  */
 export const wasRecentlyUpdated = (documentId: string): boolean => {
   const lastUpdate = lastUpdateTimes.get(documentId);
   if (!lastUpdate) return false;
   
-  const cooldownPeriod = 2000; // 2 segundos (reducido desde 5)
+  const cooldownPeriod = 1000; // 1 segundo (reducido desde 2)
   return Date.now() - lastUpdate < cooldownPeriod;
 };
 

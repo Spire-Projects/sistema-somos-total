@@ -8,6 +8,8 @@ import { startAllReplications } from "./shared/db/replication/startReplications"
 import { verifyAndRunMigrations } from "./shared/db/migration/migrationHelper";
 import { syncService } from "./shared/services/SyncService";
 import { migrateExistingDocuments } from "./shared/db/migration/timestampMigration";
+// Import helper para debugging en desarrollo
+import "./shared/db/replication/syncTestHelper";
 
 function App() {
   const dispatch = useAppDispatch();

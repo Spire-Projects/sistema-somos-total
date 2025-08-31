@@ -52,18 +52,40 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
       // Verificar si hay marca de prioridad local forzada
       const hasLocalPriority = (localDoc as any)._forceLocalPriority === true;
       
-      // Solo prevenir updates muy frecuentes si NO hay prioridad forzada
-      if (!hasLocalPriority && wasRecentlyUpdated(documentId)) {
-        console.log(`⏰ ConflictHandler: Documento ${documentId} actualizado recientemente sin prioridad forzada, usando versión remota`);
+      // Si no hay prioridad local forzada y el documento remoto es más reciente, aceptarlo
+      if (!hasLocalPriority) {
+        if (remoteTime >= localTime) {
+          console.log(`⚠️ ConflictHandler: Documento remoto ${documentId} es más reciente o igual, aceptando cambios remotos`);
+          return {
+            isEqual: false,
+            documentData: remoteDoc
+          };
+        } else {
+          console.log(`✅ ConflictHandler: Documento local ${documentId} es más reciente, manteniendo cambios locales`);
+          return {
+            isEqual: false,
+            documentData: localDoc
+          };
+        }
+      }
+      
+      // Solo prevenir updates muy frecuentes si hay prioridad forzada
+      if (hasLocalPriority && wasRecentlyUpdated(documentId)) {
+        console.log(`⏰ ConflictHandler: Documento ${documentId} con prioridad forzada actualizado recientemente, manteniendo versión local`);
+        
+        // Limpiar flag de prioridad forzada para el siguiente ciclo
+        const cleanLocalDoc = { ...localDoc };
+        delete cleanLocalDoc._forceLocalPriority;
+        
         return {
           isEqual: false,
-          documentData: remoteDoc
+          documentData: cleanLocalDoc
         };
       }
       
-      // Priorizar documento con timestamp más reciente o con marca de prioridad local
-      if (hasLocalPriority || localTime > remoteTime) {
-        console.log(`✅ ConflictHandler: Documento local ${documentId} tiene prioridad (${hasLocalPriority ? 'forzado' : localTime.toISOString()} > ${remoteTime.toISOString()})`);
+      // Si hay prioridad local forzada, usarla
+      if (hasLocalPriority) {
+        console.log(`✅ ConflictHandler: Documento local ${documentId} tiene prioridad forzada`);
         
         // Limpiar flag de prioridad forzada para evitar bucles futuros
         const cleanLocalDoc = { ...localDoc };
@@ -73,8 +95,17 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
           isEqual: false,
           documentData: cleanLocalDoc
         };
+      }
+      
+      // Fallback: usar timestamp
+      if (localTime > remoteTime) {
+        console.log(`✅ ConflictHandler: Documento local ${documentId} tiene timestamp más reciente`);
+        return {
+          isEqual: false,
+          documentData: localDoc
+        };
       } else {
-        console.log(`⚠️ ConflictHandler: Documento remoto ${documentId} tiene prioridad (${remoteTime.toISOString()} >= ${localTime.toISOString()})`);
+        console.log(`⚠️ ConflictHandler: Documento remoto ${documentId} tiene timestamp más reciente o igual`);
         return {
           isEqual: false,
           documentData: remoteDoc

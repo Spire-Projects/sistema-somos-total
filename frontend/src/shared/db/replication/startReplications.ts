@@ -14,8 +14,6 @@ export const startAllReplications = (collections: DatabaseCollections) => {
   );
   replicateCollection("pharmaceutical_forms", collections.pharmaceutical_forms);
   replicateCollection("medications", collections.medications);
- 
-  replicateCollection("users", collections.users);
   replicateCollection("medication_batches", collections.medication_batches);
   replicateCollection("clients", collections.clients);
   

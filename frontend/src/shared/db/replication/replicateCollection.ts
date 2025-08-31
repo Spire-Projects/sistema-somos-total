@@ -61,7 +61,10 @@ export const replicateCollection = <T extends { [key: string]: any }>(
     pull: {
       batchSize: 20,
       modifier: (doc: any) => {
-        console.log(`📥 ${name}: Recibiendo documento remoto ${doc.id}`);
+        console.log(`📥 ${name}: Recibiendo documento remoto ${doc.id}`, {
+          updatedAt: doc.updatedAt,
+          _lastModifiedAt: doc._lastModifiedAt
+        });
         return {
           ...doc,
           _lastSyncedAt: new Date().toISOString()

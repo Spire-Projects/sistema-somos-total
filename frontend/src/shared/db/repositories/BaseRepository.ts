@@ -32,14 +32,13 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
       currentUpdatedAt: (doc as any).updatedAt
     });
     
-    // Crear datos de actualización con timestamps de prioridad
-    const now = new Date();
-    const futureTime = new Date(now.getTime() + 2 * 1000); // 2 segundos en el futuro
+    // Usar timestamp actual en lugar de tiempo futuro para evitar problemas de sincronización
+    const now = new Date().toISOString();
     
     const updateData = {
       ...data,
-      updatedAt: futureTime.toISOString(),
-      _lastModifiedAt: futureTime.toISOString(),
+      updatedAt: now,
+      _lastModifiedAt: now,
       _forceLocalPriority: true,
       sincronized: false
     };
@@ -76,23 +75,22 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
     const doc = await collection.findOne(id).exec();
     if (!doc) return false;
     
-    // Crear datos de soft delete con timestamps de prioridad
-    const now = new Date();
-    const futureTime = new Date(now.getTime() + 2 * 1000); // 2 segundos en el futuro
+    // Usar timestamp actual en lugar de tiempo futuro
+    const now = new Date().toISOString();
     
     // Usar _deleted para usuarios y isDeleted para otras entidades
     const deleteData = collection.name === 'users' ? {
       _deleted: true,
-      deletedAt: new Date().toISOString(),
-      updatedAt: futureTime.toISOString(),
-      _lastModifiedAt: futureTime.toISOString(),
+      deletedAt: now,
+      updatedAt: now,
+      _lastModifiedAt: now,
       _forceLocalPriority: true,
       sincronized: false
     } : {
       isDeleted: true,
-      deletedAt: new Date().toISOString(),
-      updatedAt: futureTime.toISOString(),
-      _lastModifiedAt: futureTime.toISOString(),
+      deletedAt: now,
+      updatedAt: now,
+      _lastModifiedAt: now,
       _forceLocalPriority: true,
       sincronized: false
     };
