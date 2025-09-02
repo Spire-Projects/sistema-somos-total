@@ -18,10 +18,10 @@ export const isDocumentBeingProcessed = (documentId: string): boolean => {
  */
 export const markDocumentAsProcessing = (documentId: string): void => {
   processingDocuments.add(documentId);
-  // Auto-limpiar después de 30 segundos para evitar memory leaks
+  // Auto-limpiar después de 5 segundos (reducido desde 30) para evitar bloqueos largos
   setTimeout(() => {
     processingDocuments.delete(documentId);
-  }, 30000);
+  }, 5000);
 };
 
 /**

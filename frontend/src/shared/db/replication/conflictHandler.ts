@@ -22,10 +22,22 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
     // Prevenir bucles: si el documento está siendo procesado activamente, esperar
     if (isDocumentBeingProcessed(documentId)) {
       console.log(`⏸️ ConflictHandler: Documento ${documentId} ya está siendo procesado, usando versión remota`);
-      return {
-        isEqual: true,
-        documentData: remoteDoc
-      };
+      // En lugar de rechazar siempre, verificar si el remoto es realmente más nuevo
+      const localTime = new Date((localDoc as any)._lastModifiedAt || (localDoc as any).updatedAt || '1970-01-01');
+      const remoteTime = new Date((remoteDoc as any)._lastModifiedAt || (remoteDoc as any).updatedAt || '1970-01-01');
+      
+      if (remoteTime > localTime) {
+        console.log(`✅ ConflictHandler: Documento remoto es más nuevo, aplicando cambios a pesar del procesamiento`);
+        return {
+          isEqual: false,
+          documentData: remoteDoc
+        };
+      } else {
+        return {
+          isEqual: true,
+          documentData: remoteDoc
+        };
+      }
     }
     
     // Marcar como en proceso
@@ -120,7 +132,7 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
       }
     } finally {
       // Siempre desmarcar al final (con delay menor para permitir updates legítimos)
-      setTimeout(() => unmarkDocumentAsProcessing(documentId), 500);
+      setTimeout(() => unmarkDocumentAsProcessing(documentId), 200);
     }
   };
 };
