@@ -69,63 +69,6 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   // Configurar listener de Firestore para cambios en tiempo real
   let unsubscribeSnapshot: (() => void) | null = null;
 
-  const startRealtimeListener = () => {
-    if (!config.REPLICATION.REAL_TIME) {
-      console.log(
-        `⏸️ ${name}: Listener en tiempo real deshabilitado por configuración`
-      );
-      return;
-    }
-    if (unsubscribeSnapshot) {
-      unsubscribeSnapshot();
-    }
-    console.log(`🎧 ${name}: Iniciando listener en tiempo real`);
-    // Control de timestamp para evitar reSync innecesario
-    let lastSyncTimestamp: string | null = null;
-    let reSyncTimeout: NodeJS.Timeout | null = null;
-    try {
-      const q = query(colRef, orderBy("updatedAt", "desc"), limit(100));
-      unsubscribeSnapshot = onSnapshot(
-        q,
-        (snapshot) => {
-          const changes = snapshot.docChanges();
-          if (changes.length > 0) {
-            console.log(
-              `🔄 ${name}: Detectados ${changes.length} cambios remotos`
-            );
-            let hasNew = false;
-            changes.forEach((change) => {
-              const docData = change.doc.data();
-              console.log(
-                `📡 ${name}: Cambio ${change.type} en documento ${docData.id}`
-              );
-              if (!lastSyncTimestamp || docData.updatedAt > lastSyncTimestamp) {
-                hasNew = true;
-              }
-            });
-            if (hasNew) {
-              lastSyncTimestamp = new Date().toISOString();
-              // Throttle: evitar disparar reSync muchas veces seguidas
-              if (reSyncTimeout) clearTimeout(reSyncTimeout);
-              reSyncTimeout = setTimeout(() => {
-                console.log(
-                  `🔄 ${name}: Triggering reSync debido a cambios remotos`
-                );
-                replicationState.reSync();
-              }, 500);
-            }
-          }
-        },
-        (error) => {
-          console.error(`❌ ${name}: Error en listener de Firestore:`, error);
-          setTimeout(startRealtimeListener, config.REPLICATION.RETRY_INTERVAL);
-        }
-      );
-    } catch (error) {
-      console.error(`❌ ${name}: Error configurando listener:`, error);
-    }
-  };
-
   const replicationState = replicateFirestore<T>({
     replicationIdentifier: `sync-${name}`,
     collection: collectionRx,
@@ -201,7 +144,7 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   });
 
   // Iniciar listener en tiempo real una sola vez
-  startRealtimeListener();
+ // startRealtimeListener();
 
   // Detectar cuando la replicación está activa (solo para logging)
   replicationState.active$.subscribe((active) => {
