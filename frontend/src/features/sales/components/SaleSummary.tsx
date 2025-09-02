@@ -87,9 +87,9 @@ const SaleSummary = memo(({
             {/* Controles de edición del descuento */}
             {discountEditMode && (
               <div className="mt-2 p-2 bg-gray-50 rounded space-y-2">
-                <div className="flex gap-2">
-                  <Select 
-                    value={discountType} 
+                <div className="flex gap-2 items-center">
+                  <Select
+                    value={discountType}
                     onValueChange={(value: 'percentage' | 'fixed') => setDiscountType(value)}
                     disabled={isProcessing}
                   >
@@ -106,20 +106,22 @@ const SaleSummary = memo(({
                     value={discountValue}
                     onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
                     placeholder="0"
-                    className="flex-1 h-5 text-xs"
+                    className="flex-1 h-9 text-xs"
                     min="0"
                     step={discountType === 'percentage' ? "1" : "0.01"}
                     max={discountType === 'percentage' ? 100 : saleState.subtotal}
                     disabled={isProcessing}
                   />
-                  <Button
-                    size="sm"
-                    onClick={handleApplyDiscount}
-                    className="h-5 px-2 text-xs"
-                    disabled={isProcessing}
-                  >
-                    OK
-                  </Button>
+                  <div className="flex-1 flex justify-center">
+                    <Button
+                      size="sm"
+                      onClick={handleApplyDiscount}
+                      className="h-5 px-2 text-xs"
+                      disabled={isProcessing}
+                    >
+                      OK
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

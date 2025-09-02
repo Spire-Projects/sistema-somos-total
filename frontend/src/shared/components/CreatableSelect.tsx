@@ -25,6 +25,8 @@ interface CreatableSelectProps<T> {
   hideLabel?: boolean; // Si se quiere ocultar la etiqueta
   onEditValue?: (item: T) => Promise<T | null>;
   onDeleteValue?: (item: T) => Promise<void>;
+  secondaryDisplayField?: keyof T; // Nuevo campo opcional
+  secondaryLabel?: string; // Nuevo campo opcional
 }
 
 // Hook personalizado para debounce
@@ -58,6 +60,8 @@ const CreatableSelect = <T,>({
   valueField,
   disabled = false,
   hideLabel = false,
+  secondaryDisplayField,
+  secondaryLabel,
 }: CreatableSelectProps<T>) => {
   const [search, setSearch] = useState("");
   const [filteredValues, setFilteredValues] = useState<T[]>(values);
@@ -269,7 +273,7 @@ const CreatableSelect = <T,>({
                     return (
                       <div
                         key={String(item[valueField])}
-                        className={`flex items-center justify-between px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground ${
+                        className={`flex flex-col px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground ${
                           highlightedIndex === index
                             ? "bg-accent text-accent-foreground"
                             : ""
@@ -287,8 +291,17 @@ const CreatableSelect = <T,>({
                         >
                           {String(item[displayField])}
                         </button>
-
-                        <div className="flex gap-1 items-center ml-2">
+                        {secondaryDisplayField && (
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {secondaryLabel && (
+                              <span className="font-medium mr-1">
+                                {secondaryLabel}:
+                              </span>
+                            )}
+                            <span>{String(item[secondaryDisplayField])}</span>
+                          </div>
+                        )}
+                        <div className="flex gap-1 items-center ml-2 mt-1">
                           {onEditValue && (
                             <EditDialog
                               currentName={String(item[displayField])}

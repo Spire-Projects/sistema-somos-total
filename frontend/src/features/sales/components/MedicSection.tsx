@@ -207,6 +207,8 @@ const MedicSection = memo(({
               valueField="id"
               placeholder="Buscar médico..."
               hideLabel={true}
+              secondaryDisplayField="licenseNumber"
+              secondaryLabel="Licencia"
             />
             
             <Button
