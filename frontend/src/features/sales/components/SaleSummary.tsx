@@ -45,16 +45,16 @@ const SaleSummary = memo(({
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <div className="flex justify-between text-xs">
+            <span>MONTO SIN DESC (Bs):</span>
+            <span>{formatCurrency(saleState.amountWithoutDiscount)}</span>
+          </div>
+          <div className="flex justify-between text-xs text-blue-600">
             <span>SUBTOTAL (Bs):</span>
             <span>{formatCurrency(saleState.subtotal)}</span>
           </div>
-          <div className="flex justify-between text-xs text-blue-600">
+          <div className="flex justify-between text-xs">
             <span>MONTO CON DESC (Bs):</span>
             <span>{formatCurrency(saleState.amountWithDiscount)}</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span>MONTO SIN DESC (Bs):</span>
-            <span>{formatCurrency(saleState.amountWithoutDiscount)}</span>
           </div>
           
           {/* Descuento de cliente */}

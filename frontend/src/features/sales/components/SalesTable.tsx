@@ -62,11 +62,11 @@ const SalesTable = memo(({ sales, isLoading, error }: SalesTableProps) => {
                   <th className="text-left p-3 font-medium text-gray-700 text-sm">
                     Pago
                   </th>
-                  <th className="text-right p-3 font-medium text-gray-700 text-sm">
+                  <th className="text-left p-3 font-medium text-gray-700 text-sm">
                     Total
                   </th>
                   <th className="text-left p-3 font-medium text-gray-700 text-sm">
-                    Estado
+                    Facturación
                   </th>
                   <th className="text-left p-3 font-medium text-gray-700 text-sm">
                     Vendedor

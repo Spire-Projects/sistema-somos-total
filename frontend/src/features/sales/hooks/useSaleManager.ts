@@ -270,17 +270,20 @@ export const useSaleManager = () => {
 
 // Helper para calcular totales
 const calculateTotals = (items: SaleItem[], clientDiscount?: SaleState['clientDiscount']) => {
-  // Calcular subtotal (suma de precios finales con descuentos por producto)
+  // MONTO SIN DESC: Precio original total (suma de listPrice * quantity)
+  const amountWithoutDiscount = items.reduce((sum, item) => {
+    const listPrice = item.listPrice || item.unitPrice + (item.discount || 0);
+    return sum + (listPrice * item.quantity);
+  }, 0);
+  
+  // SUBTOTAL: Con descuentos por unidad aplicados (suma de precios finales)
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   
-  // Calcular montos con y sin descuento por producto
-  const amountWithDiscount = items
-    .filter(item => (item.discount || 0) > 0)
-    .reduce((sum, item) => sum + item.total, 0);
+  // Calcular descuento de cliente
+  const clientDiscountAmount = clientDiscount?.amount || 0;
   
-  const amountWithoutDiscount = items
-    .filter(item => (item.discount || 0) === 0)
-    .reduce((sum, item) => sum + item.total, 0);
+  // MONTO CON DESC: Con descuento del cliente aplicado
+  const amountWithDiscount = subtotal - clientDiscountAmount;
   
   // Calcular total de descuentos por producto
   const totalProductDiscounts = items.reduce((sum, item) => {
@@ -290,14 +293,11 @@ const calculateTotals = (items: SaleItem[], clientDiscount?: SaleState['clientDi
     return sum;
   }, 0);
   
-  // Calcular descuento de cliente
-  const clientDiscountAmount = clientDiscount?.amount || 0;
-  
   // Total ahorrado = descuentos por producto + descuento de cliente
   const totalSaved = totalProductDiscounts + clientDiscountAmount;
   
-  // Total a cobrar = subtotal - descuento de cliente
-  const total = subtotal - clientDiscountAmount;
+  // TOTAL POR COBRAR = MONTO CON DESC
+  const total = amountWithDiscount;
 
   return {
     subtotal,

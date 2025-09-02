@@ -197,13 +197,19 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
           <div className="space-y-1 text-xs">
            
               <div>
-                <span className="text-gray-600">Subtotal:</span>
+                <span className="text-gray-600">Monto sin desc.:</span>
                 <span className="ml-1">{formatCurrency(sale.totalWithoutDiscount?? 0)}</span>
+              </div>
+               <div>
+                <span className="text-gray-600">Subtotal con desc.:</span>
+                <span className="ml-1">
+                  {formatCurrency((sale.total ?? 0) + (sale.totalDiscount ?? 0))}
+                </span>
               </div>
             
             
               <div>
-                <span className="text-gray-600">Descuento:</span>
+                <span className="text-gray-600">Descuento venta:</span>
                 <span className="ml-1 text-red-600">-{formatCurrency(sale.totalDiscount?? 0)}</span>
               </div>
             
@@ -231,7 +237,7 @@ const SaleDetails = memo(({ sale }: SaleDetailsProps) => {
                   <th className="text-right p-2 font-medium text-gray-700">Precio Lista</th>
                 )}
                 {sale.items.some(item => item.discount) && (
-                  <th className="text-right p-2 font-medium text-gray-700">Descuento</th>
+                  <th className="text-right p-2 font-medium text-gray-700">Descuento por Unidad</th>
                 )}
                 <th className="text-right p-2 font-medium text-gray-700">Total</th>
               </tr>
