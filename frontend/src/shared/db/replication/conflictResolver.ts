@@ -56,20 +56,18 @@ export const recordDocumentUpdate = (documentId: string): void => {
 
 /**
  * Compara dos documentos para ver si son funcionalmente idénticos
- * (ignorando campos de metadata y timestamps)
+ * (ignorando campos de metadata de RxDB, pero manteniendo campos de datos reales)
  */
 export const areDocumentsFunctionallyEqual = (doc1: any, doc2: any): boolean => {
-  // Campos a ignorar en la comparación
+  // Campos a ignorar en la comparación - SOLO metadata de RxDB y sincronización
   const fieldsToIgnore = [
     '_rev',
     '_deleted', 
     '_meta',
     '_lastSyncedAt',
     '_serverUpdatedAt',
-    '_forceLocalPriority',
-    'updatedAt',
-    '_lastModifiedAt',
-    'createdAt'
+    '_forceLocalPriority'
+    // NO ignorar updatedAt, _lastModifiedAt, createdAt - estos son datos importantes
   ];
   
   // Crear copias limpias para comparación
@@ -81,11 +79,20 @@ export const areDocumentsFunctionallyEqual = (doc1: any, doc2: any): boolean => 
     delete clean2[field];
   });
   
+  // Agregar logs para debugging
+  console.log(`🔍 ConflictResolver: Comparando documentos funcionalmente:`, {
+    doc1_clean: clean1,
+    doc2_clean: clean2
+  });
+  
   // Comparar como JSON para una comparación profunda
   const json1 = JSON.stringify(clean1, Object.keys(clean1).sort());
   const json2 = JSON.stringify(clean2, Object.keys(clean2).sort());
   
-  return json1 === json2;
+  const areEqual = json1 === json2;
+  console.log(`🔍 ConflictResolver: ¿Son funcionalmente iguales? ${areEqual}`);
+  
+  return areEqual;
 };
 
 /**

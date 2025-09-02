@@ -138,17 +138,21 @@ export const replicateCollection = <T extends { [key: string]: any }>(
       batchSize: config.REPLICATION.BATCH_SIZE,
       modifier: (doc: any) => {
         console.log(`📥 ${name}: Recibiendo documento remoto ${doc.id}`, {
+          originalDoc: doc,
           updatedAt: doc.updatedAt,
           _lastModifiedAt: doc._lastModifiedAt,
           _serverUpdatedAt: doc._serverUpdatedAt,
         });
 
         // Marcar como sincronizado cuando viene de Firestore
-        return {
+        const modifiedDoc = {
           ...doc,
           _lastSyncedAt: new Date().toISOString(),
           sincronized: true, // Marcar como sincronizado cuando viene del remoto
         };
+        
+        console.log(`📥 ${name}: Documento modificado para RxDB:`, modifiedDoc);
+        return modifiedDoc;
       },
     },
     push: {

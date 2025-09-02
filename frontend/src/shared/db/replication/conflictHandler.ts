@@ -16,6 +16,8 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
     const documentId = (localDoc as any).id || (remoteDoc as any).id;
     
     console.log(`🔄 ConflictHandler: Evaluando conflicto para documento ${documentId}`);
+    console.log(`🔄 ConflictHandler: Documento LOCAL completo:`, localDoc);
+    console.log(`🔄 ConflictHandler: Documento REMOTO completo:`, remoteDoc);
     
     // Prevenir bucles: si el documento está siendo procesado activamente, esperar
     if (isDocumentBeingProcessed(documentId)) {
@@ -33,6 +35,7 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
       // Comparar si los documentos son funcionalmente idénticos
       if (areDocumentsFunctionallyEqual(localDoc, remoteDoc)) {
         console.log(`✅ ConflictHandler: Documentos funcionalmente idénticos ${documentId}, sin conflicto`);
+        console.log(`✅ ConflictHandler: RESULTADO - Usando documento remoto (sin cambios reales)`);
         return {
           isEqual: true,
           documentData: remoteDoc
@@ -56,12 +59,14 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
       if (!hasLocalPriority) {
         if (remoteTime >= localTime) {
           console.log(`⚠️ ConflictHandler: Documento remoto ${documentId} es más reciente o igual, aceptando cambios remotos`);
+          console.log(`⚠️ ConflictHandler: RESULTADO - Usando documento REMOTO:`, remoteDoc);
           return {
             isEqual: false,
             documentData: remoteDoc
           };
         } else {
           console.log(`✅ ConflictHandler: Documento local ${documentId} es más reciente, manteniendo cambios locales`);
+          console.log(`✅ ConflictHandler: RESULTADO - Usando documento LOCAL:`, localDoc);
           return {
             isEqual: false,
             documentData: localDoc
@@ -100,12 +105,14 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
       // Fallback: usar timestamp
       if (localTime > remoteTime) {
         console.log(`✅ ConflictHandler: Documento local ${documentId} tiene timestamp más reciente`);
+        console.log(`✅ ConflictHandler: RESULTADO FINAL - Usando documento LOCAL:`, localDoc);
         return {
           isEqual: false,
           documentData: localDoc
         };
       } else {
         console.log(`⚠️ ConflictHandler: Documento remoto ${documentId} tiene timestamp más reciente o igual`);
+        console.log(`⚠️ ConflictHandler: RESULTADO FINAL - Usando documento REMOTO:`, remoteDoc);
         return {
           isEqual: false,
           documentData: remoteDoc
