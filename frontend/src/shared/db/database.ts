@@ -85,11 +85,6 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
     return dbPromise;
   }
 
-  // Si ya hay una inicialización en progreso, esperar a que termine
-  if (dbPromise) {
-    return dbPromise;
-  }
-
   dbPromise = (async () => {
     try {
       console.log("🔄 Configurando RxDB...");

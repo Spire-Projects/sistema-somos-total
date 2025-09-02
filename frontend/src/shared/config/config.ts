@@ -39,6 +39,14 @@ export const config = {
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  },
+
+  // Configuración de replicación
+  REPLICATION: {
+    ENABLED: import.meta.env.VITE_REPLICATION_ENABLED !== 'false', // true por defecto
+    BATCH_SIZE: parseInt(import.meta.env.VITE_REPLICATION_BATCH_SIZE || '25'),
+    REAL_TIME: true, // true por defecto
+    RETRY_INTERVAL: parseInt(import.meta.env.VITE_REPLICATION_RETRY_INTERVAL || '5000'), // 5 segundos
   }
 };
 
