@@ -46,7 +46,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const CreatableSelect = <T,>({
+function CreatableSelect<T extends Record<string, any>>({
   label,
   values,
   selectedValue,
@@ -62,7 +62,7 @@ const CreatableSelect = <T,>({
   hideLabel = false,
   secondaryDisplayField,
   secondaryLabel,
-}: CreatableSelectProps<T>) => {
+}: CreatableSelectProps<T>) {
   const [search, setSearch] = useState("");
   const [filteredValues, setFilteredValues] = useState<T[]>(values);
   const [isSearching, setIsSearching] = useState(false);
@@ -165,6 +165,7 @@ const CreatableSelect = <T,>({
       onChange(item);
       setSearch("");
       setOpen(false);
+      setHighlightedIndex(-1);
     },
     [onChange]
   );
@@ -215,36 +216,42 @@ const CreatableSelect = <T,>({
       {!hideLabel && (
         <label className="text-sm font-medium text-gray-700">{label}</label>
       )}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="w-full justify-between"
+            className="w-full justify-between h-auto min-h-[2.5rem] py-2"
             disabled={disabled}
             onClick={() => !disabled && setOpen(!open)}
           >
             <span
-              className={`truncate text-left ${
+              className={`text-left flex-1 text-wrap break-words pr-2 ${
                 !displayText ? "text-gray-400" : ""
               }`}
+              style={{ 
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
+                hyphens: "auto"
+              }}
             >
               {displayText ||
                 placeholder ||
                 `Seleccionar ${label.toLowerCase()}`}
             </span>
             <ChevronDown
-              className={`ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform ${
+              className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${
                 open ? "rotate-180" : ""
               }`}
             />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[--radix-popover-trigger-width] p-0"
+          className="w-[--radix-popover-trigger-width] p-0 min-w-[300px]"
           align="start"
+          sideOffset={4}
         >
           {disabled ? (
             <div className="p-2">
@@ -252,7 +259,7 @@ const CreatableSelect = <T,>({
             </div>
           ) : (
             <>
-              <div className="p-2">
+              <div className="p-2 border-b">
                 <Input
                   ref={inputRef}
                   placeholder={`Buscar ${label.toLowerCase()}...`}
@@ -261,6 +268,7 @@ const CreatableSelect = <T,>({
                   onKeyDown={handleKeyDown}
                   className="h-8"
                   autoFocus
+                  onMouseDown={(e) => e.stopPropagation()}
                 />
               </div>
               {isSearching ? (
@@ -268,12 +276,16 @@ const CreatableSelect = <T,>({
                   Buscando...
                 </div>
               ) : (
-                <div ref={listRef} className="max-h-[200px] overflow-auto">
+                <div 
+                  ref={listRef} 
+                  className="max-h-[300px] overflow-y-auto overscroll-contain select-scroll"
+                  style={{ scrollBehavior: 'smooth' }}
+                >
                   {filteredValues.map((item, index) => {
                     return (
                       <div
                         key={String(item[valueField])}
-                        className={`flex flex-col px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground ${
+                        className={`relative flex items-start justify-between px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors group ${
                           highlightedIndex === index
                             ? "bg-accent text-accent-foreground"
                             : ""
@@ -285,73 +297,92 @@ const CreatableSelect = <T,>({
                             : ""
                         }`}
                       >
-                        <button
-                          className="flex-1 text-left truncate"
+                        <div 
+                          className="cursor-pointer flex-1 pr-2 "
                           onClick={() => handleSelect(item)}
+                          onMouseEnter={() => setHighlightedIndex(index)}
                         >
-                          {String(item[displayField])}
-                        </button>
-                        {secondaryDisplayField && (
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            {secondaryLabel && (
-                              <span className="font-medium mr-1">
-                                {secondaryLabel}:
-                              </span>
-                            )}
-                            <span>{String(item[secondaryDisplayField])}</span>
+                          <div 
+                            className="text-wrap break-words leading-tight flex !items-center"
+                            style={{ 
+                              wordBreak: "break-word",
+                              overflowWrap: "break-word",
+                              hyphens: "auto"
+                            }}
+                          >
+                            {String(item[displayField])} 
                           </div>
-                        )}
-                        <div className="flex gap-1 items-center ml-2 mt-1">
-                          {onEditValue && (
-                            <EditDialog
-                              currentName={String(item[displayField])}
-                              onConfirm={async (newName) => {
-                                const updated = await onEditValue({
-                                  ...item,
-                                  [displayField]: newName,
-                                });
-                                if (!updated) return;
-                                setFilteredValues((prev) =>
-                                  prev.map((v) =>
-                                    String(v[valueField]) ===
-                                    String(updated[valueField])
-                                      ? updated
-                                      : v
-                                  )
-                                );
-                                if (
-                                  selectedValue &&
-                                  String(selectedValue[valueField]) ===
-                                    String(updated[valueField])
-                                ) {
-                                  onChange(updated);
-                                }
-                              }}
-                            />
-                          )}
-                          {onDeleteValue && (
-                            <DeleteDialog
-                              name={String(item[displayField])}
-                              onConfirm={async () => {
-                                await onDeleteValue(item);
-                                setFilteredValues((prev) =>
-                                  prev.filter(
-                                    (v) =>
-                                      String(v[valueField]) !==
-                                      String(item[valueField])
-                                  )
-                                );
-                                if (
-                                  selectedValue &&
-                                  String(selectedValue[valueField]) ===
-                                    String(item[valueField])
-                                ) {
-                                  onChange(null as any); // Limpiar selección si se borró
-                                }
-                              }}
-                            />
+                          {secondaryDisplayField && (
+                            <div className="text-xs text-gray-500 mt-1 text-wrap break-words">
+                              {secondaryLabel && (
+                                <span className="font-medium mr-1">
+                                  {secondaryLabel}:
+                                </span>
+                              )}
+                              <span>{String(item[secondaryDisplayField])}</span>
+                            </div>
                           )}
                         </div>
+                        
+                        {(onEditValue || onDeleteValue) && (
+                          <div 
+                            className="flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                          >
+                            {onEditValue && (
+                              <EditDialog
+                                currentName={String(item[displayField])}
+                                onConfirm={async (newName) => {
+                                  const updated = await onEditValue({
+                                    ...item,
+                                    [displayField]: newName,
+                                  });
+                                  if (!updated) return;
+                                  setFilteredValues((prev) =>
+                                    prev.map((v) =>
+                                      String(v[valueField]) ===
+                                      String(updated[valueField])
+                                        ? updated
+                                        : v
+                                    )
+                                  );
+                                  if (
+                                    selectedValue &&
+                                    String(selectedValue[valueField]) ===
+                                      String(updated[valueField])
+                                  ) {
+                                    onChange(updated);
+                                  }
+                                }}
+                              />
+                            )}
+                            {onDeleteValue && (
+                              <DeleteDialog
+                                name={String(item[displayField])}
+                                onConfirm={async () => {
+                                  await onDeleteValue(item);
+                                  setFilteredValues((prev) =>
+                                    prev.filter(
+                                      (v) =>
+                                        String(v[valueField]) !==
+                                        String(item[valueField])
+                                    )
+                                  );
+                                  if (
+                                    selectedValue &&
+                                    String(selectedValue[valueField]) ===
+                                      String(item[valueField])
+                                  ) {
+                                    onChange(null as any); // Limpiar selección si se borró
+                                  }
+                                }}
+                              />
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -361,7 +392,7 @@ const CreatableSelect = <T,>({
                       <Button
                         type="button"
                         onClick={handleCreate}
-                        className="w-full text-sm h-8"
+                        className="w-full text-sm h-8 "
                         disabled={creating}
                         variant="ghost"
                       >
@@ -387,6 +418,6 @@ const CreatableSelect = <T,>({
       </Popover>
     </div>
   );
-};
+}
 
 export default CreatableSelect;
