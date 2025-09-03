@@ -35,6 +35,9 @@ export interface SaleState {
   clientName?: string;
   medicId?: string;
   medicName?: string;
+  nitClient?: string; // NIT del cliente para facturación
+  socialReasonClient?: string; // Razón social del cliente para facturación
+  saleNotes?: string; // Notas de la venta
   paymentMethod: 'efectivo' | 'qr' ;
 }
 

@@ -1,16 +1,21 @@
 import { memo, useCallback } from "react";
 import ClientSection from "./ClientSection";
 import MedicSection from "./MedicSection";
+import NitSection from "./NitSection";
+import SaleNotes from "./SaleNotes";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import SaleSummary from "./SaleSummary";
 import type { SaleState } from '../types/sale.types';
 import type { Client } from '@/shared/types/Client';
 import type { Medic } from '@/shared/types/Sales';
+import type { NIT } from '@/shared/types/Nit';
 
 interface SaleClientAndSummaryProps {
   saleState: SaleState;
   onClientSelect: (client: Client | null) => void;
   onMedicSelect: (medic: Medic | null) => void;
+  onNitSelect: (nit: NIT | null) => void;
+  onNotesChange: (notes: string) => void;
   onClientDiscountChange: (type: 'percentage' | 'fixed', value: number) => void;
   onPaymentMethodChange: (method: 'efectivo' | 'qr' ) => void;
   onConfirmSale: () => void;
@@ -22,6 +27,8 @@ const SaleClientAndSummary = memo(({
   saleState,
   onClientSelect,
   onMedicSelect,
+  onNitSelect,
+  onNotesChange,
   onClientDiscountChange,
   onPaymentMethodChange,
   onConfirmSale,
@@ -38,6 +45,16 @@ const SaleClientAndSummary = memo(({
   const handleMedicSelect = useCallback((medic: Medic | null) => {
     onMedicSelect(medic);
   }, [onMedicSelect]);
+
+  // Manejar selección de NIT
+  const handleNitSelect = useCallback((nit: NIT | null) => {
+    onNitSelect(nit);
+  }, [onNitSelect]);
+
+  // Manejar cambio de notas
+  const handleNotesChange = useCallback((notes: string) => {
+    onNotesChange(notes);
+  }, [onNotesChange]);
 
   // Manejar cambio de método de pago
   const handlePaymentMethodChange = useCallback((method: 'efectivo' | 'qr' ) => {
@@ -58,6 +75,21 @@ const SaleClientAndSummary = memo(({
         selectedMedicId={saleState.medicId}
         selectedMedicName={saleState.medicName}
         onMedicSelect={handleMedicSelect}
+      />
+
+      {/* Sección de NIT */}
+      <NitSection
+        selectedNitClient={saleState.nitClient}
+        selectedSocialReasonClient={saleState.socialReasonClient}
+        onNitSelect={handleNitSelect}
+        disabled={isProcessing}
+      />
+
+      {/* Sección de notas de venta */}
+      <SaleNotes
+        notes={saleState.saleNotes}
+        onNotesChange={handleNotesChange}
+        disabled={isProcessing}
       />
 
       {/* Selector de método de pago */}

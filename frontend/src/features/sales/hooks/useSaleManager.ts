@@ -254,6 +254,23 @@ export const useSaleManager = () => {
     }));
   }, []);
 
+  // Establecer NIT del cliente
+  const setNitClient = useCallback((nitClient?: string, socialReasonClient?: string) => {
+    setSaleState(prev => ({
+      ...prev,
+      nitClient,
+      socialReasonClient
+    }));
+  }, []);
+
+  // Establecer notas de venta
+  const setSaleNotes = useCallback((saleNotes: string) => {
+    setSaleState(prev => ({
+      ...prev,
+      saleNotes
+    }));
+  }, []);
+
   return {
     saleState,
     addMedicationToSale,
@@ -264,7 +281,9 @@ export const useSaleManager = () => {
     clearSale,
     setClient,
     setMedic,
-    setPaymentMethod
+    setPaymentMethod,
+    setNitClient,
+    setSaleNotes
   };
 };
 

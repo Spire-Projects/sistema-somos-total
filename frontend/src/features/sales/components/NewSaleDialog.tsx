@@ -19,6 +19,7 @@ import { useAppSelector } from '@/shared/store/hooks';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
 import type { Client } from '@/shared/types/Client';
 import type { Medic } from '@/shared/types/Sales';
+import type { NIT } from '@/shared/types/Nit';
 
 interface NewSaleDialogProps {
   open: boolean;
@@ -47,7 +48,9 @@ const NewSaleDialog = memo(({ open, onOpenChange, onSaleSuccess }: NewSaleDialog
     clearSale,
     setClient,
     setMedic,
-    setPaymentMethod
+    setPaymentMethod,
+    setNitClient,
+    setSaleNotes
   } = useSaleManager();
 
   const {
@@ -145,6 +148,20 @@ const NewSaleDialog = memo(({ open, onOpenChange, onSaleSuccess }: NewSaleDialog
     }
   };
 
+  // Manejar selección de NIT
+  const handleNitSelect = (nit: NIT | null) => {
+    if (nit) {
+      setNitClient(nit.numberNit, nit.socialReason);
+    } else {
+      setNitClient();
+    }
+  };
+
+  // Manejar cambio de notas de venta
+  const handleNotesChange = (notes: string) => {
+    setSaleNotes(notes);
+  };
+
   // Manejar cambio de descuento de cliente
   const handleClientDiscountChange = (type: 'percentage' | 'fixed', value: number) => {
     setClientDiscount(type, value);
@@ -227,6 +244,8 @@ const NewSaleDialog = memo(({ open, onOpenChange, onSaleSuccess }: NewSaleDialog
               saleState={saleState}
               onClientSelect={handleClientSelect}
               onMedicSelect={handleMedicSelect}
+              onNitSelect={handleNitSelect}
+              onNotesChange={handleNotesChange}
               onClientDiscountChange={handleClientDiscountChange}
               onPaymentMethodChange={handlePaymentMethodChange}
               onConfirmSale={handleConfirmSale}

@@ -97,7 +97,7 @@ const ClientFormDialog = memo(({
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-0">
             <Label htmlFor="nit">NIT (opcional)</Label>
             <Input
               id="nit"

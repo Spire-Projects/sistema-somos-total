@@ -237,16 +237,33 @@ export const validateSocialReason = (socialReason: string): boolean => {
 };
 
 /**
+ * Buscar NITs por texto (número o razón social) con paginación
+ */
+export const searchNitsPaginated = async (
+  searchText: string, 
+  page: number = 1, 
+  size: number = 10
+): Promise<ItemsResponse<NIT>> => {
+  const repository = getRepository();
+  return await repository.searchByText(searchText, page, size);
+};
+
+/**
+ * Buscar NITs por texto (número o razón social) con paginación (alias para compatibilidad)
+ */
+export const searchByText = async (
+  searchText: string, 
+  page: number = 1, 
+  size: number = 10
+): Promise<ItemsResponse<NIT>> => {
+  return await searchNitsPaginated(searchText, page, size);
+};
+
+/**
  * Buscar NITs por texto (número o razón social)
  */
 export const searchNits = async (searchText: string): Promise<NIT[]> => {
   const repository = getRepository();
-  const allNits = await repository.getActiveNits();
-  
-  const normalizedSearch = searchText.toLowerCase().trim();
-  
-  return allNits.filter(nit => 
-    nit.numberNit.toLowerCase().includes(normalizedSearch) ||
-    nit.socialReason.toLowerCase().includes(normalizedSearch)
-  );
+  const result = await repository.searchByText(searchText, 1, 50); // Obtener hasta 50 resultados
+  return result.items;
 };

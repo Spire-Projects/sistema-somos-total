@@ -12,6 +12,7 @@ export interface INitRepository {
   findBySocialReason(socialReason: string): Promise<NIT | null>;
   findAll(): Promise<NIT[]>;
   findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<NIT>>;
+  searchByText(searchQuery: string, page?: number, size?: number): Promise<ItemsResponse<NIT>>; // Nueva función de búsqueda
   update(id: string, updateData: Partial<NIT>): Promise<NIT | null>;
   delete(id: string): Promise<boolean>;
   softDelete(id: string, deletedBy: string): Promise<boolean>;
@@ -150,6 +151,10 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     };
   }
 
+  async searchByText(searchQuery: string, page: number = 1, size: number = 10): Promise<ItemsResponse<NIT>> {
+    return await this.findAllPaginated(page, size, searchQuery);
+  }
+
   async getActiveNits(): Promise<NIT[]> {
     const db = await initDatabase();
     const nits = await db.nits.find({
@@ -219,6 +224,9 @@ export class FirestoreNitRepository implements INitRepository {
     throw new Error('Firestore implementation not yet available');
   }
   async findAllPaginated(_page: number, _size: number, _searchQuery?: string): Promise<ItemsResponse<NIT>> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async searchByText(_searchQuery: string, _page?: number, _size?: number): Promise<ItemsResponse<NIT>> {
     throw new Error('Firestore implementation not yet available');
   }
   async update(_id: string, _updateData: Partial<NIT>): Promise<NIT | null> {

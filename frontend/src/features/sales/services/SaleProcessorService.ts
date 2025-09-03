@@ -152,13 +152,16 @@ export class SaleProcessorService {
       total: saleState.total,
       totalWithoutDiscount: saleState.amountWithoutDiscount,
       totalDiscount: saleState.clientDiscount ? this.calculateClientDiscountAmount(saleState) : 0,
-      client: saleState.clientName,
+      client: saleState.clientId || "", // Usar clientId en lugar de clientName
       paymentMethod: saleState.paymentMethod,
       createdBy: userId,
       isDeleted: false,
       sincronized: false,
-      idMedic: saleState.medicName,
-      factured: false
+      idMedic: saleState.medicId || "", // Usar medicId en lugar de medicName
+      factured: false,
+      nitClient: saleState.nitClient || "", // Agregar NIT del cliente
+      socialReasonClient: saleState.socialReasonClient || "", // Agregar razón social
+      saleNotes: saleState.saleNotes || "" // Agregar notas de venta
     };
 
     // Limpiar datos para evitar problemas con undefined en Firestore

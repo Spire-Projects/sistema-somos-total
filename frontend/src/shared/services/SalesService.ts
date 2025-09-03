@@ -1,6 +1,7 @@
 import type { Sale } from '../types/Sales';
 import type { ItemsResponse } from '../types/UtilTypes';
 import { getSaleRepository } from '../db/repositories/sale.repository';
+import { addSaleToClientHistory } from './ClientService';
 import { generateId } from '../utils/id.utils';
 
 const repository = getSaleRepository();
@@ -46,7 +47,21 @@ export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<
     saleNotes: cleanedData.saleNotes
   };
 
-  return await repository.create(newSale);
+  // Crear la venta
+  const createdSale = await repository.create(newSale);
+
+  // Si hay un cliente seleccionado, agregar la venta a su historial
+  if (createdSale.client && createdSale.client.trim() !== "") {
+    try {
+      await addSaleToClientHistory(createdSale.client, createdSale.id);
+      console.log(`✅ Venta ${createdSale.id} agregada al historial del cliente ${createdSale.client}`);
+    } catch (error) {
+      console.error(`❌ Error al agregar venta al historial del cliente:`, error);
+      // No fallar la venta por este error, solo registrar
+    }
+  }
+
+  return createdSale;
 };
 
 /**
