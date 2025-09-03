@@ -8,6 +8,7 @@ import {
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Line } from "react-chartjs-2";
 import type { DailySales } from "./types/Types";
+import { useEffect } from "react";
 
 interface DailySalesChartProps {
   isLoading: boolean;
@@ -20,6 +21,11 @@ export const DailySalesChart = ({
   hasData,
   dailySales,
 }: DailySalesChartProps) => {
+
+  useEffect(() => {
+    console.log("Daily Sales:", dailySales);
+  }, [dailySales]);
+
   const chartData = {
     labels: dailySales.map((d) => {
       const date = new Date(d.date);

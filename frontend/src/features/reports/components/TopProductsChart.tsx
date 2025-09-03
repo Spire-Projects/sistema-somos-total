@@ -7,7 +7,10 @@ import {
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Bar } from "react-chartjs-2";
+import { useEffect, useState } from "react";
 import type { TopProductItem } from "./types/Types";
+import { getMedicationViewById } from "@/shared/services";
+import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
 
 interface TopProductsChartProps {
   isLoading: boolean;
@@ -20,10 +23,26 @@ export const TopProductsChart = ({
   hasData,
   topProducts,
 }: TopProductsChartProps) => {
+  const [productDataMap, setProductDataMap] = useState<Record<string, MedicationCatalogView>>({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const ids = topProducts.map((p) => p.medicationId);
+      const views = await Promise.all(ids.map((id) => getMedicationViewById(id)));
+      const data: Record<string, MedicationCatalogView> = {};
+      ids.forEach((id, idx) => {
+        if (views[idx]) data[id] = views[idx];
+      });
+      setProductDataMap(data);
+    };
+    fetchData();
+  }, [topProducts]);
+
   const chartData = {
-    labels: topProducts.map((p) =>
-      p.name.length > 15 ? p.name.substring(0, 15) + "..." : p.name
-    ),
+    labels: topProducts.map((p) => {
+      const name = productDataMap[p.medicationId]?.comercialName ?? p.name;
+      return name.length > 15 ? name.substring(0, 15) + "..." : name;
+    }),
     datasets: [
       {
         label: "Unidades vendidas",

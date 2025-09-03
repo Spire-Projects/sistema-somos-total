@@ -11,18 +11,14 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/shared/components/ui/tabs";
-import { BarChart3, LineChart, PieChart } from "lucide-react";
+import { FilterTabs } from "@/shared/components/FilterTabs";
+import type { FilterOption } from "@/shared/components/FilterTabs";
 
 // Componentes
 import { DateRangeFilter } from "./DateRangeFilter";
 import { SummaryCards } from "./SummaryCards";
 import { ErrorCard } from "./ErrorCard";
+import { SalesDebugPanel } from "./SalesDebugPanel";
 import { TopProductsChart } from "./TopProductsChart";
 import { TopProductsTable } from "./TopProductsTable";
 import { DailySalesChart } from "./DailySalesChart";
@@ -77,6 +73,16 @@ export const ReportsPage = () => {
     setDateTo(e.target.value);
   };
 
+  // Opciones para el filtro
+  const filterOptions: FilterOption[] = [
+    { value: "products", label: "Productos más vendidos", icon: "📦" },
+    { value: "sales", label: "Ventas por día", icon: "📈" },
+    { value: "payment", label: "Métodos de pago", icon: "💳" },
+  ];
+
+  const [activeFilter, setActiveFilter] = useState<string>("products");
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-4 md:p-6 space-y-6">
@@ -91,6 +97,13 @@ export const ReportsPage = () => {
               negocio
             </p>
           </div>
+          <button
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            className="px-3 py-1 text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded border border-yellow-300 transition-colors"
+            title="Mostrar/Ocultar panel de debugging"
+          >
+            🔍 Debug {showDebugPanel ? 'OFF' : 'ON'}
+          </button>
         </div>
 
         {/* Filtros de fecha */}
@@ -99,6 +112,14 @@ export const ReportsPage = () => {
           dateTo={dateTo}
           onDateFromChange={handleDateFromChange}
           onDateToChange={handleDateToChange}
+        />
+
+        {/* Panel de debugging (temporal) */}
+        <SalesDebugPanel
+          sales={sales}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          isVisible={showDebugPanel}
         />
 
         {/* Tarjetas de resumen */}
@@ -111,51 +132,47 @@ export const ReportsPage = () => {
         {/* Mensajes de error */}
         {error && <ErrorCard message={error} />}
 
-        {/* Gráficos y análisis */}
-        <Tabs defaultValue="products" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="products" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Productos más vendidos
-            </TabsTrigger>
-            <TabsTrigger value="sales" className="flex items-center gap-2">
-              <LineChart className="h-4 w-4" />
-              Ventas por día
-            </TabsTrigger>
-            <TabsTrigger value="payment" className="flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              Métodos de pago
-            </TabsTrigger>
-          </TabsList>
+        {/* Gráficos y análisis (reemplazado por FilterTabs) */}
+        <div>
+          <FilterTabs
+            options={filterOptions}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            className="mb-4"
+          />
 
-          <TabsContent value="products">
-            <TopProductsChart
-              isLoading={isLoading}
-              hasData={sales.length > 0}
-              topProducts={topProducts}
-            />
+          {activeFilter === "products" && (
+            <>
+              <TopProductsChart
+                isLoading={isLoading}
+                hasData={sales.length > 0}
+                topProducts={topProducts}
+              />
 
-            {!isLoading && <TopProductsTable topProducts={topProducts} />}
-          </TabsContent>
+              {!isLoading && <TopProductsTable topProducts={topProducts} />}
+            </>
+          )}
 
-          <TabsContent value="sales">
-            <DailySalesChart
-              isLoading={isLoading}
-              hasData={sales.length > 0}
-              dailySales={dailySales}
-            />
+          {activeFilter === "sales" && (
+            <>
+              <DailySalesChart
+                isLoading={isLoading}
+                hasData={sales.length > 0}
+                dailySales={dailySales}
+              />
 
-            {!isLoading && <DailySalesTable dailySales={dailySales} />}
-          </TabsContent>
+              {!isLoading && <DailySalesTable dailySales={dailySales} />}
+            </>
+          )}
 
-          <TabsContent value="payment">
+          {activeFilter === "payment" && (
             <PaymentMethodChart
               isLoading={isLoading}
               hasData={sales.length > 0}
               paymentMethodSummary={paymentMethodSummary}
             />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );
