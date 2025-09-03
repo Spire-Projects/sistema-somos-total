@@ -11,11 +11,14 @@ export interface IUserRepository {
   findAll(): Promise<UserDocument[]>;
   update(id: string, updateData: Partial<UserDocument>): Promise<UserDocument | null>;
   delete(id: string): Promise<boolean>;
+  softDelete(id: string): Promise<boolean>;
+  restore(id: string): Promise<boolean>;
   findByRole(role: string): Promise<UserDocument[]>;
   findByText(searchText: string): Promise<UserDocument[]>;
   getStats(): Promise<{
     total: number;
     active: number;
+    deleted: number;
     byRole: Record<string, number>;
   }>;
 }
@@ -29,7 +32,11 @@ export class LocalUserRepository extends BaseRepository<UserDocument> implements
 
   async create(userData: Omit<UserDocument, 'id'>): Promise<UserDocument> {
     const id = crypto.randomUUID();
-    const fullData = { id, ...userData } as UserDocument;
+    const fullData = { 
+      id, 
+      ...userData,
+      isDeleted: false // Asegurar que isDeleted sea false por defecto
+    } as UserDocument;
     console.log(`🔄 UserRepository: Creando usuario con prioridad`, { id });
     return await this.createWithPriority(fullData);
   }
@@ -45,21 +52,56 @@ export class LocalUserRepository extends BaseRepository<UserDocument> implements
   }
 
   async delete(id: string): Promise<boolean> {
-    console.log(`🗑️ UserRepository: Eliminando usuario ${id} con prioridad`);
+    console.log(`🗑️ UserRepository: Eliminando usuario ${id} permanentemente`);
     return await this.deleteWithPriority(id);
   }
 
+  async softDelete(id: string): Promise<boolean> {
+    console.log(`🗑️ UserRepository: Soft delete usuario ${id}`);
+    const result = await this.updateWithPriority(id, { isDeleted: true });
+    return result !== null;
+  }
+
+  async restore(id: string): Promise<boolean> {
+    console.log(`♻️ UserRepository: Restaurando usuario ${id}`);
+    // Para restaurar, necesitamos buscar incluyendo los eliminados
+    const db = await initDatabase();
+    const user = await db.users.findOne({ selector: { id } }).exec();
+    if (!user) return false;
+    
+    const result = await this.updateWithPriority(id, { isDeleted: false });
+    return result !== null;
+  }
+
   async findById(id: string): Promise<UserDocument | null> {
-    return await super.findById(id);
+    const db = await initDatabase();
+    const user = await db.users.findOne({ 
+      selector: { 
+        id,
+        isDeleted: { $ne: true }
+      } 
+    }).exec();
+    return user ? user.toJSON() : null;
   }
 
   async findAll(): Promise<UserDocument[]> {
-    return await super.findAll();
+    const db = await initDatabase();
+    const users = await db.users.find({ 
+      selector: { 
+        isDeleted: { $ne: true }
+      } 
+    }).exec();
+    return users.map((user) => user.toJSON());
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
     const db = await initDatabase();
-    const user = await db.users.findOne({ selector: { email } }).exec();
+    const user = await db.users.findOne({ 
+      selector: { 
+        email,
+        isDeleted: { $ne: true }
+      } 
+    }).exec();
     return user ? user.toJSON() : null;
   }
 
@@ -96,7 +138,12 @@ export class LocalUserRepository extends BaseRepository<UserDocument> implements
 
   async findByRole(role: string): Promise<UserDocument[]> {
     const db = await initDatabase();
-    const users = await db.users.find({ selector: { role: role as any } }).exec();
+    const users = await db.users.find({ 
+      selector: { 
+        role: role as any,
+        isDeleted: { $ne: true }
+      } 
+    }).exec();
     return users.map((user) => user.toJSON());
   }
 
@@ -106,7 +153,11 @@ export class LocalUserRepository extends BaseRepository<UserDocument> implements
     }
     const db = await initDatabase();
     const normalizedText = searchText.trim().toLowerCase();
-    const allUsers = await db.users.find().exec();
+    const allUsers = await db.users.find({
+      selector: {
+        isDeleted: { $ne: true }
+      }
+    }).exec();
     const filteredUsers = allUsers.filter((user) => {
       const userJson = user.toJSON();
       return (
@@ -118,14 +169,18 @@ export class LocalUserRepository extends BaseRepository<UserDocument> implements
     return filteredUsers.map((user) => user.toJSON());
   }
 
-  async getStats(): Promise<{ total: number; active: number; byRole: Record<string, number> }> {
+  async getStats(): Promise<{ total: number; active: number; deleted: number; byRole: Record<string, number> }> {
     const db = await initDatabase();
-    const allUsers = await db.users.find().exec();
+    const allUsers = await db.users.find().exec(); // Obtener todos, incluyendo eliminados
     const users = allUsers.map((u) => u.toJSON());
+    const activeUsers = users.filter((u) => !u.isDeleted);
+    const deletedUsers = users.filter((u) => u.isDeleted);
+    
     const stats = {
-      total: users.length,
-      active: users.filter((u) => u.active).length,
-      byRole: users.reduce((acc, user) => {
+      total: activeUsers.length, // Solo contar activos en total
+      active: activeUsers.filter((u) => u.active).length,
+      deleted: deletedUsers.length,
+      byRole: activeUsers.reduce((acc, user) => {
         acc[user.role] = (acc[user.role] || 0) + 1;
         return acc;
       }, {} as Record<string, number>),
@@ -153,13 +208,19 @@ export class FirestoreUserRepository implements IUserRepository {
   async delete(_id: string): Promise<boolean> {
     throw new Error('Firestore implementation not yet available');
   }
+  async softDelete(_id: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async restore(_id: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
+  }
   async findByRole(_role: string): Promise<UserDocument[]> {
     throw new Error('Firestore implementation not yet available');
   }
   async findByText(_searchText: string): Promise<UserDocument[]> {
     throw new Error('Firestore implementation not yet available');
   }
-  async getStats(): Promise<{ total: number; active: number; byRole: Record<string, number> }> {
+  async getStats(): Promise<{ total: number; active: number; deleted: number; byRole: Record<string, number> }> {
     throw new Error('Firestore implementation not yet available');
   }
 }

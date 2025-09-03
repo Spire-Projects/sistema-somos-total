@@ -4,14 +4,17 @@ import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
-import { userSchema } from "./models/user.model";
+import { userMigrationStrategies, userSchema } from "./models/user.model";
 import type { UserDocument } from "./models/user.model";
 import { clientMigrationStrategies, clientSchema } from "./models/client.model";
 import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
 import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
-import { manufacturerSchema, manufacturerMigrationStrategies } from "./models/manufacturer.model";
+import {
+  manufacturerSchema,
+  manufacturerMigrationStrategies,
+} from "./models/manufacturer.model";
 import { medicationSchema } from "./models/medication.model";
 import { medicationBatchSchema } from "./models/medicationBatch.model";
 import type {
@@ -25,7 +28,10 @@ import type {
 } from "../types/Medication";
 import type { Sale, Medic } from "../types/Sales";
 import { config } from "../config/config";
-import { genericNameSchema, genericNameMigrationStrategies } from "./models/genericName.model";
+import {
+  genericNameSchema,
+  genericNameMigrationStrategies,
+} from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
 import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
@@ -110,61 +116,67 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
       await db.addCollections({
         users: {
           schema: userSchema,
-          conflictHandler: createLocalPriorityConflictHandler<UserDocument>()
+          migrationStrategies: userMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler<UserDocument>(),
         },
         clients: {
           schema: clientSchema,
           migrationStrategies: clientMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Client>()
+          conflictHandler: createLocalPriorityConflictHandler<Client>(),
         },
         active_ingredients: {
           schema: activeIngredientSchema,
-          conflictHandler: createLocalPriorityConflictHandler<ActiveIngredient>()
+          conflictHandler:
+            createLocalPriorityConflictHandler<ActiveIngredient>(),
         },
         generic_names: {
           schema: genericNameSchema,
           migrationStrategies: genericNameMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<GenericNameDoc>()
+          conflictHandler: createLocalPriorityConflictHandler<GenericNameDoc>(),
         },
         medication_categories: {
           schema: medicationCategorySchema,
-          conflictHandler: createLocalPriorityConflictHandler<MedicationCategory>()
+          conflictHandler:
+            createLocalPriorityConflictHandler<MedicationCategory>(),
         },
         pharmaceutical_forms: {
           schema: pharmaceuticalFormSchema,
-          conflictHandler: createLocalPriorityConflictHandler<PharmaceuticalFormDoc>()
+          conflictHandler:
+            createLocalPriorityConflictHandler<PharmaceuticalFormDoc>(),
         },
         manufacturers: {
           schema: manufacturerSchema,
           migrationStrategies: manufacturerMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Manufacturer>()
+          conflictHandler: createLocalPriorityConflictHandler<Manufacturer>(),
         },
         medications: {
           schema: medicationSchema,
-          conflictHandler: createLocalPriorityConflictHandler<Medication>()
+          conflictHandler: createLocalPriorityConflictHandler<Medication>(),
         },
         medication_batches: {
           schema: medicationBatchSchema,
-          conflictHandler: createLocalPriorityConflictHandler<MedicationBatch>()
+          conflictHandler:
+            createLocalPriorityConflictHandler<MedicationBatch>(),
         },
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
-          conflictHandler: createLocalPriorityConflictHandler<DailyCashClosure>()
+          conflictHandler:
+            createLocalPriorityConflictHandler<DailyCashClosure>(),
         },
-         sales: {
+        sales: {
           schema: saleSchema,
           migrationStrategies: saleMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Sale>()
+          conflictHandler: createLocalPriorityConflictHandler<Sale>(),
         },
         medics: {
           schema: medicSchema,
-          conflictHandler: createLocalPriorityConflictHandler<Medic>()
+          conflictHandler: createLocalPriorityConflictHandler<Medic>(),
         },
         nits: {
           schema: nitSchema,
           migrationStrategies: nitMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<NIT>()
-        }
+          conflictHandler: createLocalPriorityConflictHandler<NIT>(),
+        },
       });
 
       dbInstance = db;

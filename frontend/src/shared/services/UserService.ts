@@ -52,6 +52,7 @@ export const UserService = {
         passwordHash,
         role: data.role,
         active: true,
+        isDeleted: false,
         createdAt: new Date().toISOString()
       };
 
@@ -179,11 +180,11 @@ export const UserService = {
     }
   },
 
-  // Desactivar usuario
+  // Desactivar usuario (soft delete)
   async deactivateUser(id: string): Promise<{ success: boolean; error?: string }> {
     try {
       const db = getUserDB();
-      const result = await db.update(id, { active: false });
+      const result = await db.softDelete(id);
       
       if (!result) {
         return { success: false, error: 'Usuario no encontrado' };
@@ -219,6 +220,24 @@ export const UserService = {
     } catch (error) {
       console.error('Error eliminando usuario:', error);
       return { success: false, error: 'Error eliminando usuario' };
+    }
+  },
+
+  // Restaurar usuario eliminado (soft delete)
+  async restoreUser(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const db = getUserDB();
+      const result = await db.restore(id);
+      
+      if (!result) {
+        return { success: false, error: 'Usuario no encontrado o no se pudo restaurar' };
+      }
+
+      console.log(`♻️ Usuario restaurado exitosamente`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error restaurando usuario:', error);
+      return { success: false, error: 'Error restaurando usuario' };
     }
   },
 

@@ -5,7 +5,7 @@ import type { UserRole } from '../../types/User';
 export const userSchema: RxJsonSchema<UserDocument> = {
   title: 'user schema',
   description: 'describes a user',
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -43,10 +43,24 @@ export const userSchema: RxJsonSchema<UserDocument> = {
       type: 'string',
       format: 'date-time',
       maxLength: 50
+    },
+    isDeleted: {
+      type: 'boolean',
+      default: false
     }
   },
-  required: ['id', 'fullName', 'email', 'passwordHash', 'role', 'active', 'createdAt'],
-  indexes: ['email', 'role']
+  required: ['id', 'fullName', 'email', 'passwordHash', 'role', 'active', 'createdAt', 'isDeleted'],
+  indexes: ['email', 'role', 'isDeleted']
+};
+
+export const userMigrationStrategies = {
+  1: (oldDoc: any) => {
+    if(oldDoc.isDeleted === undefined) {
+      oldDoc.isDeleted = false;
+    }
+    return oldDoc;
+  },
+ 
 };
 
 // Tipo del documento como se almacena en RxDB
@@ -59,6 +73,7 @@ export interface UserDocument {
   active: boolean;
   createdAt: string;
   lastSession?: string;
+  isDeleted: boolean; 
 }
 
 // Datos para crear un usuario
