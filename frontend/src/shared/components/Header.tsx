@@ -1,29 +1,15 @@
 import { useAppSelector } from "../store/hooks";
 import { ChevronDown, Menu } from "lucide-react";
-import { useLocation } from "react-router";
+import { useOptimizedNavigation } from "../hooks/useOptimizedNavigation";
+import { memo } from "react";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
-export const Header = ({ onToggleSidebar }: HeaderProps) => {
+export const Header = memo(({ onToggleSidebar }: HeaderProps) => {
   const { user } = useAppSelector((state) => state.auth);
-  const location = useLocation();
-
-  const sectionNames: Record<string, string> = {
-    "/dashboard": "Dashboard",
-    "/inventory": "Inventario",
-    "/sales": "Compras",
-    "/purchases": "Ventas",
-    "/clients": "Clientes",
-    "/reports": "Reportes",
-    "/users": "Usuarios",
-    "/settings": "Configuración",
-  };
-
-  const getSectionName = () => {
-    return sectionNames[location.pathname] || "Dashboard";
-  };
+  const { currentSectionName } = useOptimizedNavigation();
 
   return (
     <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 sm:py-4 shadow-sm">
@@ -43,7 +29,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
               )}
               
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 truncate flex-1 min-w-0">
-                {getSectionName()}
+                {currentSectionName}
               </h2>
             </div>
 
@@ -78,4 +64,4 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
       </div>
     </header>
   );
-};
+});

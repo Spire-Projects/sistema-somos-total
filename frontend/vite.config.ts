@@ -29,11 +29,51 @@ export default defineConfig(({ mode }) => ({
     minify: mode === "production", // Solo en producción
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom"],
-          rxdb: ["rxdb", "dexie"],
-          firebase: ["firebase/app", "firebase/firestore"],
-          crypto: ["crypto-js", "jose"],
+        manualChunks: (id) => {
+          // Vendor libraries
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('rxdb') || id.includes('dexie')) {
+              return 'vendor-rxdb';
+            }
+            if (id.includes('firebase')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('crypto-js') || id.includes('jose')) {
+              return 'vendor-crypto';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            return 'vendor-other';
+          }
+          
+          // Feature-based chunks
+          if (id.includes('/features/inventory/')) {
+            return 'feature-inventory';
+          }
+          if (id.includes('/features/sales/')) {
+            return 'feature-sales';
+          }
+          if (id.includes('/features/purchases/')) {
+            return 'feature-purchases';
+          }
+          if (id.includes('/features/users/')) {
+            return 'feature-users';
+          }
+          if (id.includes('/features/clients/')) {
+            return 'feature-clients';
+          }
+          if (id.includes('/features/reports/')) {
+            return 'feature-reports';
+          }
+          
+          // Shared utilities
+          if (id.includes('/shared/')) {
+            return 'shared';
+          }
         },
       },
     },

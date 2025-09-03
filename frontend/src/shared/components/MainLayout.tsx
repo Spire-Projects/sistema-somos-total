@@ -2,27 +2,36 @@ import { Outlet, Navigate } from 'react-router';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { useAppSelector } from '../store/hooks';
-import { useState } from 'react';
+// import { PageTransition } from './PageTransition'; // Removido para mayor velocidad
+// import { usePrefetchHeavyPages } from '../hooks/usePrefetchHeavyPages'; // Temporalmente desactivado
+import { useState, useCallback, memo } from 'react';
 
-export const MainLayout = () => {
+export const MainLayout = memo(() => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   // En móvil/tablet el sidebar empieza cerrado, en desktop no importa porque siempre está visible
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Temporalmente desactivado - puede estar causando lentitud
+  // usePrefetchHeavyPages();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setSidebarOpen(!sidebarOpen);
-  };
+  }, [sidebarOpen]);
+
+  const closeSidebar = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+        onClose={closeSidebar} 
       />
       
       {/* Main Content */}
@@ -36,4 +45,4 @@ export const MainLayout = () => {
       </div>
     </div>
   );
-};
+});

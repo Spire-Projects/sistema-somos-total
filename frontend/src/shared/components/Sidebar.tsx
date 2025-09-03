@@ -17,7 +17,7 @@ import { logout } from "../store/authSlice";
 import { Button } from "./ui/button";
 import logo from "../../assets/logo.png"
 import type { UserRole } from "../types/User";
-import { useEffect } from "react";
+import { useEffect, useMemo, memo, useCallback } from "react";
 
 interface SidebarProps {
   className?: string;
@@ -99,14 +99,14 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export const Sidebar = ({ className, isOpen = true, onClose }: SidebarProps) => {
+export const Sidebar = memo(({ className, isOpen = true, onClose }: SidebarProps) => {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logout());
-  };
+  }, [dispatch]);
 
   // Cerrar sidebar en cambio de ruta SOLO si está abierto en dispositivos móviles
   useEffect(() => {
@@ -115,10 +115,11 @@ export const Sidebar = ({ className, isOpen = true, onClose }: SidebarProps) => 
     }
   }, [location.pathname]); // Removido onClose de las dependencias para evitar loops
 
-  // Filtrar elementos del menú según el rol del usuario
-  const visibleMenuItems = menuItems.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role))
-  );
+  // Filtrar elementos del menú según el rol del usuario - memoizado
+  const visibleMenuItems = useMemo(() => 
+    menuItems.filter(
+      (item) => !item.roles || (user && item.roles.includes(user.role))
+    ), [user]);
 
   return (
     <>
@@ -205,4 +206,4 @@ export const Sidebar = ({ className, isOpen = true, onClose }: SidebarProps) => 
       </div>
     </>
   );
-};
+});

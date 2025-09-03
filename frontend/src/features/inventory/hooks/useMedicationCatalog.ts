@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { 
   MedicationCatalogView, 
   MedicationCatalogFilters, 
@@ -88,7 +88,7 @@ export const useMedicationCatalog = (
     sort
   }), [currentPage, pageSize, filters, searchQuery, sort]);
 
-  // Fetch data function
+    // Fetch data function
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -133,10 +133,14 @@ export const useMedicationCatalog = (
     }
   }, [queryParams, searchQuery, currentPage, pageSize, filters]);
 
-  // Auto-fetch when dependencies change
-  useMemo(() => {
-    void fetchData();
-  }, [fetchData]);
+  // Auto-fetch when dependencies change con debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void fetchData();
+    }, 300); // Debounce de 300ms para evitar múltiples requests
+
+    return () => clearTimeout(timeoutId);
+  }, [queryParams]); // Solo depender de queryParams, no de fetchData para evitar loops
 
   // Derived values
   const medications = useMemo(() => data?.items || [], [data?.items]);
