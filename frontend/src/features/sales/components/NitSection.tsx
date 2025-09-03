@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -10,7 +10,7 @@ import {
 import { Receipt, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import CreatableSelect from "@/shared/components/CreatableSelect";
 import { CreateNitDialog } from "./CreateNitDialog.tsx";
-import { searchNits, createNit as createNitService } from "@/shared/services/NitService";
+import { searchNits, createNit as createNitService, getAllNits } from "@/shared/services/NitService";
 import type { NIT } from "@/shared/types/Nit";
 
 interface NitSectionProps {
@@ -29,6 +29,20 @@ const NitSection = memo(({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedNit, setSelectedNit] = useState<NIT | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [initialNits, setInitialNits] = useState<NIT[]>([]);
+
+  // Cargar NITs iniciales al montar
+  useEffect(() => {
+    const fetchInitialNits = async () => {
+      try {
+        const nits = await getAllNits();
+        setInitialNits(nits);
+      } catch (error) {
+        console.error("Error cargando NITs iniciales:", error);
+      }
+    };
+    fetchInitialNits();
+  }, []);
 
   // Función de búsqueda para el CreatableSelect
   const searchNitsFunction = async (query: string): Promise<NIT[]> => {
@@ -129,7 +143,7 @@ const NitSection = memo(({
                   <div className="space-y-2">
                     <CreatableSelect<NIT>
                       label="Buscar NIT"
-                      values={[]}
+                      values={initialNits}
                       selectedValue={selectedNit}
                       onChange={handleNitSelect}
                       searchFunction={searchNitsFunction}
