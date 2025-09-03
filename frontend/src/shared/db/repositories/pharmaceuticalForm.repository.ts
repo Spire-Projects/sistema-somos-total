@@ -58,8 +58,8 @@ export class LocalPharmaceuticalFormRepository extends BaseRepository<Pharmaceut
     const pharmaceuticalForm = await db.pharmaceutical_forms.findOne({ 
       selector: { 
         name,
-        isDeleted: { $ne: true }
-      } 
+        _deleted: { $eq: false }
+      } as any
     }).exec();
     return pharmaceuticalForm ? JSON.parse(JSON.stringify(pharmaceuticalForm.toJSON())) as PharmaceuticalFormDoc : null;
   }
@@ -73,7 +73,7 @@ export class LocalPharmaceuticalFormRepository extends BaseRepository<Pharmaceut
       query = db.pharmaceutical_forms.find({
         selector: {
           $and: [
-            { isDeleted: { $ne: true } },
+            { _deleted: { $eq: false } },
             {
               $or: [
                 { name: { $regex: normalizedText, $options: 'i' } },
@@ -82,11 +82,11 @@ export class LocalPharmaceuticalFormRepository extends BaseRepository<Pharmaceut
               ]
             }
           ]
-        }
+        } as any
       });
     } else {
       query = db.pharmaceutical_forms.find({
-        selector: { isDeleted: { $ne: true } }
+        selector: { _deleted: { $eq: false } } as any
       });
     }
 
@@ -143,7 +143,7 @@ export class LocalPharmaceuticalFormRepository extends BaseRepository<Pharmaceut
     const db = await initDatabase();
     const normalizedText = searchText.trim().toLowerCase();
     const allForms = await db.pharmaceutical_forms.find({
-      selector: { isDeleted: { $ne: true } }
+      selector: { _deleted: { $eq: false } } as any
     }).exec();
     
     const filteredForms = allForms.filter((form) => {

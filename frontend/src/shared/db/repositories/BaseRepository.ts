@@ -78,16 +78,9 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
     // Usar timestamp actual en lugar de tiempo futuro
     const now = new Date().toISOString();
     
-    // Usar _deleted para usuarios y isDeleted para otras entidades
-    const deleteData = collection.name === 'users' ? {
+    // Usar _deleted que es el campo estándar de RxDB para soft deletes
+    const deleteData = {
       _deleted: true,
-      deletedAt: now,
-      updatedAt: now,
-      _lastModifiedAt: now,
-      _forceLocalPriority: true,
-      sincronized: false
-    } : {
-      isDeleted: true,
       deletedAt: now,
       updatedAt: now,
       _lastModifiedAt: now,
@@ -120,10 +113,8 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
   protected async findAll(): Promise<T[]> {
     const collection = await this.getCollection();
     
-    // Usar _deleted para usuarios y isDeleted para otras entidades
-    const selector = collection.name === 'users' ? 
-      { _deleted: { $eq: false } } : 
-      { isDeleted: { $ne: true } };
+    // Usar _deleted que es el campo estándar de RxDB para soft deletes
+    const selector = { _deleted: { $eq: false } };
     
     const docs = await collection.find({
       selector: selector as any

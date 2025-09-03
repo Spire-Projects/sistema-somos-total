@@ -58,8 +58,8 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
     const manufacturer = await db.manufacturers.findOne({ 
       selector: { 
         name,
-        isDeleted: { $ne: true }
-      } 
+        _deleted: { $eq: false }
+      } as any
     }).exec();
     return manufacturer ? JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer : null;
   }
@@ -73,7 +73,7 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
       query = db.manufacturers.find({
         selector: {
           $and: [
-            { isDeleted: { $ne: true } },
+            { _deleted: { $eq: false } },
             {
               $or: [
                 { name: { $regex: normalizedText, $options: 'i' } },
@@ -82,11 +82,11 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
               ]
             }
           ]
-        }
+        } as any
       });
     } else {
       query = db.manufacturers.find({
-        selector: { isDeleted: { $ne: true } }
+        selector: { _deleted: { $eq: false } } as any
       });
     }
 
@@ -117,7 +117,7 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
     const db = await initDatabase();
     const normalizedText = searchText.trim().toLowerCase();
     const allManufacturers = await db.manufacturers.find({
-      selector: { isDeleted: { $ne: true } }
+      selector: { _deleted: { $eq: false } } as any
     }).exec();
     
     const filteredManufacturers = allManufacturers.filter((manufacturer) => {
