@@ -1,8 +1,13 @@
 import { memo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { Receipt, Plus, X } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/shared/components/ui/collapsible";
+import { Receipt, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import CreatableSelect from "@/shared/components/CreatableSelect";
 import { CreateNitDialog } from "./CreateNitDialog.tsx";
 import { searchNits, createNit as createNitService } from "@/shared/services/NitService";
@@ -23,6 +28,7 @@ const NitSection = memo(({
 }: NitSectionProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedNit, setSelectedNit] = useState<NIT | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Función de búsqueda para el CreatableSelect
   const searchNitsFunction = async (query: string): Promise<NIT[]> => {
@@ -69,78 +75,92 @@ const NitSection = memo(({
 
   return (
     <>
-      <Card className="!gap-1">
-        <CardHeader className="!pb-0">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Receipt className="h-4 w-4" />
-            <p className="text-sm">
-            NIT (opcional)
-            </p>
-            {hasSelection && (
-              <Badge variant="secondary" className="ml-auto">
-                Seleccionado
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="!space-y-0">
-          {hasSelection ? (
-            // Mostrar NIT seleccionado
-            <div className="space-y-2">
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium text-blue-900">{selectedSocialReasonClient}</p>
-                    <p className="text-sm text-blue-700">NIT: {selectedNitClient}</p>
+      <Card className="!gap-1 !py-2">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full h-auto p-4 justify-between hover:bg-gray-50"
+              disabled={disabled}
+            >
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                <span className="text-sm font-medium">NIT (opcional)</span>
+                {hasSelection && (
+                  <Badge variant="secondary" className="ml-2">
+                    Seleccionado
+                  </Badge>
+                )}
+              </div>
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <CardContent className="!space-y-0 pt-0">
+              {hasSelection ? (
+                // Mostrar NIT seleccionado
+                <div className="space-y-2">
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <p className="font-medium text-blue-900">{selectedSocialReasonClient}</p>
+                        <p className="text-sm text-blue-700">NIT: {selectedNitClient}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearSelection}
+                        disabled={disabled}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearSelection}
-                    disabled={disabled}
-                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
-              </div>
-            </div>
-          ) : (
-            // Selector de NIT
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <CreatableSelect<NIT>
-                  label="Buscar NIT"
-                  values={[]}
-                  selectedValue={selectedNit}
-                  onChange={handleNitSelect}
-                  searchFunction={searchNitsFunction}
-                  onAddValue={handleCreateNitFromSelect}
-                  displayField="socialReason"
-                  valueField="id"
-                  secondaryDisplayField="numberNit"
-                  secondaryLabel="NIT:"
-                  placeholder="Buscar por número de NIT o razón social..."
-                  disabled={disabled}
-                  hideLabel={true}
-                />
-              </div>
-              
-              <div className="flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCreateDialog(true)}
-                  disabled={disabled}
-                  className="text-sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Nuevo NIT
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
+              ) : (
+                // Selector de NIT
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <CreatableSelect<NIT>
+                      label="Buscar NIT"
+                      values={[]}
+                      selectedValue={selectedNit}
+                      onChange={handleNitSelect}
+                      searchFunction={searchNitsFunction}
+                      onAddValue={handleCreateNitFromSelect}
+                      displayField="socialReason"
+                      valueField="id"
+                      secondaryDisplayField="numberNit"
+                      secondaryLabel="NIT:"
+                      placeholder="Buscar por número de NIT o razón social..."
+                      disabled={disabled}
+                      hideLabel={true}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-center w-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCreateDialog(true)}
+                      disabled={disabled}
+                      className="!text-xs w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Nuevo NIT
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Diálogo para crear nuevo NIT */}

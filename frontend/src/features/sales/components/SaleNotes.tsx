@@ -1,8 +1,14 @@
-import { memo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { memo, useState } from "react";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
-import { FileText } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/shared/components/ui/collapsible";
+import { FileText, ChevronDown, ChevronRight } from "lucide-react";
 
 interface SaleNotesProps {
   notes?: string;
@@ -10,48 +16,72 @@ interface SaleNotesProps {
   disabled?: boolean;
 }
 
-const SaleNotes = memo(({ 
-  notes = '', 
-  onNotesChange,
-  disabled = false 
-}: SaleNotesProps) => {
-  
-  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onNotesChange(e.target.value);
-  };
+const SaleNotes = memo(
+  ({ notes = "", onNotesChange, disabled = false }: SaleNotesProps) => {
+    const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <Card className="!gap-0">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          Notas de Venta (opcional)
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <Label htmlFor="sale-notes" className="sr-only">
-            Notas de la venta
-          </Label>
-          <Textarea
-            id="sale-notes"
-            value={notes}
-            onChange={handleNotesChange}
-            placeholder="Agregar observaciones o comentarios sobre la venta..."
-            disabled={disabled}
-            className="min-h-[80px] text-sm"
-            maxLength={500}
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>Observaciones opcionales sobre la venta</span>
-            <span>{notes.length}/500</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-});
+    const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onNotesChange(e.target.value);
+    };
 
-SaleNotes.displayName = 'SaleNotes';
+    return (
+      <Card className="!gap-0 !py-2">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full h-auto p-4 justify-between hover:bg-gray-50"
+              disabled={disabled}
+            >
+              <div className="flex flex-col gap-1 justify-start">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Notas de Venta (opcional)
+                  </span>
+                </div>
+                {notes && notes.trim() && (
+                  <span className="text-xs text-left text-gray-500 ">
+                    ({notes.length} caracteres)
+                  </span>
+                )}
+              </div>
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                <Label htmlFor="sale-notes" className="sr-only">
+                  Notas de la venta
+                </Label>
+                <Textarea
+                  id="sale-notes"
+                  value={notes}
+                  onChange={handleNotesChange}
+                  placeholder="Agregar observaciones o comentarios sobre la venta..."
+                  disabled={disabled}
+                  className="min-h-[80px] text-sm"
+                  maxLength={500}
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Observaciones opcionales sobre la venta</span>
+                  <span>{notes.length}/500</span>
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </Card>
+    );
+  }
+);
+
+SaleNotes.displayName = "SaleNotes";
 
 export default SaleNotes;

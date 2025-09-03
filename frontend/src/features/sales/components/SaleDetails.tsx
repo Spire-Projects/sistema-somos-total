@@ -19,8 +19,7 @@ import type { Sale } from '@/shared/types/Sales';
 import type { AuthUser } from '@/shared/types/User';
 import type { Client } from '@/shared/types/Client';
 import type { Medic } from '@/shared/types/Sales';
-import { findMedicationById, getMedicationViewById } from '@/shared/services';
-import type { Medication } from '@/shared/types/Medication';
+import { getMedicationViewById } from '@/shared/services';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
 
 interface SaleDetailsProps {
@@ -209,7 +208,7 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   return (
     <>
       <div className="bg-gray-50 p-4 border-t">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {/* Información general */}
           <div className="space-y-2">
             <h4 className="font-semibold text-sm text-gray-900">Información General</h4>
@@ -250,6 +249,21 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
             </div>
           </div>
 
+          {/* Información de NIT */}
+          <div className="space-y-2">
+            <h4 className="font-semibold text-sm text-gray-900">Información de NIT</h4>
+            <div className="space-y-1 text-xs">
+              <div>
+                <span className="text-gray-600">NIT:</span>
+                <span className="ml-1">{currentSale.nitClient || 'No especificado'}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Razón Social:</span>
+                <span className="ml-1">{currentSale.socialReasonClient || 'No especificada'}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Totales */}
           <div className="space-y-2">
             <h4 className="font-semibold text-sm text-gray-900">Totales</h4>
@@ -275,6 +289,17 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
             </div>
           </div>
         </div>
+
+        {/* Notas de venta */}
+        {currentSale.saleNotes && currentSale.saleNotes.trim() && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-sm text-gray-900 mb-2 flex items-center gap-2">
+              <span>📝</span>
+              Notas de la Venta
+            </h4>
+            <p className="text-xs text-gray-700 whitespace-pre-wrap">{currentSale.saleNotes}</p>
+          </div>
+        )}
 
         {/* Botón de facturación */}
         <div className="mb-4 flex justify-end">
