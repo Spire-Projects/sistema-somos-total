@@ -6,23 +6,38 @@ import { generateId } from '../utils/id.utils';
 const repository = getSaleRepository();
 
 /**
+ * Limpiar datos de venta para evitar valores undefined que causan problemas en Firestore
+ */
+export const cleanSaleData = (data: any) => {
+  return {
+    ...data,
+    client: data.client || "",
+    idMedic: data.idMedic || "",
+    totalWithoutDiscount: data.totalWithoutDiscount || 0,
+    totalDiscount: data.totalDiscount || 0,
+  };
+};
+
+/**
  * Crear una venta
  */
 export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<Sale> => {
+  const cleanedData = cleanSaleData(data);
+  
   const newSale: Sale = {
     id: generateId(),
-    items: data.items,
-    total: data.total,
-    totalWithoutDiscount: data.totalWithoutDiscount,
-    totalDiscount: data.totalDiscount,
-    client: data.client,
-    paymentMethod: data.paymentMethod,
-    createdBy: data.createdBy,
+    items: cleanedData.items,
+    total: cleanedData.total,
+    totalWithoutDiscount: cleanedData.totalWithoutDiscount,
+    totalDiscount: cleanedData.totalDiscount,
+    client: cleanedData.client,
+    paymentMethod: cleanedData.paymentMethod,
+    createdBy: cleanedData.createdBy,
     createdAt: new Date().toISOString(),
-    isDeleted: data.isDeleted || false,
-    sincronized: data.sincronized || false,
-    idMedic: data.idMedic,
-    factured: data.factured || false
+    isDeleted: cleanedData.isDeleted || false,
+    sincronized: cleanedData.sincronized || false,
+    idMedic: cleanedData.idMedic,
+    factured: cleanedData.factured || false
   };
 
   return await repository.create(newSale);
@@ -137,4 +152,12 @@ export const findSalesByDateRangeAndFacturedStatusPaginated = async (
   searchQuery?: string
 ): Promise<ItemsResponse<Sale>> => {
   return await repository.findByDateRangeAndFacturedStatusPaginated(page, size, dateFrom, dateTo, factured, searchQuery);
+};
+
+/**
+ * Actualizar estado de facturación de una venta
+ */
+export const updateSaleFacturedStatus = async (id: string, factured: boolean): Promise<Sale> => {
+  const updateData = cleanSaleData({ factured });
+  return await repository.update(id, updateData);
 };

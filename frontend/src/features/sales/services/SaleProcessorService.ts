@@ -1,5 +1,5 @@
 import { getMedicationBatchRepository } from '@/shared/db/repositories/medicationBatch.repository';
-import { createSale } from '@/shared/services/SalesService';
+import { createSale, cleanSaleData } from '@/shared/services/SalesService';
 import type { Sale, SaleItem as SaleSaleItem } from '@/shared/types/Sales';
 import type { SaleState } from '../types/sale.types';
 
@@ -147,19 +147,22 @@ export class SaleProcessorService {
       total: item.total
     }));
 
-    return {
+    const rawData = {
       items: saleItems,
       total: saleState.total,
       totalWithoutDiscount: saleState.amountWithoutDiscount,
       totalDiscount: saleState.clientDiscount ? this.calculateClientDiscountAmount(saleState) : 0,
-      client: saleState.clientName || undefined,
+      client: saleState.clientName,
       paymentMethod: saleState.paymentMethod,
       createdBy: userId,
       isDeleted: false,
       sincronized: false,
-      idMedic: saleState.medicName || undefined,
+      idMedic: saleState.medicName,
       factured: false
     };
+
+    // Limpiar datos para evitar problemas con undefined en Firestore
+    return cleanSaleData(rawData) as Omit<Sale, 'id' | 'createdAt'>;
   }
 
   /**

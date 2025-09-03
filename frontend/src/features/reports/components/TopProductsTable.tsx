@@ -6,6 +6,9 @@ import {
 } from "@/shared/components/ui/card";
 import { formatCurrency } from "@/shared/services/BatchService";
 import type { TopProductItem } from "./types/Types";
+import { getMedicationViewById } from "@/shared/services";
+import { useEffect, useState } from "react";
+import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
 
 interface TopProductsTableProps {
   topProducts: TopProductItem[];
@@ -13,6 +16,20 @@ interface TopProductsTableProps {
 
 export const TopProductsTable = ({ topProducts }: TopProductsTableProps) => {
   if (topProducts.length === 0) return null;
+  const [productDataMap, setProductDataMap] = useState<Record<string, MedicationCatalogView>>({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const ids = topProducts.map((p) => p.medicationId);
+      const views = await Promise.all(ids.map((id) => getMedicationViewById(id)));
+      const data: Record<string, MedicationCatalogView> = {};
+      ids.forEach((id, idx) => {
+        if (views[idx]) data[id] = views[idx];
+      });
+      setProductDataMap(data);
+    };
+    fetchData();
+  }, [topProducts]);
 
   return (
     <Card className="mt-4">
@@ -39,7 +56,7 @@ export const TopProductsTable = ({ topProducts }: TopProductsTableProps) => {
                   className="border-b hover:bg-gray-50"
                 >
                   <td className="py-2 px-2">{index + 1}</td>
-                  <td className="py-2 px-2">{product.name}</td>
+                  <td className="py-2 px-2">{productDataMap[product.medicationId]?.comercialName}</td>
                   <td className="py-2 px-2 text-right">{product.quantity}</td>
                   <td className="py-2 px-2 text-right">
                     {formatCurrency(product.revenue)}

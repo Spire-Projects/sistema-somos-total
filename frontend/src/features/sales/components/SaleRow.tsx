@@ -31,22 +31,33 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [createdByUser, setCreatedByUser] = useState<AuthUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
+  const [currentSale, setCurrentSale] = useState<Sale>(sale);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
   }, []);
 
+  // Actualizar el estado local cuando cambie la prop sale
+  useEffect(() => {
+    setCurrentSale(sale);
+  }, [sale]);
+
+  // Manejar actualización de la venta
+  const handleSaleUpdate = useCallback((updatedSale: Sale) => {
+    setCurrentSale(updatedSale);
+  }, []);
+
   // Cargar información del usuario que creó la venta
   useEffect(() => {
     const fetchCreatedByUser = async () => {
-      if (!sale.createdBy) {
+      if (!currentSale.createdBy) {
         setLoadingUser(false);
         return;
       }
 
       try {
         setLoadingUser(true);
-        const response = await UserService.getUserById(sale.createdBy);
+        const response = await UserService.getUserById(currentSale.createdBy);
         if (response.success && response.user) {
           setCreatedByUser(response.user);
         }
@@ -58,13 +69,13 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
     };
 
     fetchCreatedByUser();
-  }, [sale.createdBy]);
+  }, [currentSale.createdBy]);
 
   // Función para mostrar el nombre del usuario
   const getCreatedByDisplay = () => {
     if (loadingUser) return '...';
     if (createdByUser) return createdByUser.fullName;
-    return sale.createdBy || 'Desconocido';
+    return currentSale.createdBy || 'Desconocido';
   };
 
   return (
@@ -89,54 +100,54 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
         <td className="p-3">
           <div className="space-y-1">
             <div className="font-medium text-sm text-gray-900">
-              #{sale.id.slice(-8)}
+              #{currentSale.id.slice(-8)}
             </div>
             <div className="text-xs text-gray-500">
-              {formatDate(sale.createdAt)}
+              {formatDate(currentSale.createdAt)}
             </div>
           </div>
         </td>
 
         <td className="p-3">
           <div className="text-sm text-gray-900">
-            {sale.client || 'Cliente general'}
+            {currentSale.client || 'Cliente general'}
           </div>
         </td>
 
         <td className="p-3">
           <div className="text-sm text-center">
-            {sale.items.length}
+            {currentSale.items.length}
           </div>
         </td>
 
         <td className="p-3">
           <div className="flex items-center gap-2 text-sm">
-            <PaymentMethodIcon method={sale.paymentMethod} />
-            <span className="capitalize">{sale.paymentMethod}</span>
+            <PaymentMethodIcon method={currentSale.paymentMethod} />
+            <span className="capitalize">{currentSale.paymentMethod}</span>
           </div>
         </td>
 
         <td className="p-3">
           <div className="text-sm font-semibold text-green-600">
-            {formatCurrency(sale.total)}
+            {formatCurrency(currentSale.total)}
           </div>
         </td>
 
         <td className="p-3">
           <div className="flex items-center gap-2">
             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-              sale.factured 
+              currentSale.factured 
                 ? 'bg-green-100 text-green-800' 
                 : 'bg-orange-100 text-orange-800'
             }`}>
-              {sale.factured ? 'Facturado' : 'Pendiente'}
+              {currentSale.factured ? 'Facturado' : 'Pendiente'}
             </span>
           </div>
         </td>
 
         <td className="p-3">
           <div className="text-xs text-gray-500">
-            {createdByUser?.fullName || 'Desconocido'}
+            {getCreatedByDisplay()}
           </div>
         </td>
       </tr>
@@ -145,7 +156,7 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
       {isExpanded && (
         <tr>
           <td colSpan={8} className="p-0">
-            <SaleDetails sale={sale} />
+            <SaleDetails sale={currentSale} onSaleUpdate={handleSaleUpdate} />
           </td>
         </tr>
       )}
