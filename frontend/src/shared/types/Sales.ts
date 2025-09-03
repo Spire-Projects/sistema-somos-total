@@ -29,7 +29,7 @@ export interface  Sale {
   totalWithoutDiscount?: number; // Total amount without discount, optional
   totalDiscount?: number; // Total discount applied to the sale, optional
   client?: string;  // ID of the client, can be null or empty string if no client
-  paymentMethod: 'efectivo' | 'qr' | 'transferencia';
+  paymentMethod: 'efectivo' | 'qr' ;
   createdAt: string; // ISO date string
   createdBy: string; // ID of the user who created the sale
   isDeleted?: boolean; // Indicates if the sale is deleted

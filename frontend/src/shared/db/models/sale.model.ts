@@ -2,7 +2,7 @@ import type { RxJsonSchema, RxCollection } from "rxdb";
 import type { Sale } from "../../types/Sales";
 
 export const saleSchema: RxJsonSchema<Sale> = {
-  version: 1,
+  version: 2,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -29,7 +29,7 @@ export const saleSchema: RxJsonSchema<Sale> = {
     client: { type: "string", maxLength: 100 },
     paymentMethod: {
       type: "string",
-      enum: ["efectivo", "qr", "transferencia"],
+      enum: ["efectivo", "qr"],
       maxLength: 30,
     },
     createdAt: { type: "string", maxLength: 50 },
@@ -60,6 +60,17 @@ export const saleMigrationStrategies = {
   1: (oldDoc: any) => {
     let paymentMethod = oldDoc.paymentMethod;
     if (paymentMethod === 'tarjeta') {
+      paymentMethod = 'qr';
+    }
+    return {
+      ...oldDoc,
+      paymentMethod,
+    };
+  },
+  // Migration from version 1 to 2: Convert existing 'transferencia' values to 'qr' and remove 'transferencia' from enum
+  2: (oldDoc: any) => {
+    let paymentMethod = oldDoc.paymentMethod;
+    if (paymentMethod === 'transferencia') {
       paymentMethod = 'qr';
     }
     return {

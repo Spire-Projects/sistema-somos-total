@@ -18,11 +18,13 @@ export const DateRangeFilter = ({
 }: DateRangeFilterProps) => {
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent className="p-x-4 !p-y-0">
         <div className="flex flex-col sm:flex-row items-end gap-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Calendar className="h-4 w-4" />
-            Rango de fechas para el análisis:
+          <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-gray-700">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+            {/* shorter label on very small screens, full label from sm and up */}
+            <span className="inline sm:hidden">Rango de fechas</span>
+            <span className="hidden sm:inline">Rango de fechas para el análisis:</span>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 flex-1">

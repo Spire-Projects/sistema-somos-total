@@ -602,8 +602,7 @@ export class ExcelExporter {
       paymentMethod: {
         'cash': 'Efectivo',
         'qr': 'QR',
-        'transfer': 'Transferencia',
-        'check': 'Cheque'
+        
       },
       
       // Roles de usuario

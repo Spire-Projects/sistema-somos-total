@@ -18,8 +18,6 @@ const PaymentMethodIcon = memo(({ method }: { method: string }) => {
       return <Banknote className="h-3 w-3" />;
     case 'qr':
       return <CreditCard className="h-3 w-3" />;
-    case 'transferencia':
-      return <Smartphone className="h-3 w-3" />;
     default:
       return <Receipt className="h-3 w-3" />;
   }

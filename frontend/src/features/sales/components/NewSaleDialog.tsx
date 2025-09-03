@@ -151,7 +151,7 @@ const NewSaleDialog = memo(({ open, onOpenChange, onSaleSuccess }: NewSaleDialog
   };
 
   // Manejar cambio de método de pago
-  const handlePaymentMethodChange = (method: 'efectivo' | 'qr' | 'transferencia') => {
+  const handlePaymentMethodChange = (method: 'efectivo' | 'qr') => {
     setPaymentMethod(method);
   };
 

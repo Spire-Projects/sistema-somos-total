@@ -12,7 +12,7 @@ interface SaleClientAndSummaryProps {
   onClientSelect: (client: Client | null) => void;
   onMedicSelect: (medic: Medic | null) => void;
   onClientDiscountChange: (type: 'percentage' | 'fixed', value: number) => void;
-  onPaymentMethodChange: (method: 'efectivo' | 'qr' | 'transferencia') => void;
+  onPaymentMethodChange: (method: 'efectivo' | 'qr' ) => void;
   onConfirmSale: () => void;
   onCancel: () => void;
   isProcessing?: boolean;
@@ -40,7 +40,7 @@ const SaleClientAndSummary = memo(({
   }, [onMedicSelect]);
 
   // Manejar cambio de método de pago
-  const handlePaymentMethodChange = useCallback((method: 'efectivo' | 'qr' | 'transferencia') => {
+  const handlePaymentMethodChange = useCallback((method: 'efectivo' | 'qr' ) => {
     onPaymentMethodChange(method);
   }, [onPaymentMethodChange]);
 

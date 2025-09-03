@@ -88,22 +88,18 @@ export const ReportsPage = () => {
       <div className="p-4 md:p-6 space-y-6">
         {/* Encabezado */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+          <div className="w-full md:w-auto">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
               Reportes y Análisis
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Estadísticas de ventas, productos populares y rendimiento del
-              negocio
+            </p>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">
+              <span className="inline sm:hidden">Estadísticas y rendimiento</span>
+              <span className="hidden sm:inline">
+                Estadísticas de ventas, productos populares y rendimiento del negocio
+              </span>
             </p>
           </div>
-          <button
-            onClick={() => setShowDebugPanel(!showDebugPanel)}
-            className="px-3 py-1 text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded border border-yellow-300 transition-colors"
-            title="Mostrar/Ocultar panel de debugging"
-          >
-            🔍 Debug {showDebugPanel ? 'OFF' : 'ON'}
-          </button>
+          
         </div>
 
         {/* Filtros de fecha */}

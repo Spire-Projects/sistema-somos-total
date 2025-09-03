@@ -9,6 +9,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Line } from "react-chartjs-2";
 import type { DailySales } from "./types/Types";
 import { useEffect } from "react";
+import { formatDateSafe } from "@/shared/utils/date.utils";
 
 interface DailySalesChartProps {
   isLoading: boolean;
@@ -21,16 +22,12 @@ export const DailySalesChart = ({
   hasData,
   dailySales,
 }: DailySalesChartProps) => {
-
   useEffect(() => {
     console.log("Daily Sales:", dailySales);
   }, [dailySales]);
 
   const chartData = {
-    labels: dailySales.map((d) => {
-      const date = new Date(d.date);
-      return `${date.getDate()}/${date.getMonth() + 1}`;
-    }),
+    labels: dailySales.map((d) => formatDateSafe(d.date)),
     datasets: [
       {
         label: "Total de ventas",

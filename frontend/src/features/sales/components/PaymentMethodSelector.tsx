@@ -4,8 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { QrCode, DollarSign, ArrowLeftRight } from 'lucide-react';
 
 interface PaymentMethodSelectorProps {
-  selectedMethod: 'efectivo' | 'qr' | 'transferencia';
-  onPaymentMethodChange: (method: 'efectivo' | 'qr' | 'transferencia') => void;
+  selectedMethod: 'efectivo' | 'qr' ;
+  onPaymentMethodChange: (method: 'efectivo' | 'qr' ) => void;
   disabled?: boolean;
 }
 
@@ -24,11 +24,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       id: 'qr' as const, 
       label: 'QR', 
       icon: QrCode
-    },
-    { 
-      id: 'transferencia' as const, 
-      label: 'Transferencia', 
-      icon: ArrowLeftRight
     }
   ];
 

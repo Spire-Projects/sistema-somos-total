@@ -5,6 +5,7 @@ import {
   CardContent,
 } from "@/shared/components/ui/card";
 import { formatCurrency } from "@/shared/services/BatchService";
+import { formatDateSafe } from "@/shared/utils/date.utils";
 import type { DailySales } from "./types/Types";
 
 interface DailySalesTableProps {
@@ -34,7 +35,7 @@ export const DailySalesTable = ({ dailySales }: DailySalesTableProps) => {
               {dailySales.map((day) => (
                 <tr key={day.date} className="border-b hover:bg-gray-50">
                   <td className="py-2 px-2">
-                    {new Date(day.date).toLocaleDateString("es-ES")}
+                    {formatDateSafe(day.date)}
                   </td>
                   <td className="py-2 px-2 text-right">
                     {formatCurrency(day.total)}

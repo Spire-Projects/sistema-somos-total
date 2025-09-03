@@ -26,7 +26,6 @@ export function usePaymentMethods(sales: Sale[]) {
     const methodNames: Record<string, string> = {
       efectivo: "Efectivo",
       qr: "QR",
-      transferencia: "Transferencia",
     };
 
     return Array.from(methodMap.entries())

@@ -35,7 +35,7 @@ export interface SaleState {
   clientName?: string;
   medicId?: string;
   medicName?: string;
-  paymentMethod: 'efectivo' | 'qr' | 'transferencia';
+  paymentMethod: 'efectivo' | 'qr' ;
 }
 
 export interface NewSaleFormData {

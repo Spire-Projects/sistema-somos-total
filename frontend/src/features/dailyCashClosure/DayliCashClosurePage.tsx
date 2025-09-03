@@ -27,6 +27,7 @@ import {
 } from "@/shared/components/ui/pagination";
 import { bolivianDenominations } from "@/shared/utils/dailyCash.utils";
 import { Label } from "@/shared/components/ui/label";
+import { useAppSelector } from "@/shared/store/hooks";
 
 export const DailyCashClosuresPage = () => {
   const [page, setPage] = useState(1);
@@ -39,6 +40,7 @@ export const DailyCashClosuresPage = () => {
   const [userId, setUserId] = useState("");
   const [date, setDate] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user } = useAppSelector((state) => state.auth);
 
   const totalCash = breakdown.reduce(
     (sum, item) => sum + item.quantity * item.denomination.value,
