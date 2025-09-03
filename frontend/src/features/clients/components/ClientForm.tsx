@@ -7,10 +7,8 @@ import { Label } from "@/shared/components/ui/label";
 interface ClientFormData {
   name: string;
   email?: string;
-  nit?: string;
   phone?: string;
   address?: string;
-  loyaltyPoints?: number;
 }
 
 interface ClientFormProps {
@@ -48,47 +46,6 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="nit">NIT</Label>
-          <Input
-            id="nit"
-            type="text"
-            placeholder="12345678"
-            autoComplete="off"
-            onKeyPress={(e) => {
-              if (!/^\d$/.test(e.key)) {
-                e.preventDefault();
-              }
-            }}
-            {...register("nit", {
-              validate: {
-                format: (value) => {
-                  if (!value) return true;
-
-                  if (!/^\d+$/.test(value)) {
-                    return "El NIT debe contener solo números";
-                  }
-
-                  if (value.length > 20) {
-                    return "El NIT no puede exceder 20 caracteres";
-                  }
-
-                  if (Number(value) < 0) {
-                    return "El NIT no puede ser negativo";
-                  }
-
-                  return true;
-                },
-              },
-              setValueAs: (value) => (value ? value.trim() : undefined),
-            })}
-            className={errors.nit ? "border-red-500" : ""}
-          />
-          {errors.nit && (
-            <p className="text-sm text-red-500">{errors.nit.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
@@ -102,10 +59,7 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
             <p className="text-sm text-red-500">{errors.email.message}</p>
           )}
         </div>
-      </div>
 
-      {/* Información de contacto */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="phone">Teléfono</Label>
           <Input
@@ -118,35 +72,6 @@ export const ClientForm = memo(({ form, mode = "create" }: ClientFormProps) => {
           />
           {errors.phone && (
             <p className="text-sm text-red-500">{errors.phone.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="loyaltyPoints">
-            {isEditMode
-              ? "Puntos de fidelidad actuales"
-              : "Puntos de fidelidad iniciales"}
-          </Label>
-          <Input
-            id="loyaltyPoints"
-            type="number"
-            min={0}
-            placeholder="0"
-            {...register("loyaltyPoints", {
-              valueAsNumber: true,
-              setValueAs: (value) => (value === "" ? undefined : Number(value)),
-            })}
-            className={errors.loyaltyPoints ? "border-red-500" : ""}
-          />
-          {errors.loyaltyPoints && (
-            <p className="text-sm text-red-500">
-              {errors.loyaltyPoints.message}
-            </p>
-          )}
-          {!isEditMode && (
-            <p className="text-xs text-gray-500">
-              Los puntos se pueden ajustar después de crear el cliente
-            </p>
           )}
         </div>
       </div>

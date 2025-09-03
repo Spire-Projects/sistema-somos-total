@@ -2,7 +2,7 @@ import type { RxJsonSchema, RxCollection } from "rxdb";
 import type { Sale } from "../../types/Sales";
 
 export const saleSchema: RxJsonSchema<Sale> = {
-  version: 2,
+  version: 3,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -38,6 +38,9 @@ export const saleSchema: RxJsonSchema<Sale> = {
     sincronized: { type: "boolean" },
     idMedic: { type: "string", maxLength: 100 },
     factured: { type: "boolean" },
+    nitClient: { type: "string", maxLength: 100 },
+    socialReasonClient: { type: "string", maxLength: 200 },
+    saleNotes: { type: "string", maxLength: 1000 }
   },
   required: ["id", "items", "total", "paymentMethod", "createdAt", "createdBy", "factured"],
   indexes: [
@@ -76,6 +79,15 @@ export const saleMigrationStrategies = {
     return {
       ...oldDoc,
       paymentMethod,
+    };
+  },
+
+  3: (oldDoc: any) => {
+    return {
+      ...oldDoc,
+      nitClient: oldDoc.nitClient || "",
+      socialReasonClient: oldDoc.socialReasonClient || "",
+      saleNotes: oldDoc.saleNotes || ""
     };
   }
 };

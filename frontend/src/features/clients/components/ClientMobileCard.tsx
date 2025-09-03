@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Mail, Phone, MapPin, CreditCard, Edit, Trash2 } from "lucide-react";
+import { Mail, Phone, MapPin, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import type { Client } from "@/shared/types/Client";
 
@@ -44,11 +44,6 @@ export const ClientMobileCard = memo(({ client, onEdit, onDelete }: ClientMobile
         <div className="flex items-center gap-2">
           <Mail className="h-4 w-4 text-gray-400" />
           <span className="truncate">{client.email || "Sin email"}</span>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <CreditCard className="h-4 w-4 text-gray-400" />
-          <span>{client.nit || "Sin NIT"}</span>
         </div>
         
         <div className="flex items-center gap-2">

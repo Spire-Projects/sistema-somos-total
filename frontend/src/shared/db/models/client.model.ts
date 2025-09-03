@@ -5,7 +5,7 @@ import type { Client } from '../../types/Client';
 export const clientSchema: RxJsonSchema<Client> = {
   title: 'client schema',
   description: 'describes a client',
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -22,10 +22,7 @@ export const clientSchema: RxJsonSchema<Client> = {
       format: 'email',
       maxLength: 100
     },
-    nit: {
-      type: 'string',
-      maxLength: 50
-    },
+   
     phone: {
       type: 'string',
       maxLength: 50
@@ -46,10 +43,7 @@ export const clientSchema: RxJsonSchema<Client> = {
         type: 'string'
       }
     },
-    loyaltyPoints: {
-      type: 'number',
-      minimum: 0
-    },
+   
     lastPurchaseDate: {
       type: 'string',
       format: 'date-time',
@@ -78,7 +72,6 @@ export const clientSchema: RxJsonSchema<Client> = {
   indexes: [
     'name',
     'email', 
-    'nit', 
     'createdAt',
     'updatedAt',
     'isDeleted',
@@ -86,19 +79,24 @@ export const clientSchema: RxJsonSchema<Client> = {
     ['isDeleted', 'createdAt'], // Índice compuesto para paginación de activos
     ['isDeleted', 'name'],      // Índice compuesto para búsqueda de activos por nombre
     ['isDeleted', 'email'],     // Índice compuesto para búsqueda de activos por email
-    ['isDeleted', 'nit'],       // Índice compuesto para búsqueda de activos por nit
     ['isDeleted', 'updatedAt']  // Índice compuesto para clientes eliminados ordenados
   ]
+};
+
+export const clientMigrationStrategies = {
+ 
+  1: (oldDoc: any) => {
+    const { nit, loyaltyPoints, ...rest } = oldDoc;
+    return rest;
+  },
 };
 
 // Datos para crear un cliente
 export interface CreateClientData {
   name: string;
   email?: string;
-  nit?: string;
   phone?: string;
   address?: string;
-  loyaltyPoints?: number;
   createdBy?: string;
 }
 
@@ -106,10 +104,8 @@ export interface CreateClientData {
 export interface UpdateClientData {
   name?: string;
   email?: string;
-  nit?: string;
   phone?: string;
   address?: string;
-  loyaltyPoints?: number;
   updatedBy?: string;
 }
 
@@ -118,11 +114,5 @@ export interface ClientStatistics {
   totalClients: number;
   activeClients: number;
   deletedClients: number;
-  averageLoyaltyPoints: number;
-  topClientsByPoints: Array<{
-    id: string;
-    name: string;
-    loyaltyPoints: number;
-  }>;
   recentClients: number; // últimos 30 días
 }

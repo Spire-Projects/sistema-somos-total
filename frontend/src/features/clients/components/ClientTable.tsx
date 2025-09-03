@@ -8,7 +8,7 @@ import {
   TableRow 
 } from '@/shared/components/ui/table';
 import { Button } from '@/shared/components/ui/button';
-import { Mail, Phone, MapPin, CreditCard, Edit, Trash2 } from "lucide-react";
+import { Mail, Phone, MapPin, Edit, Trash2 } from "lucide-react";
 import type { Client } from "@/shared/types/Client";
 
 interface ClientTableProps {
@@ -30,7 +30,6 @@ export const ClientTable = memo<ClientTableProps>(({ clients, onEdit, onDelete }
             <TableRow>
               <TableHead className="w-[200px]">Cliente</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
-              <TableHead className="hidden lg:table-cell">NIT</TableHead>
               <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
               <TableHead>Dirección</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -54,14 +53,6 @@ export const ClientTable = memo<ClientTableProps>(({ clients, onEdit, onDelete }
                     <Mail className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-600">
                       {client.email || "Sin email"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">
-                      {client.nit || "Sin NIT"}
                     </span>
                   </div>
                 </TableCell>

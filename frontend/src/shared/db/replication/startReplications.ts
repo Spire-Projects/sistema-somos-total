@@ -20,6 +20,7 @@ export const startAllReplications = (collections: DatabaseCollections) => {
   replicateCollection("medics", collections.medics);
 
   replicateCollection("daily_cash_closures", collections.daily_cash_closures);
+  replicateCollection("nits", collections.nits);
 
   console.log("✅ Todas las replicaciones iniciadas");
 };

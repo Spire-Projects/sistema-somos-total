@@ -20,10 +20,8 @@ import { ClientForm } from "./ClientForm";
 const clientSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().optional().or(z.literal("")),
-  nit: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
-  loyaltyPoints: z.number().min(0, "Los puntos no pueden ser negativos").optional(),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -51,10 +49,8 @@ export const AddClientDialog = ({
     defaultValues: {
       name: "",
       email: "",
-      nit: "",
       phone: "",
       address: "",
-      loyaltyPoints: 0,
     },
   });
 
@@ -64,19 +60,15 @@ export const AddClientDialog = ({
       form.reset({
         name: client.name,
         email: client.email,
-        nit: client.nit,
         phone: client.phone || "",
         address: client.address || "",
-        loyaltyPoints: client.loyaltyPoints || 0,
       });
     } else if (mode === "create") {
       form.reset({
         name: "",
         email: "",
-        nit: "",
         phone: "",
         address: "",
-        loyaltyPoints: 0,
       });
     }
   }, [isEditMode, client, mode, form]);
@@ -89,10 +81,8 @@ export const AddClientDialog = ({
         const updateData: UpdateClientData = {
           name: data.name,
           email: data.email?.trim() || "",
-          nit: data.nit?.trim() || "",
           phone: data.phone?.trim() || "",
           address: data.address?.trim() || "",
-          loyaltyPoints: data.loyaltyPoints || 0,
         };
 
         await updateClient(client.id, updateData);
@@ -102,10 +92,8 @@ export const AddClientDialog = ({
         const clientData: CreateClientData = {
           name: data.name,
           email: data.email?.trim() || "",
-          nit: data.nit?.trim() || "",
           phone: data.phone?.trim() || "",
           address: data.address?.trim() || "",
-          loyaltyPoints: data.loyaltyPoints || 0,
         };
 
         await createClient(clientData);

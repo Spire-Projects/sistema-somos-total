@@ -6,7 +6,7 @@ import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { userSchema } from "./models/user.model";
 import type { UserDocument } from "./models/user.model";
-import { clientSchema } from "./models/client.model";
+import { clientMigrationStrategies, clientSchema } from "./models/client.model";
 import type { Client } from "../types/Client";
 import { activeIngredientSchema } from "./models/activeIngredient.model";
 import { medicationCategorySchema } from "./models/medicationCategory.model";
@@ -31,6 +31,8 @@ import { medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
 import { saleMigrationStrategies, saleSchema } from "./models/sale.model";
 import { createLocalPriorityConflictHandler } from "./replication/conflictHandler";
+import { nitMigrationStrategies, nitSchema } from "./models/nit.model";
+import type { NIT } from "../types/Nit";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -69,6 +71,7 @@ export interface DatabaseCollections {
   daily_cash_closures: RxCollection<DailyCashClosure>;
   sales: RxCollection<Sale>;
   medics: RxCollection<Medic>;
+  nits: RxCollection<NIT>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -111,6 +114,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         clients: {
           schema: clientSchema,
+          migrationStrategies: clientMigrationStrategies,
           conflictHandler: createLocalPriorityConflictHandler<Client>()
         },
         active_ingredients: {
@@ -156,6 +160,11 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
           schema: medicSchema,
           conflictHandler: createLocalPriorityConflictHandler<Medic>()
         },
+        nits: {
+          schema: nitSchema,
+          migrationStrategies: nitMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler<NIT>()
+        }
       });
 
       dbInstance = db;

@@ -51,9 +51,14 @@ const defaultValues: Partial<MedicationFormData> = {
   warnings: "",
 };
 
+// Mover patrones regex fuera del componente para evitar recreaciones
+const CONCENTRATION_PATTERN = /^[\d.,]+\s*(mg|g|ml|l|UI|mcg|µg|%|mEq|mmol)\s*$/i;
+const BARCODE_PATTERN = /^[0-9]+$/;
+
 const AddMedicationDialog = memo(
   ({ onMedicationAdded, medicationId, edit }: AddMedicationDialogProps) => {
     const [open, setOpen] = useState(false);
+    const [showValidationErrors, setShowValidationErrors] = useState(false);
 
     const {
       register,
@@ -64,36 +69,55 @@ const AddMedicationDialog = memo(
       formState: { errors, isSubmitting, isDirty },
     } = useForm<MedicationFormData>({
       defaultValues,
-      mode: "onChange",
+      mode: "onSubmit", // Cambiar a onSubmit para validación menos intrusiva
+      reValidateMode: "onBlur", // Solo re-validar en onBlur después del primer submit
     });
 
-    const watchedValues = watch();
+    // Watch campos específicos de forma más eficiente
+    const comercialName = watch("comercialName");
+    const tradeName = watch("tradeName");
+    const categoryId = watch("categoryId");
+    const genericName = watch("genericName");
+    const manufacturerId = watch("manufacturerId");
+    const pharmaceuticalFormId = watch("pharmaceuticalFormId");
+    const presentation = watch("presentation");
+    const concentration = watch("concentration");
+    const activeIngredientIds = watch("activeIngredientIds");
+    const barcode = watch("barcode");
 
     useEffect(() => {
       const getData = async () => {
-        if (medicationId) {
-          const medicationData = await findMedicationById(medicationId);
-          console.log(medicationData);
-          if (!medicationData) return;
+        // Solo cargar datos cuando el diálogo esté abierto y hay medicationId
+        if (medicationId && open) {
+          try {
+            const medicationData = await findMedicationById(medicationId);
+            if (!medicationData) return;
 
-          Object.keys(medicationData).forEach((key) => {
-            if (key in defaultValues) {
-              console.log(key);
-              console.log(
-                key as keyof MedicationFormData,
-                medicationData[key as keyof CreateMedicationData]
-              );
-              setValue(
-                key as keyof MedicationFormData,
-                medicationData[key as keyof CreateMedicationData]
-              );
+            // Usar batch update más eficiente
+            Object.entries(medicationData).forEach(([key, value]) => {
+              if (key in defaultValues) {
+                setValue(
+                  key as keyof MedicationFormData,
+                  value,
+                  { shouldDirty: false, shouldValidate: false } // Evitar validación excesiva
+                );
+              }
+            });
+            
+            // Para el modo editar, activar validación después de cargar los datos
+            // para que el usuario vea inmediatamente si hay algún problema
+            if (edit) {
+              setShowValidationErrors(true);
             }
-          });
+          } catch (error) {
+            console.error("Error loading medication data:", error);
+            toast.error("Error al cargar los datos del medicamento");
+          }
         }
       };
 
       getData();
-    }, [medicationId, setValue, open]);
+    }, [medicationId, setValue, open, edit]); // Incluir 'edit' como dependencia
 
     // Custom validation rules
     const validationRules = useMemo(
@@ -120,13 +144,13 @@ const AddMedicationDialog = memo(
         concentration: {
           required: "La concentración es requerida",
           pattern: {
-            value: /^[\d.,]+\s*(mg|g|ml|l|UI|mcg|µg|%|mEq|mmol)\s*$/i,
+            value: CONCENTRATION_PATTERN,
             message: "Formato inválido. Ej: 500mg, 10ml, 25%",
           },
         },
         barcode: {
           pattern: {
-            value: /^[0-9]$/,
+            value: BARCODE_PATTERN,
             message: "Código de barras debe tener sólo números",
           },
         },
@@ -137,6 +161,9 @@ const AddMedicationDialog = memo(
     const onSubmit = useCallback(
       async (data: MedicationFormData) => {
         try {
+          // Activar visualización de errores en el primer intento de submit
+          setShowValidationErrors(true);
+          
           // Validation: At least one active ingredient is required
           if (
             !data.activeIngredientIds ||
@@ -163,6 +190,7 @@ const AddMedicationDialog = memo(
           // Reset form y cerrar dialog
           reset();
           setOpen(false);
+          setShowValidationErrors(false); // Reset validation errors state
 
           // Notificar al componente padre
           onMedicationAdded?.();
@@ -175,7 +203,7 @@ const AddMedicationDialog = memo(
           );
         }
       },
-      [reset, onMedicationAdded]
+      [reset, onMedicationAdded, medicationId] // Agregar medicationId como dependencia
     );
 
     const handleOpenChange = useCallback(
@@ -189,6 +217,10 @@ const AddMedicationDialog = memo(
 
         if (!newOpen) {
           reset();
+          setShowValidationErrors(false); // Reset validation errors when closing
+        } else {
+          // Reset validation errors when opening
+          setShowValidationErrors(false);
         }
 
         setOpen(newOpen);
@@ -198,25 +230,38 @@ const AddMedicationDialog = memo(
 
     const handleFieldChange = useCallback(
       (field: keyof MedicationFormData, value: any) => {
-        setValue(field, value, { shouldDirty: true, shouldValidate: true });
+        setValue(field, value, { 
+          shouldDirty: true, 
+          shouldValidate: false // Reducir validación automática para mejor rendimiento
+        });
+        
+        // Activar validación después de la primera interacción con cualquier campo
+        if (!showValidationErrors) {
+          setShowValidationErrors(true);
+        }
       },
-      [setValue]
+      [setValue, showValidationErrors]
     );
 
-    // Validation for required fields
+    // Validation for required fields - Optimizado para evitar re-renders excesivos
     const isFormValid = useMemo(() => {
       return (
-        watchedValues.comercialName?.trim() &&
-        watchedValues.tradeName?.trim() &&
-        watchedValues.categoryId &&
-        watchedValues.genericName?.trim() &&
-        watchedValues.manufacturerId &&
-        watchedValues.pharmaceuticalFormId &&
-        watchedValues.presentation?.trim() &&
-        watchedValues.concentration?.trim() &&
-        watchedValues.activeIngredientIds?.length > 0
+        comercialName?.trim() &&
+        tradeName?.trim() &&
+        categoryId &&
+        genericName?.trim() &&
+        manufacturerId &&
+        pharmaceuticalFormId &&
+        presentation?.trim() &&
+        concentration?.trim() &&
+        activeIngredientIds?.length > 0
       );
-    }, [watchedValues]);
+    }, [comercialName, tradeName, categoryId, genericName, manufacturerId, pharmaceuticalFormId, presentation, concentration, activeIngredientIds]);
+
+    // Errores condicionales para componentes hijos
+    const conditionalErrors = useMemo(() => {
+      return showValidationErrors ? errors : {};
+    }, [showValidationErrors, errors]);
 
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -246,8 +291,9 @@ const AddMedicationDialog = memo(
                   id="comercialName"
                   {...register("comercialName", validationRules.comercialName)}
                   placeholder="Ej: Tylenol, Advil, Omeprazol MK"
+                  onBlur={() => setShowValidationErrors(true)}
                 />
-                {errors.comercialName && (
+                {showValidationErrors && errors.comercialName && (
                   <p className="text-sm text-red-600">
                     {errors.comercialName.message}
                   </p>
@@ -260,8 +306,9 @@ const AddMedicationDialog = memo(
                   id="tradeName"
                   {...register("tradeName", validationRules.tradeName)}
                   placeholder="Ej: Tylenol Extra Fuerte 500mg, Advil 200mg Cápsulas"
+                  onBlur={() => setShowValidationErrors(true)}
                 />
-                {errors.tradeName && (
+                {showValidationErrors && errors.tradeName && (
                   <p className="text-sm text-red-600">
                     {errors.tradeName.message}
                   </p>
@@ -271,20 +318,20 @@ const AddMedicationDialog = memo(
 
             {/* Principio Activo (Nombre Genérico) */}
             <GenericNameSelect
-              selectedId={watchedValues.genericName}
+              selectedId={genericName}
               onChange={(generic) =>
                 handleFieldChange("genericName", generic.id)
               }
-              error={errors.genericName?.message}
+              error={showValidationErrors ? errors.genericName?.message : undefined}
             />
 
             {/* Selects de Catálogos */}
             <MedicationCatalogSelects
-              categoryId={watchedValues.categoryId}
-              manufacturerId={watchedValues.manufacturerId}
-              pharmaceuticalFormId={watchedValues.pharmaceuticalFormId}
+              categoryId={categoryId}
+              manufacturerId={manufacturerId}
+              pharmaceuticalFormId={pharmaceuticalFormId}
               onFieldChange={handleFieldChange}
-              errors={errors}
+              errors={conditionalErrors}
             />
 
             {/* Información Adicional */}
@@ -297,8 +344,9 @@ const AddMedicationDialog = memo(
                   id="presentation"
                   {...register("presentation", validationRules.presentation)}
                   placeholder="Ej: Caja x 30 tabletas, Frasco x 100ml, Blíster x 20 cápsulas"
+                  onBlur={() => setShowValidationErrors(true)}
                 />
-                {errors.presentation && (
+                {showValidationErrors && errors.presentation && (
                   <p className="text-sm text-red-600">
                     {errors.presentation.message}
                   </p>
@@ -311,8 +359,9 @@ const AddMedicationDialog = memo(
                   id="concentration"
                   {...register("concentration", validationRules.concentration)}
                   placeholder="Ej: 500mg, 10ml, 25%, 5mg/ml, 200UI"
+                  onBlur={() => setShowValidationErrors(true)}
                 />
-                {errors.concentration && (
+                {showValidationErrors && errors.concentration && (
                   <p className="text-sm text-red-600">
                     {errors.concentration.message}
                   </p>
@@ -321,9 +370,9 @@ const AddMedicationDialog = memo(
             </div>
 
             <BarcodeScannerInput
-              value={watchedValues.barcode || ""}
+              value={barcode || ""}
               onChange={(val) => handleFieldChange("barcode", val)}
-              error={errors.barcode?.message}
+              error={showValidationErrors ? errors.barcode?.message : undefined}
             />
 
             {/* Información Descriptiva */}
@@ -369,8 +418,8 @@ const AddMedicationDialog = memo(
               onChange={(ids: string[]) =>
                 handleFieldChange("activeIngredientIds", ids)
               }
-              error={errors.activeIngredientIds?.message}
-              selected={watchedValues.activeIngredientIds}
+              error={showValidationErrors ? errors.activeIngredientIds?.message : undefined}
+              selected={activeIngredientIds}
             />
 
             {/* Botones */}

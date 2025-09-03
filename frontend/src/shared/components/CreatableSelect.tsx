@@ -285,7 +285,7 @@ function CreatableSelect<T extends Record<string, any>>({
                     return (
                       <div
                         key={String(item[valueField])}
-                        className={`relative flex items-start justify-between px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors group ${
+                        className={`relative flex items-start justify-between px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors group ${
                           highlightedIndex === index
                             ? "bg-accent text-accent-foreground"
                             : ""
@@ -298,12 +298,12 @@ function CreatableSelect<T extends Record<string, any>>({
                         }`}
                       >
                         <div 
-                          className="cursor-pointer flex-1 pr-2 "
+                          className="cursor-pointer flex-1 pr-2  h-8 flex flex-col items-center"
                           onClick={() => handleSelect(item)}
                           onMouseEnter={() => setHighlightedIndex(index)}
                         >
                           <div 
-                            className="text-wrap break-words leading-tight flex !items-center"
+                            className="text-wrap break-words leading-tight text-left flex-col flex justify-end w-full"
                             style={{ 
                               wordBreak: "break-word",
                               overflowWrap: "break-word",
@@ -313,9 +313,9 @@ function CreatableSelect<T extends Record<string, any>>({
                             {String(item[displayField])} 
                           </div>
                           {secondaryDisplayField && (
-                            <div className="text-xs text-gray-500 mt-1 text-wrap break-words">
+                            <div className="text-xs text-gray-500 mt-1 text-wrap break-words w-full">
                               {secondaryLabel && (
-                                <span className="font-medium mr-1">
+                                <span className="font-medium mr-1 w-full text-left">
                                   {secondaryLabel}:
                                 </span>
                               )}

@@ -14,18 +14,11 @@ const getRepository = () => getClientRepository();
 export const createClient = async (clientData: CreateClientData): Promise<Client> => {
   const repository = getRepository();
   
-  // Validar que no exista un cliente con el mismo email o NIT solo si están presentes y no están vacíos
+  // Validar que no exista un cliente con el mismo email solo si está presente y no está vacío
   if (clientData.email && clientData.email.trim() !== "") {
     const existingEmail = await repository.findByEmail(clientData.email);
     if (existingEmail) {
       throw new Error('Ya existe un cliente con este email');
-    }
-  }
-
-  if (clientData.nit && clientData.nit.trim() !== "") {
-    const existingNit = await repository.findByNit(clientData.nit);
-    if (existingNit) {
-      throw new Error('Ya existe un cliente con este NIT');
     }
   }
 
@@ -34,12 +27,10 @@ export const createClient = async (clientData: CreateClientData): Promise<Client
     ...clientData,
     // Asegurar que los campos opcionales sean strings vacíos en lugar de undefined
     email: clientData.email?.trim() || "",
-    nit: clientData.nit?.trim() || "",
     phone: clientData.phone?.trim() || "",
     address: clientData.address?.trim() || "",
     createdAt: now,
     updatedAt: now,
-    loyaltyPoints: clientData.loyaltyPoints || 0,
     salesHistory: [],
     sincronized: false,
     isDeleted: false
@@ -60,14 +51,6 @@ export const getClientById = async (id: string): Promise<Client | null> => {
 export const getClientByEmail = async (email: string): Promise<Client | null> => {
   const repository = getRepository();
   return await repository.findByEmail(email);
-};
-
-/**
- * Obtener cliente por NIT
- */
-export const getClientByNit = async (nit: string): Promise<Client | null> => {
-  const repository = getRepository();
-  return await repository.findByNit(nit);
 };
 
 /**
@@ -96,7 +79,7 @@ export const getAllClientsPaginated = async (
 export const updateClient = async (id: string, updateData: UpdateClientData): Promise<Client | null> => {
   const repository = getRepository();
   
-  // Si se está actualizando email o NIT, validar que no existan duplicados solo si están presentes y no están vacíos
+  // Si se está actualizando email, validar que no existan duplicados solo si está presente y no está vacío
   if (updateData.email && updateData.email.trim() !== "") {
     const existingEmail = await repository.findByEmail(updateData.email);
     if (existingEmail && existingEmail.id !== id) {
@@ -104,18 +87,10 @@ export const updateClient = async (id: string, updateData: UpdateClientData): Pr
     }
   }
 
-  if (updateData.nit && updateData.nit.trim() !== "") {
-    const existingNit = await repository.findByNit(updateData.nit);
-    if (existingNit && existingNit.id !== id) {
-      throw new Error('Ya existe un cliente con este NIT');
-    }
-  }
-
   return await repository.update(id, {
     ...updateData,
     // Asegurar que los campos opcionales sean strings vacíos en lugar de undefined
     email: updateData.email?.trim() || "",
-    nit: updateData.nit?.trim() || "",
     phone: updateData.phone?.trim() || "",
     address: updateData.address?.trim() || "",
     updatedAt: new Date().toISOString()
@@ -152,37 +127,6 @@ export const restoreClient = async (id: string): Promise<boolean> => {
 export const addSaleToClientHistory = async (clientId: string, saleId: string): Promise<Client | null> => {
   const repository = getRepository();
   return await repository.addSaleToHistory(clientId, saleId);
-};
-
-/**
- * Actualizar puntos de fidelidad
- */
-export const updateClientLoyaltyPoints = async (clientId: string, points: number): Promise<Client | null> => {
-  if (points < 0) {
-    throw new Error('Los puntos de fidelidad no pueden ser negativos');
-  }
-
-  const repository = getRepository();
-  return await repository.updateLoyaltyPoints(clientId, points);
-};
-
-/**
- * Agregar puntos de fidelidad (suma a los existentes)
- */
-export const addLoyaltyPoints = async (clientId: string, pointsToAdd: number): Promise<Client | null> => {
-  const client = await getClientById(clientId);
-  if (!client) {
-    throw new Error('Cliente no encontrado');
-  }
-
-  const currentPoints = client.loyaltyPoints || 0;
-  const newPoints = currentPoints + pointsToAdd;
-
-  if (newPoints < 0) {
-    throw new Error('Los puntos resultantes no pueden ser negativos');
-  }
-
-  return await updateClientLoyaltyPoints(clientId, newPoints);
 };
 
 /**
@@ -238,52 +182,6 @@ export const formatClientContact = (client: Client): string => {
     parts.push(client.phone);
   }
   return parts.join(' • ');
-};
-
-/**
- * Obtener nivel de fidelidad basado en puntos
- */
-export const getLoyaltyLevel = (points: number): 'bronze' | 'silver' | 'gold' | 'platinum' => {
-  if (points >= 1000) return 'platinum';
-  if (points >= 500) return 'gold';
-  if (points >= 100) return 'silver';
-  return 'bronze';
-};
-
-/**
- * Obtener color del badge de nivel de fidelidad
- */
-export const getLoyaltyLevelColor = (level: string): string => {
-  switch (level) {
-    case 'platinum':
-      return 'bg-purple-100 text-purple-800';
-    case 'gold':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'silver':
-      return 'bg-gray-100 text-gray-800';
-    case 'bronze':
-      return 'bg-orange-100 text-orange-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-/**
- * Obtener texto del nivel de fidelidad
- */
-export const getLoyaltyLevelText = (level: string): string => {
-  switch (level) {
-    case 'platinum':
-      return 'Platino';
-    case 'gold':
-      return 'Oro';
-    case 'silver':
-      return 'Plata';
-    case 'bronze':
-      return 'Bronce';
-    default:
-      return 'Sin nivel';
-  }
 };
 
 /**

@@ -10,13 +10,11 @@ export interface IClientRepository {
   create(clientData: Omit<Client, 'id'>): Promise<Client>;
   findById(id: string): Promise<Client | null>;
   findByEmail(email: string): Promise<Client | null>;
-  findByNit(nit: string): Promise<Client | null>;
   findAll(): Promise<Client[]>;
   findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Client>>;
   update(id: string, updateData: Partial<Client>): Promise<Client | null>;
   delete(id: string): Promise<boolean>;
   addSaleToHistory(clientId: string, saleId: string): Promise<Client | null>;
-  updateLoyaltyPoints(clientId: string, points: number): Promise<Client | null>;
   getClientSales(clientId: string): Promise<string[]>;
   getStatistics(): Promise<ClientStatistics>;
   getActiveClients(): Promise<Client[]>;
@@ -84,18 +82,6 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
     return client ? JSON.parse(JSON.stringify(client.toJSON())) as Client : null;
   }
 
-  async findByNit(nit: string): Promise<Client | null> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne({ 
-      selector: { 
-        isDeleted: false,
-        nit
-      },
-      sort: [{ isDeleted: 'asc', nit: 'asc' }]
-    }).exec();
-    return client ? JSON.parse(JSON.stringify(client.toJSON())) as Client : null;
-  }
-
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Client>> {
     const db = await initDatabase();
     
@@ -107,7 +93,6 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
         $or: [
           { name: { $regex: normalizedText, $options: 'i' } },
           { email: { $regex: normalizedText, $options: 'i' } },
-          { nit: { $regex: normalizedText, $options: 'i' } },
           { phone: { $regex: normalizedText, $options: 'i' } },
           { address: { $regex: normalizedText, $options: 'i' } }
         ]
@@ -177,20 +162,7 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
     return JSON.parse(JSON.stringify(client.toJSON())) as Client;
   }
 
-  async updateLoyaltyPoints(clientId: string, points: number): Promise<Client | null> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(clientId).exec();
-    if (!client) return null;
-    
-    await client.update({ 
-      $set: { 
-        loyaltyPoints: points,
-        updatedAt: new Date().toISOString() 
-      } 
-    });
-    
-    return JSON.parse(JSON.stringify(client.toJSON())) as Client;
-  }
+
 
   async getClientSales(clientId: string): Promise<string[]> {
     const client = await this.findById(clientId);
@@ -209,21 +181,6 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
     const activeClients = activeClientsDocs.map((c) => JSON.parse(JSON.stringify(c.toJSON())) as Client);
     const deletedClients = deletedClientsDocs.map((c) => JSON.parse(JSON.stringify(c.toJSON())) as Client);
 
-    // Puntos de fidelidad
-    const totalLoyaltyPoints = activeClients.reduce((sum, client) => sum + (client.loyaltyPoints || 0), 0);
-    const averageLoyaltyPoints = activeClients.length > 0 ? totalLoyaltyPoints / activeClients.length : 0;
-
-    // Top clientes por puntos
-    const topClientsByPoints = activeClients
-      .filter(c => c.loyaltyPoints && c.loyaltyPoints > 0)
-      .sort((a, b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0))
-      .slice(0, 10)
-      .map(c => ({
-        id: c.id,
-        name: c.name,
-        loyaltyPoints: c.loyaltyPoints || 0
-      }));
-
     // Clientes de los últimos 30 días
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -233,8 +190,6 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
       totalClients: totalClients.length,
       activeClients: activeClients.length,
       deletedClients: deletedClients.length,
-      averageLoyaltyPoints,
-      topClientsByPoints,
       recentClients
     };
   }
@@ -301,9 +256,6 @@ export class FirestoreClientRepository implements IClientRepository {
   async findByEmail(_email: string): Promise<Client | null> {
     throw new Error('Firestore implementation not yet available');
   }
-  async findByNit(_nit: string): Promise<Client | null> {
-    throw new Error('Firestore implementation not yet available');
-  }
   async findAll(): Promise<Client[]> {
     throw new Error('Firestore implementation not yet available');
   }
@@ -317,9 +269,6 @@ export class FirestoreClientRepository implements IClientRepository {
     throw new Error('Firestore implementation not yet available');
   }
   async addSaleToHistory(_clientId: string, _saleId: string): Promise<Client | null> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async updateLoyaltyPoints(_clientId: string, _points: number): Promise<Client | null> {
     throw new Error('Firestore implementation not yet available');
   }
   async getClientSales(_clientId: string): Promise<string[]> {

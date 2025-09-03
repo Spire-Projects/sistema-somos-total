@@ -13,6 +13,9 @@ export const cleanSaleData = (data: any) => {
     ...data,
     client: data.client || "",
     idMedic: data.idMedic || "",
+    nitClient: data.nitClient || "",
+    socialReasonClient: data.socialReasonClient || "",
+    saleNotes: data.saleNotes || "",
     totalWithoutDiscount: data.totalWithoutDiscount || 0,
     totalDiscount: data.totalDiscount || 0,
   };
@@ -37,7 +40,10 @@ export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<
     isDeleted: cleanedData.isDeleted || false,
     sincronized: cleanedData.sincronized || false,
     idMedic: cleanedData.idMedic,
-    factured: cleanedData.factured || false
+    factured: cleanedData.factured || false,
+    nitClient: cleanedData.nitClient,
+    socialReasonClient: cleanedData.socialReasonClient,
+    saleNotes: cleanedData.saleNotes
   };
 
   return await repository.create(newSale);

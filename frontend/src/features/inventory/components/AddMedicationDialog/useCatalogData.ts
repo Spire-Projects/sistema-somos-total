@@ -29,13 +29,31 @@ export const useCatalogData = (
   const [loading, setLoading] = useState(false);
 
   const loadCatalogData = useCallback(async () => {
+    // Evitar cargar si no hay IDs
+    if (!categoryId && !manufacturerId && !pharmaceuticalFormId) {
+      setSelectedValues({
+        category: null,
+        manufacturer: null,
+        pharmaceuticalForm: null
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const [category, manufacturer, pharmaceuticalForm] = await Promise.all([
-        categoryId ? findMedicationCategoryById(categoryId) : null,
-        manufacturerId ? findManufacturerById(manufacturerId) : null,
-        pharmaceuticalFormId ? findPharmaceuticalFormById(pharmaceuticalFormId) : null,
-      ]);
+      const promises = [];
+      
+      // Solo hacer llamadas para los IDs que existen
+      if (categoryId) promises.push(findMedicationCategoryById(categoryId));
+      else promises.push(Promise.resolve(null));
+      
+      if (manufacturerId) promises.push(findManufacturerById(manufacturerId));
+      else promises.push(Promise.resolve(null));
+      
+      if (pharmaceuticalFormId) promises.push(findPharmaceuticalFormById(pharmaceuticalFormId));
+      else promises.push(Promise.resolve(null));
+
+      const [category, manufacturer, pharmaceuticalForm] = await Promise.all(promises);
 
       setSelectedValues({
         category,

@@ -36,6 +36,9 @@ export interface  Sale {
   sincronized?: boolean; // Indicates if the sale is synchronized with the server
   idMedic?: string; // Medic information associated with the sale
   factured?: boolean; // Indicates if the sale has been factured
+  nitClient?: string; // Optional NIT of the client for invoicing purposes
+  socialReasonClient?: string; // Optional social reason of the client for invoicing purposes
+  saleNotes?: string; // Optional notes about the sale
 }
 
 export interface BatchWithMedication extends MedicationBatch {
