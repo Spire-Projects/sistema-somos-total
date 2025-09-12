@@ -201,14 +201,16 @@ export const UserService = {
   async deleteUser(id: string): Promise<{ success: boolean; error?: string }> {
     try {
       const db = getUserDB();
-      
-      // Verificar que el usuario existe antes de intentar eliminarlo
+    
       const user = await db.findById(id);
       if (!user) {
         return { success: false, error: 'Usuario no encontrado' };
       }
 
-      // Eliminar el usuario de la base de datos
+      const updatedUser = await db.update(id, { isDeleted: true });
+      if (!updatedUser) {
+        return { success: false, error: 'No se pudo marcar el usuario como eliminado' };
+      }
       const deleteResult = await db.delete(id);
       
       if (!deleteResult) {

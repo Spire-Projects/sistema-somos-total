@@ -9,7 +9,8 @@ const repository = getSaleRepository();
 /**
  * Limpiar datos de venta para evitar valores undefined que causan problemas en Firestore
  */
-export const cleanSaleData = (data: any) => {
+export const cleanSaleData = (data: any):Sale => {
+  console.log("Cleaning sale data:", data);
   return {
     ...data,
     client: data.client || "",
@@ -179,6 +180,10 @@ export const findSalesByDateRangeAndFacturedStatusPaginated = async (
  * Actualizar estado de facturación de una venta
  */
 export const updateSaleFacturedStatus = async (id: string, factured: boolean): Promise<Sale> => {
-  const updateData = cleanSaleData({ factured });
+  const currentData = await repository.findById(id);
+  if (!currentData) {
+    throw new Error(`Sale with ID "${id}" not found`);
+  }
+  const updateData = { ...currentData, factured };
   return await repository.update(id, updateData);
 };

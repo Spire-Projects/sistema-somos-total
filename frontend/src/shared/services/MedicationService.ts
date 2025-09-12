@@ -253,11 +253,10 @@ export const updateMedication = async (
  */
 export const deleteMedication = async (id: string): Promise<boolean> => {
   // Verificar si existe
-  const existing = await medicationDB.findById(id);
-  if (!existing) {
-    throw new Error(`Medication with ID "${id}" not found`);
-  }
-
+  const medication = await medicationDB.findById(id);
+  if (!medication) return false;
+  const newData = { ...medication, isDeleted: true };
+  await medicationDB.update(id, newData);
   return await medicationDB.delete(id);
 };
 

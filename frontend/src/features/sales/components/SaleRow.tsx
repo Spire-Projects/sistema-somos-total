@@ -7,6 +7,8 @@ import { UserService } from '@/shared/services/UserService';
 import SaleDetails from './SaleDetails';
 import type { Sale } from '@/shared/types/Sales';
 import type { AuthUser } from '@/shared/types/User';
+import type { Client } from '@/shared/types/Client';
+import { getClientById } from '@/shared/services';
 
 interface SaleRowProps {
   sale: Sale;
@@ -30,10 +32,31 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
   const [createdByUser, setCreatedByUser] = useState<AuthUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [currentSale, setCurrentSale] = useState<Sale>(sale);
+  const [clientName, setClientName] = useState<Client | null>(null);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(prev => !prev);
   }, []);
+
+  // Actualizar el estado local cuando cambie la prop sale
+  useEffect(() => {
+    const fetchClientName = async () => {
+      if (!sale.client) {
+        setClientName(null);
+        return;
+      }
+      try {
+        const response = await getClientById(sale.client);
+        if (response) {
+          setClientName(response);
+        }
+      } catch (error) {
+        console.error('Error fetching client name:', error);
+      }
+    };
+
+    fetchClientName();
+  }, [sale.client]);
 
   // Actualizar el estado local cuando cambie la prop sale
   useEffect(() => {
@@ -108,7 +131,7 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
 
         <td className="p-3">
           <div className="text-sm text-gray-900">
-            {currentSale.client || 'Cliente general'}
+            {clientName?.name || 'Cliente general'}
           </div>
         </td>
 
