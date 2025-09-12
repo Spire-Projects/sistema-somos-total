@@ -46,6 +46,11 @@ const MedicationSearchItem = memo(({ medication, onAddToSale }: MedicationSearch
                 No disponible
               </span>
             )}
+             {medication.prescriptionRequired && (
+              <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                Requiere receta
+              </span>
+            )}
           </div>
           <p className={`text-xs truncate ${hasStock ? 'text-gray-600' : 'text-gray-400'}`}>
             {medication.tradeName}

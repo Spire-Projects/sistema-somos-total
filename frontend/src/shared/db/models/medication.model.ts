@@ -2,7 +2,7 @@ import type { RxJsonSchema } from 'rxdb';
 import type { Medication } from '../../types/Medication';
 // Esquema RxDB para Medication
 export const medicationSchema: RxJsonSchema<Medication> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -87,9 +87,12 @@ export const medicationSchema: RxJsonSchema<Medication> = {
     updatedBy: {
       type: 'string',
       maxLength: 100
+    },
+    prescriptionRequired: {
+      type: 'boolean'
     }
   },
-  required: ['id', 'tradeName', 'genericName', 'activeIngredientIds', 'pharmaceuticalFormId', 'concentration', 'presentation', 'manufacturerId', 'categoryId', 'comercialName', 'isDeleted'],
+  required: ['id', 'tradeName', 'genericName', 'activeIngredientIds', 'pharmaceuticalFormId', 'concentration', 'presentation', 'manufacturerId', 'categoryId', 'comercialName', 'isDeleted', 'prescriptionRequired'],
   indexes: [
     // Índices simples existentes
     'tradeName', 
@@ -114,4 +117,15 @@ export const medicationSchema: RxJsonSchema<Medication> = {
     ['isDeleted', 'categoryId', 'createdAt'],          // Filtro categoría + ordenamiento fecha
     ['isDeleted', 'manufacturerId', 'createdAt']       // Filtro fabricante + ordenamiento fecha
   ]
+};
+
+export const medicationMigrationStrategies = {
+ 
+  1: (oldDoc: any) => {
+    return {
+      ...oldDoc,
+      prescriptionRequired: false 
+    };
+  },
+  
 };

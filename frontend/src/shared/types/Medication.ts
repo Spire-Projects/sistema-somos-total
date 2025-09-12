@@ -9,6 +9,7 @@ export interface Medication {
   presentation: string; // e.g., "Box of 20 tablets"
   manufacturerId: string; // e.g., "PharmaCorp"
   categoryId: string;            // reference to MedicationCategory
+  prescriptionRequired: boolean; // indicates if a prescription is required
   barcode?: string; // optional barcode for scanning
   description?: string; // e.g., "Used for pain relief"
   indications?: string; // e.g., "Headache, Fever"

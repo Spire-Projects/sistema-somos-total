@@ -63,7 +63,7 @@ export const useMedicationSearch = (debounceMs: number = 300): UseMedicationSear
       const result = await searchMedicationCatalogPaginated(
         query.trim(),
         1, // primera página
-        10 // 10 resultados
+        50 // 10 resultados
         // Sin filtro hasStock para mostrar todos los medicamentos
       );
 

@@ -15,7 +15,7 @@ import {
   manufacturerSchema,
   manufacturerMigrationStrategies,
 } from "./models/manufacturer.model";
-import { medicationSchema } from "./models/medication.model";
+import { medicationMigrationStrategies, medicationSchema } from "./models/medication.model";
 import { medicationBatchSchema } from "./models/medicationBatch.model";
 import type {
   ActiveIngredient,
@@ -151,6 +151,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         medications: {
           schema: medicationSchema,
+          migrationStrategies: medicationMigrationStrategies,
           conflictHandler: createLocalPriorityConflictHandler<Medication>(),
         },
         medication_batches: {

@@ -36,6 +36,7 @@ export interface CreateMedicationData {
   presentation: string;
   manufacturerId: string;
   categoryId: string;
+  prescriptionRequired: boolean;
   barcode?: string;
   description?: string;
   indications?: string;

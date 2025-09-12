@@ -11,6 +11,7 @@ import {
 import { Input } from "../../../../shared/components/ui/input";
 import { Textarea } from "../../../../shared/components/ui/textarea";
 import { Label } from "../../../../shared/components/ui/label";
+
 import { Plus, Loader2 } from "lucide-react";
 import {
   createMedication,
@@ -23,6 +24,9 @@ import MedicationCatalogSelects from "./MedicationCatalogSelects.tsx";
 import ActiveIngredientsMultiSelect from "./ActiveIngredientsMultiSelect.tsx";
 import BarcodeScannerInput from "./BarCodeScanner.tsx";
 import GenericNameSelect from "./GenericNameSelect.tsx";
+import { Switch } from "@/shared/components/ui/switch.tsx";
+import { useSelector } from "react-redux";
+
 
 interface AddMedicationDialogProps {
   onMedicationAdded?: () => void;
@@ -49,6 +53,7 @@ const defaultValues: Partial<MedicationFormData> = {
   description: "",
   indications: "",
   warnings: "",
+  prescriptionRequired: false,
 };
 
 // Mover patrones regex fuera del componente para evitar recreaciones
@@ -72,6 +77,7 @@ const AddMedicationDialog = memo(
       mode: "onSubmit", // Cambiar a onSubmit para validación menos intrusiva
       reValidateMode: "onBlur", // Solo re-validar en onBlur después del primer submit
     });
+    const authUser = useSelector((state: any) => state.auth.user);
 
     // Watch campos específicos de forma más eficiente
     const comercialName = watch("comercialName");
@@ -84,6 +90,7 @@ const AddMedicationDialog = memo(
     const concentration = watch("concentration");
     const activeIngredientIds = watch("activeIngredientIds");
     const barcode = watch("barcode");
+    const prescriptionRequired = watch("prescriptionRequired");
 
     useEffect(() => {
       const getData = async () => {
@@ -91,16 +98,19 @@ const AddMedicationDialog = memo(
         if (medicationId && open) {
           try {
             const medicationData = await findMedicationById(medicationId);
+            console.log("Fetched add dialog medication data:", medicationData);
             if (!medicationData) return;
 
             // Usar batch update más eficiente
             Object.entries(medicationData).forEach(([key, value]) => {
               if (key in defaultValues) {
+                
                 setValue(
                   key as keyof MedicationFormData,
                   value,
                   { shouldDirty: false, shouldValidate: false } // Evitar validación excesiva
                 );
+               
               }
             });
             
@@ -175,8 +185,10 @@ const AddMedicationDialog = memo(
 
           const medicationData: CreateMedicationData = {
             ...data,
-            createdBy: "current-user", // TODO: Obtener del contexto de auth
+            createdBy: authUser?.id || "current-user", 
           };
+
+          console.log("Medication Data to submit:", medicationData);
 
           if (medicationId) {
             await updateMedication(medicationId, medicationData);
@@ -230,6 +242,9 @@ const AddMedicationDialog = memo(
 
     const handleFieldChange = useCallback(
       (field: keyof MedicationFormData, value: any) => {
+        if (field === 'prescriptionRequired') {
+          console.log('handleFieldChange called for prescriptionRequired with value:', value);
+        }
         setValue(field, value, { 
           shouldDirty: true, 
           shouldValidate: false // Reducir validación automática para mejor rendimiento
@@ -421,6 +436,18 @@ const AddMedicationDialog = memo(
               error={showValidationErrors ? errors.activeIngredientIds?.message : undefined}
               selected={activeIngredientIds}
             />
+
+            {/* Switch para Receta Médica */}
+            <div className="flex items-center space-x-4">
+              <Switch
+                id="prescriptionRequired"
+                checked={prescriptionRequired}
+                onCheckedChange={(checked: boolean) => handleFieldChange("prescriptionRequired", checked)}
+              />
+              <Label htmlFor="prescriptionRequired" className="font-medium">
+                Requiere Receta Médica
+              </Label>
+            </div>
 
             {/* Botones */}
             <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">

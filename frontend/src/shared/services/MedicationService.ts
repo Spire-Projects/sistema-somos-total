@@ -128,7 +128,7 @@ export const createMedication = async (
     warnings: data.warnings,
     sincronized: false,
     isDeleted: false,
-    // Remover createdAt manual - lo maneja automáticamente BaseRepository
+    prescriptionRequired: data.prescriptionRequired,
     createdBy: data.createdBy,
   };
 
@@ -321,10 +321,13 @@ export const getMedicationCatalogPaginated = async (
     })
   );
 
-  // 3. Si el ordenamiento es por campo calculado, ordenar en memoria
-  if (sort && calculatedFields.includes(sort.field)) {
-    catalogViews = sortCatalogViewsInMemory(catalogViews, sort);
-  }
+  // 3. Aplicar ordenamiento
+  // Si hay sort y es un campo calculado, usar ese ordenamiento
+  // Si no hay sort o no es campo calculado, aplicar ordenamiento por defecto priorizando stock
+  catalogViews = sortCatalogViewsInMemory(
+    catalogViews, 
+    sort && calculatedFields.includes(sort.field) ? sort : undefined
+  );
 
   // 4. Aplicar filtros de stock si los hay (que requieren datos de lotes)
   let filteredViews = catalogViews;
@@ -476,6 +479,7 @@ const createMedicationCatalogView = async (
     concentration: medication.concentration,
     presentation: medication.presentation,
     barcode: medication.barcode,
+    prescriptionRequired: medication.prescriptionRequired,
 
     // Datos resueltos - nombres reales obtenidos de servicios
     manufacturerName,
@@ -511,50 +515,70 @@ const createMedicationCatalogView = async (
  */
 const sortCatalogViewsInMemory = (
   catalogViews: MedicationCatalogView[],
-  sort: MedicationCatalogSort
+  sort?: MedicationCatalogSort // Hacemos opcional el parámetro sort
 ): MedicationCatalogView[] => {
   return [...catalogViews].sort((a, b) => {
-    let valueA: any, valueB: any;
-
-    // Obtener los valores a comparar según el campo de ordenamiento
-    switch (sort.field) {
-      case "totalActiveStock":
-        valueA = a.totalActiveStock;
-        valueB = b.totalActiveStock;
-        break;
-      case "activeBatchCount":
-        valueA = a.activeBatchCount;
-        valueB = b.activeBatchCount;
-        break;
-      case "categoryName":
-        valueA = a.categoryName.toLowerCase();
-        valueB = b.categoryName.toLowerCase();
-        break;
-      case "manufacturerName":
-        valueA = a.manufacturerName.toLowerCase();
-        valueB = b.manufacturerName.toLowerCase();
-        break;
-      default:
-        // Para campos que no son calculados (fallback), usar string comparison
-        valueA = String(
-          a[sort.field as keyof MedicationCatalogView] || ""
-        ).toLowerCase();
-        valueB = String(
-          b[sort.field as keyof MedicationCatalogView] || ""
-        ).toLowerCase();
-        break;
+    // 1. Primera prioridad: Medicamentos con stock vs sin stock
+    const aHasStock = a.totalActiveStock > 0;
+    const bHasStock = b.totalActiveStock > 0;
+    if (aHasStock !== bHasStock) {
+      return aHasStock ? -1 : 1; // Los que tienen stock van primero
     }
 
-    // Realizar la comparación
-    let result = 0;
-    if (typeof valueA === "number" && typeof valueB === "number") {
-      result = valueA - valueB;
-    } else {
-      result = String(valueA).localeCompare(String(valueB));
+    // 2. Segunda prioridad: Medicamentos con batches vs sin batches
+    const aHasBatches = (a.activeBatchCount ?? 0) > 0;
+    const bHasBatches = (b.activeBatchCount ?? 0) > 0;
+    if (aHasBatches !== bHasBatches) {
+      return aHasBatches ? -1 : 1; // Los que tienen batches van primero
     }
 
-    // Aplicar orden descendente si es necesario
-    return sort.order === "desc" ? -result : result;
+    // 3. Si hay un sort especificado, aplicarlo como tercer criterio
+    if (sort) {
+      let valueA: any, valueB: any;
+
+      // Obtener los valores a comparar según el campo de ordenamiento
+      switch (sort.field) {
+        case "totalActiveStock":
+          valueA = a.totalActiveStock;
+          valueB = b.totalActiveStock;
+          break;
+        case "activeBatchCount":
+          valueA = a.activeBatchCount;
+          valueB = b.activeBatchCount;
+          break;
+        case "categoryName":
+          valueA = a.categoryName.toLowerCase();
+          valueB = b.categoryName.toLowerCase();
+          break;
+        case "manufacturerName":
+          valueA = a.manufacturerName.toLowerCase();
+          valueB = b.manufacturerName.toLowerCase();
+          break;
+        default:
+          // Para campos que no son calculados (fallback), usar string comparison
+          valueA = String(
+            a[sort.field as keyof MedicationCatalogView] || ""
+          ).toLowerCase();
+          valueB = String(
+            b[sort.field as keyof MedicationCatalogView] || ""
+          ).toLowerCase();
+          break;
+      }
+
+      // Realizar la comparación
+      let result = 0;
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        result = valueA - valueB;
+      } else {
+        result = String(valueA).localeCompare(String(valueB));
+      }
+
+      // Aplicar orden descendente si es necesario
+      return sort.order === "desc" ? -result : result;
+    }
+
+    // 4. Si no hay sort especificado, ordenar por cantidad de stock descendente
+    return (b.totalActiveStock ?? 0) - (a.totalActiveStock ?? 0);
   });
 };
 

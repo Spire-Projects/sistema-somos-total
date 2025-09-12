@@ -14,6 +14,7 @@ export interface MedicationCatalogView {
   genericName: string;
   concentration: string;
   presentation: string;
+  prescriptionRequired: boolean;
   barcode?: string;
 
   // Datos resueltos (nombres en lugar de IDs para UI)
