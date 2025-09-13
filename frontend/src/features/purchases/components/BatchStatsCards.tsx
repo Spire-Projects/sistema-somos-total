@@ -13,7 +13,7 @@ export const BatchStatsCards: React.FC<BatchStatsCardsProps> = ({
   medications, 
   totalMedications 
 }) => {
-  // Cálculos para las estadísticas
+  
   const totalBatches = medications.reduce((total, med) => total + med.batchCount, 0);
   const totalStock = medications.reduce((total, med) => total + med.totalStock, 0);
   const expiringBatches = medications.reduce((count, med) => {

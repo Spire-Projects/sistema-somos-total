@@ -1,10 +1,54 @@
 import type { Sale } from '../types/Sales';
 import type { ItemsResponse } from '../types/UtilTypes';
 import { getSaleRepository } from '../db/repositories/sale.repository';
-import { addSaleToClientHistory } from './ClientService';
+import { addSaleToClientHistory, getClientById } from './ClientService';
+import { UserService } from './UserService';
 import { generateId } from '../utils/id.utils';
+import { getCachedValue, setCachedValue } from '../utils/entity-cache.utils';
 
 const repository = getSaleRepository();
+
+/**
+ * Helper: Obtener nombre de cliente con cache
+ */
+const getClientName = async (clientId: string): Promise<string> => {
+  const cacheKey = `client_name_${clientId}`;
+  
+  // Intentar obtener del cache
+  const cachedName = getCachedValue<string>(cacheKey);
+  if (cachedName !== null) {
+    return cachedName;
+  }
+
+  // Si no está en cache, buscar en la base de datos
+  const client = await getClientById(clientId);
+  const name = client?.name || "Cliente no encontrado";
+  
+  // Guardar en cache
+  setCachedValue(cacheKey, name);
+  return name;
+};
+
+/**
+ * Helper: Obtener nombre de vendedor con cache
+ */
+const getSellerName = async (userId: string): Promise<string> => {
+  const cacheKey = `seller_name_${userId}`;
+  
+  // Intentar obtener del cache
+  const cachedName = getCachedValue<string>(cacheKey);
+  if (cachedName !== null) {
+    return cachedName;
+  }
+
+  // Si no está en cache, buscar en la base de datos
+  const result = await UserService.getUserById(userId);
+  const name = result.user?.fullName || "Vendedor no encontrado";
+  
+  // Guardar en cache
+  setCachedValue(cacheKey, name);
+  return name;
+};
 
 /**
  * Limpiar datos de venta para evitar valores undefined que causan problemas en Firestore
@@ -101,12 +145,55 @@ export const searchSales = async (query: string): Promise<Sale[]> => {
 /**
  * Obtener ventas paginadas
  */
+export interface ExtendedSale extends Sale {
+  clientName?: string;
+  sellerName?: string;
+}
+
 export const findSalesPaginated = async (
   page: number,
   size: number,
   searchQuery?: string
-): Promise<ItemsResponse<Sale>> => {
-  return await repository.findAllPaginated(page, size, searchQuery);
+): Promise<ItemsResponse<ExtendedSale>> => {
+  // 1. Obtener las ventas base
+  const response = await repository.findAllPaginated(page, size, searchQuery);
+  
+  // 2. Enriquecer las ventas con nombres resueltos
+  const extendedSales = await Promise.all(
+    response.items.map(async (sale) => {
+      // Resolver nombres en paralelo si existen IDs
+      const [clientName, sellerName] = await Promise.all([
+        sale.client ? getClientName(sale.client) : Promise.resolve(undefined),
+        sale.createdBy ? getSellerName(sale.createdBy) : Promise.resolve(undefined)
+      ]);
+
+      return {
+        ...sale,
+        clientName,
+        sellerName
+      };
+    })
+  );
+
+  // 3. Si hay término de búsqueda, filtrar también por nombres resueltos
+  let filteredSales = extendedSales;
+  if (searchQuery && searchQuery.trim()) {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    filteredSales = extendedSales.filter(sale => 
+      sale.clientName?.toLowerCase().includes(normalizedQuery) ||
+      sale.sellerName?.toLowerCase().includes(normalizedQuery) ||
+      sale.id.toLowerCase().includes(normalizedQuery) ||
+      sale.nitClient?.toLowerCase().includes(normalizedQuery) ||
+      sale.socialReasonClient?.toLowerCase().includes(normalizedQuery)
+    );
+  }
+
+  return {
+    ...response,
+    items: filteredSales,
+    // Actualizar total si se filtraron resultados
+    totalItems: searchQuery ? filteredSales.length : response.totalItems
+  };
 };
 
 /**

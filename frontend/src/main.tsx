@@ -7,7 +7,7 @@ import { Provider } from "react-redux";
 import { store } from "./shared/store/store";
 import { initSecurity } from "./shared/config/security";
 import { initDatabaseAndModels } from "./shared/db/database";
-import { checkAndInitializeData } from "./shared/utils/init-data.utils";
+
 
 // Mostrar información de configuración en desarrollo
 import "./shared/utils/env.utils";

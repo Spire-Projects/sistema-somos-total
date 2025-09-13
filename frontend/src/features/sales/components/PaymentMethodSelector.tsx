@@ -1,7 +1,7 @@
 import React from 'react';
 import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
-import { QrCode, DollarSign, ArrowLeftRight } from 'lucide-react';
+import { QrCode, DollarSign } from 'lucide-react';
 
 interface PaymentMethodSelectorProps {
   selectedMethod: 'efectivo' | 'qr' ;

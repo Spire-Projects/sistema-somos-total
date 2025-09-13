@@ -82,9 +82,9 @@ export class ForceSyncService {
       if (collection && collection.replicationState) {
         // Forzar pull desde Firestore
         await collection.replicationState.reSync();
-        console.log(`✅ Sincronización forzada completada para ${collectionName}`);
+       // console.log(`✅ Sincronización forzada completada para ${collectionName}`);
       } else {
-        console.warn(`⚠️ No se encontró replicación activa para ${collectionName}`);
+       // console.warn(`⚠️ No se encontró replicación activa para ${collectionName}`);
       }
     } catch (error) {
       console.error(`❌ Error al forzar sincronización de ${collectionName}:`, error);

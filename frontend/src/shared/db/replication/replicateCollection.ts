@@ -3,10 +3,6 @@ import type { RxCollection } from "rxdb";
 import {
   collection as fbCollection,
   type FirestoreDataConverter,
-  onSnapshot,
-  query,
-  orderBy,
-  limit,
 } from "firebase/firestore";
 import { firestore } from "@/shared/config/firebase";
 import { config } from "@/shared/config/config";
@@ -18,14 +14,14 @@ export const replicateCollection = <T extends { [key: string]: any }>(
 ) => {
   // Verificar si la replicación está habilitada
   if (!config.REPLICATION.ENABLED) {
-    console.log(`⏸️ ${name}: Replicación deshabilitada por configuración`);
+   // console.log(`⏸️ ${name}: Replicación deshabilitada por configuración`);
     return null;
   }
 
-  console.log(`🔄 Iniciando replicación para colección: ${name}`, {
-    batchSize: config.REPLICATION.BATCH_SIZE,
-    realTime: config.REPLICATION.REAL_TIME,
-  });
+ // console.log(`🔄 Iniciando replicación para colección: ${name}`, {
+//    batchSize: config.REPLICATION.BATCH_SIZE,
+//realTime: config.REPLICATION.REAL_TIME,
+//  });
 
   const converter: FirestoreDataConverter<T> = {
     toFirestore: (data: T) => {
@@ -148,7 +144,7 @@ export const replicateCollection = <T extends { [key: string]: any }>(
 
   // Detectar cuando la replicación está activa (solo para logging)
   replicationState.active$.subscribe((active) => {
-    console.log(`🔄 ${name}: Replicación ${active ? "activa" : "pausada"}`);
+    //console.log(`🔄 ${name}: Replicación ${active ? "activa" : "pausada"}`);
     if (active) {
       syncService.onSynchronizationStart(name);
     }
@@ -157,9 +153,9 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   // Manejar conflictos de documentos de forma más directa
   replicationState.received$.subscribe(async (docs) => {
     const docsArray = Array.isArray(docs) ? docs : [docs];
-    console.log(
-      `⬇️ ${name}: Recibidos ${docsArray.length} documentos de Firestore`
-    );
+  //  console.log(
+   //   `⬇️ ${name}: Recibidos ${docsArray.length} documentos de Firestore`
+   // );
 
     if (docsArray.length > 0) {
       docsArray.forEach((doc: any) => {
@@ -199,9 +195,9 @@ export const replicateCollection = <T extends { [key: string]: any }>(
             } as any);
           }
         }
-        console.log(
-          `✅ ${name}: ${docsArray.length} documentos marcados como sincronizados`
-        );
+     //   console.log(
+      //    `✅ ${name}: ${docsArray.length} documentos marcados como sincronizados`
+      //  );
       } catch (error) {
         console.error(
           `❌ ${name}: Error marcando documentos como sincronizados:`,
@@ -220,7 +216,7 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   // Cleanup listener cuando se cancele la replicación
   replicationState.canceled$.subscribe((canceled) => {
     if (canceled && unsubscribeSnapshot) {
-      console.log(`🛑 ${name}: Limpiando listener de Firestore`);
+    //  console.log(`🛑 ${name}: Limpiando listener de Firestore`);
       unsubscribeSnapshot();
       unsubscribeSnapshot = null;
     }

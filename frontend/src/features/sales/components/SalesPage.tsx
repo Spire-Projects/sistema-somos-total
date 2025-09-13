@@ -60,7 +60,7 @@ export const SalesPage = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar por cliente, método de pago, vendedor..."
+              placeholder="Buscar por método de pago"
               value={filters.searchQuery}
               onChange={handleSearchChange}
               className="pl-10 border-gray-300"

@@ -1,5 +1,5 @@
 import { memo, useState, useCallback, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Receipt, CreditCard, Banknote, Smartphone } from 'lucide-react';
+import { ChevronDown, ChevronRight, Receipt, CreditCard, Banknote } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDate } from '@/shared/utils/date.utils';
@@ -131,7 +131,7 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
 
         <td className="p-3">
           <div className="text-sm text-gray-900">
-            {clientName?.name || 'Cliente general'}
+            {clientName?.name || 'Cliente genera'}
           </div>
         </td>
 

@@ -18,7 +18,6 @@ import type { FilterOption } from "@/shared/components/FilterTabs";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { SummaryCards } from "./SummaryCards";
 import { ErrorCard } from "./ErrorCard";
-import { SalesDebugPanel } from "./SalesDebugPanel";
 import { TopProductsChart } from "./TopProductsChart";
 import { TopProductsTable } from "./TopProductsTable";
 import { DailySalesChart } from "./DailySalesChart";
@@ -81,8 +80,7 @@ export const ReportsPage = () => {
   ];
 
   const [activeFilter, setActiveFilter] = useState<string>("products");
-  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-4 md:p-6 space-y-6">
@@ -110,13 +108,7 @@ export const ReportsPage = () => {
           onDateToChange={handleDateToChange}
         />
 
-        {/* Panel de debugging (temporal) */}
-        <SalesDebugPanel
-          sales={sales}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-          isVisible={showDebugPanel}
-        />
+       
 
         {/* Tarjetas de resumen */}
         <SummaryCards
