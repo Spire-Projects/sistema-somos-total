@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { UserSearchAndFilters, type UserFilter } from './UserSearchAndFilters';
 import { UserTable } from './UserTable';
 import { DataPagination } from '../../../shared/components/DataPagination';
+import type { UserDocument } from '@/shared/db/models/user.model';
 import { UserDialog } from './UserDialog';
 import CustomDialog from '../../../shared/components/CustomDialog';
 import { useUserActions } from '../hooks/useUserActions';
@@ -47,7 +48,7 @@ export const UserManager: React.FC = () => {
   [users, searchQuery, activeFilter, filterUsers]);
 
   // Calcular usuarios paginados
-  const paginatedUsers = useMemo(() => {
+  const paginatedUsers = useMemo<UserDocument[]>(() => {
     const startIndex = (currentPage - 1) * usersPerPage;
     const endIndex = startIndex + usersPerPage;
     return filteredUsers.slice(startIndex, endIndex);

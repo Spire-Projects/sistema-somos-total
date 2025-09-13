@@ -5,11 +5,12 @@ import { Badge } from '../../../shared/components/ui/badge';
 import type { AuthUser } from '../../../shared/types/User';
 import { formatDate, formatDateTime } from '@/shared/utils/date.utils';
 import { getRoleBadgeVariant, getRoleLabel } from '@/shared/utils/role.utils';
+import type { UserDocument } from '@/shared/db/models/user.model';
 
 interface UserTableProps {
-  users: AuthUser[];
-  onEditUser: (user: AuthUser) => void;
-  onDeleteUser: (user: AuthUser) => void;
+  users: UserDocument[];
+  onEditUser: (user: UserDocument) => void;
+  onDeleteUser: (user: UserDocument) => void;
   loading?: boolean;
 }
 
@@ -52,6 +53,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                   <div className="flex items-center space-x-3">
                     <div>
                       <div className="font-medium">{user.fullName}</div>
+                      <div className="text-sm text-gray-500">{user.isDeleted ? 'Eliminado' : 'Activo'}</div>
                     </div>
                   </div>
                 </TableCell>
@@ -107,7 +109,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900 truncate">{user.fullName}</p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="text-sm text-gray-500 truncate">{user.isDeleted}</p>
                     </div>
                     <Badge variant={user.active ? 'default' : 'secondary'}>
                       {user.active ? 'Activo' : 'Inactivo'}

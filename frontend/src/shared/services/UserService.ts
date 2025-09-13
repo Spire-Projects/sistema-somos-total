@@ -133,13 +133,11 @@ export const UserService = {
   },
 
   // Obtener todos los usuarios (solo para admin)
-  async getAllUsers(): Promise<{ success: boolean; users?: AuthUser[]; error?: string }> {
+  async getAllUsers(): Promise<{ success: boolean; users?: UserDocument[]; error?: string }> {
     try {
       const db = getUserDB();
       const users = await db.findAll();
-      const authUsers = users.map(userToAuthUser);
-      
-      return { success: true, users: authUsers };
+      return { success: true, users };
     } catch (error) {
       console.error('Error obteniendo usuarios:', error);
       return { success: false, error: 'Error obteniendo usuarios' };

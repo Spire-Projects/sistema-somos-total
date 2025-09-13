@@ -98,14 +98,6 @@ if (typeof window !== 'undefined') {
     }
   };
 
-  console.log(`
-🔧 Funciones de debug RxDB disponibles:
-- await getLocalDocs('users') - Ver todos los documentos de una colección
-- await countLocalDocs() - Contar documentos por colección  
-- await checkSyncStatus('users') - Verificar estado de sincronización
-
-📝 Ejemplo: await getLocalDocs('users');
-  `);
 }
 
 function App() {

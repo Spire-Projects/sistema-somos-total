@@ -33,11 +33,15 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       preload: join(__dirname, 'preload.js'),
-      webSecurity: true
+      webSecurity: true,
+      backgroundThrottling: false,   // Mejora el rendimiento en segundo plano
+      devTools: isDev,              // Deshabilita DevTools en producción
+      spellcheck: false            // Desactiva corrector para ahorrar recursos
     },
-    show: false, // No mostrar hasta que esté listo
+    show: false,
     titleBarStyle: 'default',
-    autoHideMenuBar: true // Ocultar barra de menú por defecto
+    autoHideMenuBar: true,
+    backgroundColor: '#ffffff'     // Evita parpadeos al cargar
   });
 
   // Mostrar ventana cuando esté lista
@@ -92,10 +96,29 @@ async function initializeApp(): Promise<void> {
   }
 }
 
+// Gestión de memoria y optimización
+function cleanupResources(): void {
+  if (mainWindow) {
+    mainWindow.webContents.session.clearCache();
+    mainWindow.webContents.session.clearStorageData({
+      storages: ['shadercache', 'serviceworkers', 'cachestorage']
+    });
+  }
+  global.gc && global.gc();
+}
+
+// Limpiar recursos periódicamente (cada 30 minutos)
+setInterval(cleanupResources, 1800000);
+
+// Optimizaciones de rendimiento
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+
 // Eventos de la aplicación
 app.whenReady().then(initializeApp);
 
 app.on('window-all-closed', () => {
+  cleanupResources(); // Limpieza al cerrar
   // En macOS es común mantener la app activa aunque no haya ventanas
   if (process.platform !== 'darwin') {
     app.quit();

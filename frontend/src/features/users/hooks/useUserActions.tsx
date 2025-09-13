@@ -3,9 +3,10 @@ import { UserService } from '../../../shared/services/UserService';
 import type { AuthUser } from '@/shared/types/User';
 import { config } from '../../../shared/config/config';
 import type { UserFilter } from '../components/UserSearchAndFilters';
+import type { UserDocument } from '@/shared/db/models/user.model';
 
 export function useUserActions() {
-  const [users, setUsers] = useState<AuthUser[]>([]);
+  const [users, setUsers] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   
@@ -42,13 +43,13 @@ export function useUserActions() {
     setDialogOpen(true);
   }, []);
 
-  const handleEditUser = useCallback((user: AuthUser) => {
+  const handleEditUser = useCallback((user: UserDocument) => {
     setDialogMode('edit');
     setEditingUser(user);
     setDialogOpen(true);
   }, []);
 
-  const handleDeleteUser = useCallback((user: AuthUser) => {
+  const handleDeleteUser = useCallback((user: UserDocument) => {
     setUserToDelete(user);
     setDeleteDialogOpen(true);
   }, []);
@@ -89,7 +90,7 @@ export function useUserActions() {
   }, []);
 
   // Filtrar usuarios con los criterios de búsqueda y filtros
-  const filterUsers = useCallback((allUsers: AuthUser[], searchQuery: string, activeFilter: UserFilter) => {
+  const filterUsers = useCallback((allUsers: UserDocument[], searchQuery: string, activeFilter: UserFilter): UserDocument[] => {
     let filtered = allUsers;
 
     if (searchQuery.trim()) {
@@ -109,7 +110,7 @@ export function useUserActions() {
   }, []);
 
   // Calcular contadores para los filtros
-  const calculateUserCounts = useCallback((allUsers: AuthUser[]) => {
+  const calculateUserCounts = useCallback((allUsers: UserDocument[]) => {
     const counts = {
       all: allUsers.length,
       admin: allUsers.filter(u => u.role === 'admin').length,

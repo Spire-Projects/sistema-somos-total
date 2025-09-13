@@ -154,7 +154,7 @@ export class SyncService {
 
   // Método para manejar cuando comienza la sincronización
   onSynchronizationStart(collectionName: string): void {
-    console.log(`🔄 ${collectionName}: Sincronización iniciada`);
+    //console.log(`🔄 ${collectionName}: Sincronización iniciada`);
     
     // Si no es manual, marcar como automática
     if (!this._isManualSync) {
