@@ -17,6 +17,11 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     exclude: ["jose"],
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+    ],
   },
   server: {
     host: true,
@@ -27,8 +32,17 @@ export default defineConfig(({ mode }) => ({
   build: {
     sourcemap: mode === "development", // Solo en desarrollo
     minify: mode === "production", // Solo en producción
+    modulePreload: {
+      polyfill: true, // Añade un polyfill para navegadores más antiguos
+      resolveDependencies: (_, deps) => {
+        // Personaliza qué módulos se precargan
+        return deps;
+      },
+    },
     rollupOptions: {
       output: {
+        // Configuración manual de chunks comentada temporalmente
+        /*
         manualChunks: (id) => {
           // Vendor libraries
           if (id.includes('node_modules')) {
@@ -75,6 +89,7 @@ export default defineConfig(({ mode }) => ({
             return 'shared';
           }
         },
+        */
       },
     },
   },

@@ -15,7 +15,7 @@ export const config = {
   // Configuración de la aplicación
   APP: {
     NAME: 'FarmaApp',
-    VERSION: '1.0.9',
+    VERSION: '1.0.10',
   },
   
   // Configuración de tokens
