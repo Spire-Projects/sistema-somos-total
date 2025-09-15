@@ -2,7 +2,6 @@ import { Edit, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../shared/components/ui/table';
 import { Button } from '../../../shared/components/ui/button';
 import { Badge } from '../../../shared/components/ui/badge';
-import type { AuthUser } from '../../../shared/types/User';
 import { formatDate, formatDateTime } from '@/shared/utils/date.utils';
 import { getRoleBadgeVariant, getRoleLabel } from '@/shared/utils/role.utils';
 import type { UserDocument } from '@/shared/db/models/user.model';

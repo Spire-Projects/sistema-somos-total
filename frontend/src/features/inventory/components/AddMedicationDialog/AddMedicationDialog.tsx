@@ -26,6 +26,7 @@ import BarcodeScannerInput from "./BarCodeScanner.tsx";
 import GenericNameSelect from "./GenericNameSelect.tsx";
 import { Switch } from "@/shared/components/ui/switch.tsx";
 import { useSelector } from "react-redux";
+import CustomDialog from "../../../../shared/components/CustomDialog";
 
 
 interface AddMedicationDialogProps {
@@ -62,10 +63,9 @@ const BARCODE_PATTERN = /^[0-9]+$/;
 
 const AddMedicationDialog = memo(
   ({ onMedicationAdded, medicationId, edit }: AddMedicationDialogProps) => {
-    const [open, setOpen] = useState(false);
-    const [showValidationErrors, setShowValidationErrors] = useState(false);
-
-    const {
+  const [open, setOpen] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [showConfirmClose, setShowConfirmClose] = useState(false);    const {
       register,
       handleSubmit,
       setValue,
@@ -221,10 +221,8 @@ const AddMedicationDialog = memo(
     const handleOpenChange = useCallback(
       (newOpen: boolean) => {
         if (!newOpen && isDirty) {
-          const confirmClose = window.confirm(
-            "¿Estás seguro de que quieres cerrar? Se perderán los cambios no guardados."
-          );
-          if (!confirmClose) return;
+          setShowConfirmClose(true);
+          return;
         }
 
         if (!newOpen) {
@@ -239,6 +237,17 @@ const AddMedicationDialog = memo(
       },
       [isDirty, reset]
     );
+
+    const handleConfirmClose = useCallback(() => {
+      setShowConfirmClose(false);
+      reset();
+      setShowValidationErrors(false);
+      setOpen(false);
+    }, [reset]);
+
+    const handleCancelClose = useCallback(() => {
+      setShowConfirmClose(false);
+    }, []);
 
     const handleFieldChange = useCallback(
       (field: keyof MedicationFormData, value: any) => {
@@ -477,6 +486,16 @@ const AddMedicationDialog = memo(
             </div>
           </form>
         </DialogContent>
+
+        <CustomDialog
+          isOpen={showConfirmClose}
+          onConfirm={handleConfirmClose}
+          onCancel={handleCancelClose}
+          title="¿Cerrar sin guardar?"
+          description="¿Estás seguro de que quieres cerrar? Se perderán los cambios no guardados."
+          textConfirm="Sí, cerrar"
+          textCancel="Cancelar"
+        />
       </Dialog>
     );
   }

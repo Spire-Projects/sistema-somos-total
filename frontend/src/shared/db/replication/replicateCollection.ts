@@ -131,6 +131,8 @@ export const replicateCollection = <T extends { [key: string]: any }>(
     live: true,
     serverTimestampField: "_serverUpdatedAt",
     waitForLeadership: false,
+    retryTime: 1000 * 5,
+    
   });
 
   // Manejar errores de replicación
@@ -146,7 +148,7 @@ export const replicateCollection = <T extends { [key: string]: any }>(
   replicationState.active$.subscribe((active) => {
     //console.log(`🔄 ${name}: Replicación ${active ? "activa" : "pausada"}`);
     if (active) {
-      syncService.onSynchronizationStart(name);
+      syncService.onSynchronizationStart();
     }
   });
 
