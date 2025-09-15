@@ -187,7 +187,7 @@ const MedicationDetailModal = memo(({ open, onOpenChange, medicationItem }: Medi
               {medicationItem.batchId && (
                 <div>
                   <span className="font-medium text-gray-700">Lote Seleccionado:</span>
-                  <p className="text-gray-900">#{medicationItem.batchId}</p>
+                  <p className="text-gray-900">#{medication.activeBatches?.map(batch => batch.batchId).join(", ")}</p>
                 </div>
               )}
             </div>

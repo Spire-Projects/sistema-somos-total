@@ -9,7 +9,7 @@ import {
 } from "../../../../shared/components/ui/dialog";
 import { Button } from "../../../../shared/components/ui/button";
 import { Package, Plus } from "lucide-react";
-import type { Medication } from "../../../../shared/types/Medication";
+import type { Medication, Manufacturer } from "../../../../shared/types/Medication";
 import type { BatchWithMedication } from "../../../../shared/types/Sales";
 import { useSelector } from "react-redux";
 import AddMedicationDialog from "../../../inventory/components/AddMedicationDialog/AddMedicationDialog";
@@ -29,6 +29,7 @@ import BatchPriceCard from "./BatchPriceCard";
 import BatchDialogFooter from "./BatchDialogFooter";
 import { createMedicationBatch, updateMedicationBatch } from "@/shared/services/MedicationBatchService";
 import { findMedicationById } from "@/shared/services/MedicationService";
+import { searchManufacturers } from "@/shared/services/ManufacturerService";
 
 interface BatchDialogProps {
   isOpen: boolean;
@@ -52,6 +53,7 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   const [isProfitMode, setIsProfitMode] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showAddMedicationDialog, setShowAddMedicationDialog] = useState(false);
+  const [selectedManufacturer, setSelectedManufacturer] = useState<Manufacturer | null>(null);
 
   // Configurar react-hook-form
   const form = useForm<BatchFormData>({
@@ -79,9 +81,25 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
         setProfitMargin(
           calculateProfitMargin(batch.purchasePrice, batch.sellingPrice)
         );
+        
+        // Buscar el manufacturer por nombre si existe supplier
+        if (batch.supplier) {
+          searchManufacturers(batch.supplier).then((manufacturers) => {
+            const matchingManufacturer = manufacturers.find(
+              (m) => m.name.toLowerCase() === batch.supplier?.toLowerCase()
+            );
+            setSelectedManufacturer(matchingManufacturer || null);
+          }).catch((error) => {
+            console.error("Error searching for manufacturer:", error);
+            setSelectedManufacturer(null);
+          });
+        } else {
+          setSelectedManufacturer(null);
+        }
       } else {
         reset(getEmptyBatch(authUser?.id || "current-user"));
         setProfitMargin(0);
+        setSelectedManufacturer(null);
       }
     }
   }, [isOpen, mode, batch, authUser, reset]);
@@ -123,6 +141,10 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   const handleMedicationAdded = useCallback(() => {
     setShowAddMedicationDialog(false);
     // Aquí podrías recargar la lista de medicamentos si fuera necesario
+  }, []);
+
+  const handleManufacturerChange = useCallback((manufacturer: Manufacturer | null) => {
+    setSelectedManufacturer(manufacturer);
   }, []);
 
   // Efecto para activar el dialog de medicamentos
@@ -181,6 +203,10 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   };
 
   const formValues = watch();
+  const extendedFormValues = {
+    ...formValues,
+    selectedManufacturer,
+  };
   const [selectedMedication, setSelectedMedication] =
     useState<Medication | null>(null);
 
@@ -239,10 +265,11 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
           </Button>
 
           <BatchInfoCard
-        formData={formValues}
-        errors={errors}
-        mode={mode}
-        handleInputChange={handleInputChange}
+            formData={extendedFormValues}
+            errors={errors}
+            mode={mode}
+            handleInputChange={handleInputChange}
+            onManufacturerChange={handleManufacturerChange}
           />
 
           <BatchPriceCard

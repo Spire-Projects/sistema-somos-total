@@ -59,6 +59,7 @@ const BatchMedicationCard: React.FC<BatchMedicationCardProps> = ({
             }
             searchFunction={searchMedications}
             displayField="tradeName"
+            secondaryDisplayField="comercialName"
             valueField="id"
             placeholder="Buscar medicamento..."
             disabled={mode === "edit"} 

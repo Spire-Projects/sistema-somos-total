@@ -1,24 +1,130 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '../../../../shared/components/ui/card';
 import { Input } from '../../../../shared/components/ui/input';
 import { Label } from '../../../../shared/components/ui/label';
 import { Calendar } from 'lucide-react';
+import CreatableSelect from '../../../../shared/components/CreatableSelect';
 import type { BatchFormData } from '../../utils/batchForm.utils';
 import type { FieldErrors } from 'react-hook-form';
+import type { Manufacturer } from '../../../../shared/types/Medication';
+import {
+  findManufacturersPaginated,
+  createManufacturer,
+  updateManufacturer,
+  deleteManufacturer,
+} from '../../../../shared/services';
 
 interface BatchInfoCardProps {
   formData: BatchFormData;
   errors: FieldErrors<BatchFormData>;
   mode: 'create' | 'edit';
   handleInputChange: (field: keyof BatchFormData, value: string | number) => void;
+  onManufacturerChange?: (manufacturer: Manufacturer | null) => void;
 }
 
 const BatchInfoCard: React.FC<BatchInfoCardProps> = ({
   formData,
   errors,
   mode,
-  handleInputChange
+  handleInputChange,
+  onManufacturerChange
 }) => {
+  // Estado para los manufacturers iniciales
+  const [initialManufacturers, setInitialManufacturers] = useState<Manufacturer[]>([]);
+  const [manufacturersLoading, setManufacturersLoading] = useState(true);
+
+  // Cargar manufacturers iniciales (primeros 10)
+  useEffect(() => {
+    const loadInitialManufacturers = async () => {
+      try {
+        setManufacturersLoading(true);
+        const response = await findManufacturersPaginated(1, 10);
+        setInitialManufacturers(response.items);
+      } catch (error) {
+        console.error("Error loading initial manufacturers:", error);
+        setInitialManufacturers([]);
+      } finally {
+        setManufacturersLoading(false);
+      }
+    };
+
+    loadInitialManufacturers();
+  }, []);
+
+  const searchManufacturersList = useCallback(
+    async (query: string): Promise<Manufacturer[]> => {
+      try {
+        if (!query || query.trim() === "") {
+          return initialManufacturers;
+        }
+
+        const response = await findManufacturersPaginated(1, 10, query);
+        return response.items;
+      } catch (error) {
+        console.error("Error searching manufacturers:", error);
+        return [];
+      }
+    },
+    [initialManufacturers]
+  );
+
+  const handleCreateManufacturer = useCallback(
+    async (name: string): Promise<Manufacturer> => {
+      try {
+        const newManufacturer = await createManufacturer({
+          name,
+          createdBy: "current-user", // TODO: Usar ID del usuario actual
+        });
+
+        setInitialManufacturers((prev) => [newManufacturer, ...prev]);
+        return newManufacturer;
+      } catch (error) {
+        console.error("Error creating manufacturer:", error);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const handleEditManufacturer = useCallback(
+    async (updated: Manufacturer): Promise<Manufacturer | null> => {
+      try {
+        const edited = await updateManufacturer(updated.id, {
+          name: updated.name,
+        });
+
+        if (!edited) return null;
+
+        setInitialManufacturers((prev) =>
+          prev.map((item) => (item.id === edited.id ? edited : item))
+        );
+
+        return edited;
+      } catch (error) {
+        console.error("Error editing manufacturer:", error);
+        throw error;
+      }
+    },
+    []
+  );
+
+  const handleDeleteManufacturer = useCallback(async (item: Manufacturer) => {
+    try {
+      await deleteManufacturer(item.id);
+      setInitialManufacturers((prev) => prev.filter((i) => i.id !== item.id));
+    } catch (error) {
+      console.error("Error deleting manufacturer:", error);
+    }
+  }, []);
+
+  const handleManufacturerSelect = useCallback(
+    (manufacturer: Manufacturer) => {
+      handleInputChange('manufacturerId', manufacturer.id);
+      handleInputChange('supplier', manufacturer.name);
+      onManufacturerChange?.(manufacturer);
+    },
+    [handleInputChange, onManufacturerChange]
+  );
   return (
     <Card className='p-0'>
       <CardContent className="p-4 space-y-4">
@@ -96,13 +202,26 @@ const BatchInfoCard: React.FC<BatchInfoCardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="supplier">Proveedor</Label>
-            <Input
-              id="supplier"
-              value={formData.supplier}
-              onChange={(e) => handleInputChange('supplier', e.target.value)}
-              placeholder="Nombre del proveedor"
-            />
+            {manufacturersLoading ? (
+              <div className="space-y-2">
+                <Label>Proveedor/Fabricante</Label>
+                <Input placeholder="Cargando fabricantes..." disabled />
+              </div>
+            ) : (
+              <CreatableSelect<Manufacturer>
+                label="Proveedor/Fabricante"
+                values={initialManufacturers}
+                selectedValue={formData.selectedManufacturer}
+                onChange={handleManufacturerSelect}
+                searchFunction={searchManufacturersList}
+                onAddValue={handleCreateManufacturer}
+                onEditValue={handleEditManufacturer}
+                onDeleteValue={handleDeleteManufacturer}
+                displayField="name"
+                valueField="id"
+                placeholder="Ej: Bayer, Pfizer, Genfar, MK"
+              />
+            )}
           </div>
         </div>
       </CardContent>

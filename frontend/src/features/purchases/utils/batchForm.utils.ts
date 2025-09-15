@@ -3,6 +3,7 @@ import type {
   BatchWithMedication,
   CreateBatchData,
 } from "../../../shared/types/Sales";
+import type { Manufacturer } from "../../../shared/types/Medication";
 
 // Esquema de validación con Zod
 export const batchFormSchema = z.object({
@@ -14,13 +15,16 @@ export const batchFormSchema = z.object({
   sellingPrice: z.number().min(0.01, "El precio de venta debe ser mayor a 0"),
   purchaseDate: z.string(),
   supplier: z.string().optional(),
+  manufacturerId: z.string().optional(), // ID del manufacturer seleccionado
   createdBy: z.string(),
 }).refine((data) => data.sellingPrice >= data.purchasePrice, {
   message: "El precio de venta no puede ser menor al precio de compra",
   path: ["sellingPrice"],
 });
 
-export type BatchFormData = z.infer<typeof batchFormSchema>;
+export type BatchFormData = z.infer<typeof batchFormSchema> & {
+  selectedManufacturer?: Manufacturer | null; // Objeto manufacturer completo para el UI
+};
 
 // Función de validación legacy (mantener por compatibilidad si es necesaria)
 export function validateBatchForm(formData: Partial<CreateBatchData>) {

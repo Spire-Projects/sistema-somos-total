@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { CheckCircle, Receipt, Printer, User, Calendar } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -11,6 +11,8 @@ import {
 import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDateTime } from '@/shared/utils/date.utils';
 import type { Sale } from '@/shared/types/Sales';
+import type { Client } from '@/shared/types/Client';
+import { getClientById } from '@/shared/services';
 
 interface SaleSuccessDialogProps {
   isOpen: boolean;
@@ -25,6 +27,14 @@ const SaleSuccessDialog = memo(({
   sale,
   onPrintReceipt
 }: SaleSuccessDialogProps) => {
+  const [client, setClient] = useState<Client | null>(null);
+  useEffect(() => {
+    if (sale.client) {
+      getClientById(sale.client).then(setClient).catch(() => setClient(null));
+    } else {
+      setClient(null);
+    }
+  }, [sale.client]);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -68,7 +78,7 @@ const SaleSuccessDialog = memo(({
               <User className="h-4 w-4 text-gray-500" />
               <div className="flex-1">
                 <div className="text-xs text-gray-600">Cliente</div>
-                <div className="text-sm">{sale.client || 'Cliente general'}</div>
+                <div className="text-sm">{client?.name || 'Cliente general'}</div>
               </div>
             </div>
 
