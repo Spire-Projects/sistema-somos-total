@@ -6,6 +6,7 @@ import { DataPagination } from "@/shared/components/DataPagination";
 import { MedicationAccordionTable } from "./MedicationAccordionTable";
 import { BatchStatsCards } from "./BatchStatsCards";
 import { MedicationBatchSearch } from "./MedicationBatchSearch";
+import CustomDialog from "@/shared/components/CustomDialog";
 import type { MedicationWithBatches } from "@/shared/types/Medication";
 import type { BatchWithMedication } from "@/shared/types/Sales";
 import {
@@ -36,6 +37,11 @@ export const BatchManager: React.FC = () => {
     null
   );
   const [preselectedMedicationId, setPreselectedMedicationId] = useState<string | null>(null);
+
+  // Estados para diálogo de confirmación de eliminación
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [batchToDelete, setBatchToDelete] = useState<BatchWithMedication | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadMedications();
@@ -100,21 +106,32 @@ export const BatchManager: React.FC = () => {
   };
 
   const handleDeleteBatch = async (batch: BatchWithMedication) => {
-    if (
-      !window.confirm(`¿Estás seguro de eliminar el lote ${batch.batchId}?`)
-    ) {
-      return;
-    }
+    setBatchToDelete(batch);
+    setDeleteDialogOpen(true);
+  };
 
+  const confirmDeleteBatch = async () => {
+    if (!batchToDelete) return;
+
+    setDeleting(true);
     try {
-      await deleteMedicationBatch(batch.id);
-      console.log("Lote eliminado correctamente:", batch.batchId);
+      await deleteMedicationBatch(batchToDelete.id);
+      console.log("Lote eliminado correctamente:", batchToDelete.batchId);
       // Recargar los datos después de eliminar
       loadMedications();
+      setDeleteDialogOpen(false);
+      setBatchToDelete(null);
     } catch (error) {
       console.error("Error eliminando lote:", error);
       setError("Error eliminando el lote");
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const cancelDeleteBatch = () => {
+    setDeleteDialogOpen(false);
+    setBatchToDelete(null);
   };
 
   const handleDialogSuccess = () => {
@@ -224,6 +241,18 @@ export const BatchManager: React.FC = () => {
         batch={editingBatch}
         mode={dialogMode}
         preselectedMedicationId={preselectedMedicationId}
+      />
+
+      {/* Diálogo de confirmación de eliminación */}
+      <CustomDialog
+        isOpen={deleteDialogOpen}
+        onConfirm={confirmDeleteBatch}
+        onCancel={cancelDeleteBatch}
+        title="Eliminar Lote"
+        description={`¿Estás seguro de eliminar el lote ${batchToDelete?.batchId}? Esta acción no se puede deshacer.`}
+        textConfirm="Eliminar"
+        textCancel="Cancelar"
+        loading={deleting}
       />
     </div>
   );
