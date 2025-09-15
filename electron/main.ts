@@ -14,7 +14,7 @@ const isDev = process.env.NODE_ENV === 'development';
 function getFrontendUrl(): string {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:5173';
+    return 'http://localhost:5175';
   }
   
   // En producción, usar archivos estáticos desde file://
@@ -83,7 +83,7 @@ function createWindow(): void {
 async function initializeApp(): Promise<void> {
   try {
     if (isDev && !app.isPackaged) {
-      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5173');
+      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5175');
       console.log('💡 Asegúrate de ejecutar "npm run dev:frontend" en otra terminal');
     } else {
     }

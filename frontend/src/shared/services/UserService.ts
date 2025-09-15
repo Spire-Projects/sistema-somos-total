@@ -18,7 +18,7 @@ import {
 } from '../utils/auth.utils';
 import type { AuthUser } from '../types/User';
 
-// Selector de base de datos según el modo (repositorio)
+
 const getUserDB = () => getUserRepository();
 
 export const UserService = {

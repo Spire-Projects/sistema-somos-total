@@ -131,7 +131,7 @@ const SaleRow = memo(({ sale }: SaleRowProps) => {
 
         <td className="p-3">
           <div className="text-sm text-gray-900">
-            {clientName?.name || 'Cliente genera'}
+            {clientName?.name || 'Cliente general'}
           </div>
         </td>
 

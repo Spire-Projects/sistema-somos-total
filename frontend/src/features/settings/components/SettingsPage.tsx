@@ -45,7 +45,6 @@ export const SettingsPage = () => {
 
   // Opciones para los filtros/tabs
   const tabOptions: FilterOption[] = [
-    { value: 'ingredients', label: 'Ingredientes', icon: '🧪', count: activeIngredients.length },
     { value: 'categories', label: 'Categorías', icon: '🏷️', count: categories.length },
     { value: 'forms', label: 'Formas Farm.', icon: '💊', count: pharmaceuticalForms.length },
     { value: 'manufacturers', label: 'Fabricantes', icon: '🏭', count: manufacturers.length },
@@ -72,18 +71,7 @@ export const SettingsPage = () => {
     }
   };
 
-  const handleInitializeData = async () => {
-    setInitializing(true);
-    try {
-      await initializeMedicationData();
-      await loadData();
-      console.log('✅ Datos inicializados correctamente');
-    } catch (error) {
-      console.error('❌ Error inicializando datos:', error);
-    } finally {
-      setInitializing(false);
-    }
-  };
+  
 
   useEffect(() => {
     loadData();
@@ -119,26 +107,12 @@ export const SettingsPage = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="!text-xl font-bold text-gray-900">Configuración del Sistema</h1>
-        <Button 
-          onClick={handleInitializeData} 
-          disabled={initializing}
-          variant="default"
-        >
-          {initializing ? 'Inicializando...' : 'Recargar Datos Iniciales'}
-        </Button>
+      
       </div>
 
       {/* Resumen de datos */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Ingredientes Activos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{activeIngredients.length}</div>
-          </CardContent>
-        </Card>
-        
+       
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Categorías</CardTitle>

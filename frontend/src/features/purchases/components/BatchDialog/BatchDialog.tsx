@@ -144,7 +144,7 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
   const onSubmit = async (data: BatchFormData) => {
     setLoading(true);
     try {
-      console.log("Batch data:", data);
+    
       
       if (mode === 'create') {
         await createMedicationBatch({
@@ -200,49 +200,59 @@ const BatchDialog: React.FC<BatchDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!w-400 max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="
+          min-w-[90vw] 
+          sm:min-w-[500px] 
+          md:min-w-[600px] 
+          lg:min-w-[700px] 
+          xl:min-w-[800px] 
+          max-h-[90vh] 
+          overflow-y-auto
+        "
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {mode === "create" ? "Agregar Nuevo Lote" : "Editar Lote"}
+        <Package className="h-5 w-5" />
+        {mode === "create" ? "Agregar Nuevo Lote" : "Editar Lote"}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Utilizar los componentes memoizados */}
           <BatchMedicationCard
-            selectedMedication={selectedMedication}
-            formData={formValues}
-            errors={errors}
-            mode={mode}
-            handleInputChange={handleInputChange}
+        selectedMedication={selectedMedication}
+        formData={formValues}
+        errors={errors}
+        mode={mode}
+        handleInputChange={handleInputChange}
           />
 
           <Button 
-            type="button" 
-            variant="outline" 
-            className="w-full mb-4"
-            onClick={() => setShowAddMedicationDialog(true)}
+        type="button" 
+        variant="outline" 
+        className="w-full mb-4"
+        onClick={() => setShowAddMedicationDialog(true)}
           >
-            <Plus className="h-5 w-5 mr-2" />
-            Agregar Medicamento
+        <Plus className="h-5 w-5 mr-2" />
+        Agregar Medicamento
           </Button>
 
           <BatchInfoCard
-            formData={formValues}
-            errors={errors}
-            mode={mode}
-            handleInputChange={handleInputChange}
+        formData={formValues}
+        errors={errors}
+        mode={mode}
+        handleInputChange={handleInputChange}
           />
 
           <BatchPriceCard
-            formData={formValues}
-            errors={errors}
-            isProfitMode={isProfitMode}
-            profitMargin={profitMargin}
-            setIsProfitMode={setIsProfitMode}
-            handleInputChange={handleInputChange}
-            handleProfitMarginChange={handleProfitMarginChange}
+        formData={formValues}
+        errors={errors}
+        isProfitMode={isProfitMode}
+        profitMargin={profitMargin}
+        setIsProfitMode={setIsProfitMode}
+        handleInputChange={handleInputChange}
+        handleProfitMarginChange={handleProfitMarginChange}
           />
 
           <BatchDialogFooter mode={mode} loading={loading} onClose={onClose} />

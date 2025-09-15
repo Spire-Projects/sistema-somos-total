@@ -76,7 +76,7 @@ function createLocalServer() {
 function getFrontendUrl() {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:5173';
+    return 'http://localhost:5175';
   }
   
   // En producción, usar servidor HTTP local
@@ -156,7 +156,7 @@ function createWindow() {
 async function initializeApp() {
   try {
     if (isDev && !app.isPackaged) {
-      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5173');
+      console.log('📱 Modo desarrollo: Esperando que Vite esté disponible en http://localhost:5175');
       console.log('💡 Asegúrate de ejecutar "npm run dev:frontend" en otra terminal');
     } else {
       await createLocalServer();
