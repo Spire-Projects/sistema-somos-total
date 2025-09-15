@@ -67,6 +67,13 @@ export interface IMedicationBatchRepository {
   ): Promise<MedicationBatch | null>;
   findMedicationIdsWithActiveStock(): Promise<string[]>;
 
+  // 🆕 NUEVO MÉTODO PARA ESTADÍSTICAS GLOBALES OPTIMIZADAS
+  getExpiringAndExpiredBatchesCount(daysToExpire: number): Promise<{
+    expiring: number;
+    expired: number;
+    total: number;
+  }>;
+
   // Validaciones
   batchIdExistsForMedication(
     medicationId: string,
@@ -742,6 +749,61 @@ export class LocalMedicationBatchRepository
     const doc = await collection.findOne({ selector }).exec();
     return !!doc;
   }
+
+  /**
+   * 🆕 Obtiene el conteo de lotes próximos a vencer y vencidos de manera optimizada
+   * @param daysToExpire Número de días para considerar como "próximo a vencer"
+   * @returns Objeto con conteos de lotes próximos a vencer, vencidos y total
+   */
+  async getExpiringAndExpiredBatchesCount(daysToExpire: number): Promise<{
+    expiring: number;
+    expired: number;
+    total: number;
+  }> {
+    const collection = await this.getCollection();
+    const now = new Date();
+    const expiringThreshold = new Date();
+    expiringThreshold.setDate(now.getDate() + daysToExpire);
+
+    // Convertir fechas a strings en formato ISO para comparación
+    const nowISODate = now.toISOString().split('T')[0]; // Solo la fecha, sin tiempo
+    const expiringISODate = expiringThreshold.toISOString().split('T')[0];
+
+    // Usar una sola consulta find con el índice ['isDeleted', 'expirationDate'] 
+    // y procesar en memoria para evitar el slow count
+    const docs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          expirationDate: { $lte: expiringISODate } // Todos los lotes hasta el umbral
+        },
+        // Este selector coincide con el índice ['isDeleted', 'expirationDate']
+      })
+      .exec();
+
+    // Procesar en memoria (más eficiente que múltiples count queries)
+    let expiredCount = 0;
+    let expiringCount = 0;
+
+    docs.forEach((doc: any) => {
+      const batch = doc.toJSON();
+      const expirationDate = batch.expirationDate;
+      
+      if (expirationDate <= nowISODate) {
+        expiredCount++;
+      } else if (expirationDate <= expiringISODate) {
+        expiringCount++;
+      }
+    });
+
+    const total = expiredCount + expiringCount;
+
+    return {
+      expiring: expiringCount,
+      expired: expiredCount,
+      total,
+    };
+  }
 }
 
 /**
@@ -860,6 +922,14 @@ export class FirestoreMedicationBatchRepository
   }
 
   async findMedicationIdsWithActiveStock(): Promise<string[]> {
+    throw new Error("Firestore implementation not yet available");
+  }
+
+  async getExpiringAndExpiredBatchesCount(_daysToExpire: number): Promise<{
+    expiring: number;
+    expired: number;
+    total: number;
+  }> {
     throw new Error("Firestore implementation not yet available");
   }
 }

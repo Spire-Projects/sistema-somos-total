@@ -47,6 +47,11 @@ export const config = {
     BATCH_SIZE: parseInt(import.meta.env.VITE_REPLICATION_BATCH_SIZE || '25'),
     REAL_TIME: true, // true por defecto
     RETRY_INTERVAL: parseInt(import.meta.env.VITE_REPLICATION_RETRY_INTERVAL || '5000'), // 5 segundos
+  },
+
+  // Configuración de inventario y lotes
+  INVENTORY: {
+    EXPIRING_SOON_DAYS: parseInt(import.meta.env.VITE_EXPIRING_SOON_DAYS || '30'), // Días para considerar "próximo a vencer"
   }
 };
 

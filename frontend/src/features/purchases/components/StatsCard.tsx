@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
 
 interface StatsCardProps {
@@ -7,6 +8,7 @@ interface StatsCardProps {
   value: number | string;
   icon: LucideIcon;
   color: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'yellow' | 'teal';
+  loading?: boolean;
 }
 
 const colorMap = {
@@ -51,7 +53,8 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   title,
   value,
   icon: Icon,
-  color
+  color,
+  loading = false
 }) => {
   const colorClasses = colorMap[color];
   
@@ -61,7 +64,14 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            {loading ? (
+              <div className="flex items-center mt-1">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400 mr-2" />
+                <span className="text-lg text-gray-400">Cargando...</span>
+              </div>
+            ) : (
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+            )}
           </div>
           <div className={`p-2 rounded-full ${colorClasses.bg}`}>
             <Icon className={`h-6 w-6 ${colorClasses.text}`} />
