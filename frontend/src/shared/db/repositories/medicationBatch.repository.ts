@@ -77,6 +77,9 @@ export interface IMedicationBatchRepository {
   // 🆕 MÉTODO PARA CONTAR TOTAL DE LOTES ACTIVOS GLOBALMENTE
   getTotalActiveBatchesCount(): Promise<number>;
 
+  // 🆕 MÉTODO PARA OBTENER IDs DE MEDICAMENTOS CON LOTES PRÓXIMOS A VENCER
+  findMedicationIdsWithExpiringBatches(daysToExpire: number): Promise<string[]>;
+
   // Validaciones
   batchIdExistsForMedication(
     medicationId: string,
@@ -826,6 +829,40 @@ export class LocalMedicationBatchRepository
 
     return count;
   }
+
+  /**
+   * 🆕 Obtiene IDs únicos de medicamentos que tienen lotes próximos a vencer o vencidos
+   * @param daysToExpire Número de días para considerar como "próximo a vencer"
+   * @returns Array de IDs de medicamentos únicos
+   */
+  async findMedicationIdsWithExpiringBatches(daysToExpire: number): Promise<string[]> {
+    const collection = await this.getCollection();
+    const now = new Date();
+    const expiringThreshold = new Date();
+    expiringThreshold.setDate(now.getDate() + daysToExpire);
+
+    // Convertir fechas a strings en formato ISO para comparación
+    const expiringISODate = expiringThreshold.toISOString().split('T')[0];
+
+    // Usar consulta optimizada con el índice ['isDeleted', 'expirationDate']
+    const docs = await collection
+      .find({
+        selector: {
+          isDeleted: false,
+          expirationDate: { $lte: expiringISODate } // Lotes que vencen hasta el umbral
+        },
+      })
+      .exec();
+
+    // Extraer IDs únicos de medicamentos
+    const medicationIds = new Set<string>();
+    docs.forEach((doc: any) => {
+      const batch = doc.toJSON();
+      medicationIds.add(batch.medicationId);
+    });
+
+    return Array.from(medicationIds);
+  }
 }
 
 /**
@@ -956,6 +993,10 @@ export class FirestoreMedicationBatchRepository
   }
 
   async getTotalActiveBatchesCount(): Promise<number> {
+    throw new Error("Firestore implementation not yet available");
+  }
+
+  async findMedicationIdsWithExpiringBatches(_daysToExpire: number): Promise<string[]> {
     throw new Error("Firestore implementation not yet available");
   }
 }

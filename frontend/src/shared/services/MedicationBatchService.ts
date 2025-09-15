@@ -1,5 +1,6 @@
 import { getMedicationRepository } from '../db/repositories/medication.repository';
 import { getMedicationBatchRepository } from '../db/repositories/medicationBatch.repository';
+import { config } from '../config/config';
 import type { 
   MedicationBatch, 
   BatchFilters, 
@@ -528,6 +529,57 @@ export const searchMedicationsWithBatchesCombined = async (
     page: page,
     size: size,
     totalItems: uniqueMedicationIds.length, // Total real de esta búsqueda combinada
+    totalPages
+  };
+};
+
+/**
+ * 🆕 Obtener medicamentos con lotes próximos a vencer (OPTIMIZADO)
+ * Busca directamente en la BD los medicamentos que tienen lotes próximos a vencer o vencidos
+ */
+export const getMedicationsWithExpiringBatches = async (
+  page: number = 1,
+  size: number = 10,
+  daysToExpire: number = config.INVENTORY.EXPIRING_SOON_DAYS
+): Promise<ItemsResponse<MedicationWithBatches>> => {
+  const batchDB = medicationBatchDb;
+  
+  // 🚀 Obtener IDs de medicamentos con lotes próximos a vencer de forma optimizada
+  const medicationIdsWithExpiringBatches = await batchDB.findMedicationIdsWithExpiringBatches(daysToExpire);
+  
+  if (medicationIdsWithExpiringBatches.length === 0) {
+    // No hay medicamentos con lotes próximos a vencer
+    return {
+      items: [],
+      page,
+      size,
+      totalItems: 0,
+      totalPages: 0
+    };
+  }
+  
+  // Aplicar paginación a los IDs
+  const totalItems = medicationIdsWithExpiringBatches.length;
+  const totalPages = Math.ceil(totalItems / size);
+  const startIndex = (page - 1) * size;
+  const endIndex = startIndex + size;
+  const paginatedMedicationIds = medicationIdsWithExpiringBatches.slice(startIndex, endIndex);
+  
+  // Obtener datos completos solo para la página actual
+  const medicationsWithBatches: MedicationWithBatches[] = [];
+  
+  for (const medicationId of paginatedMedicationIds) {
+    const medicationWithBatches = await getMedicationWithBatches(medicationId, 1, 20);
+    if (medicationWithBatches) {
+      medicationsWithBatches.push(medicationWithBatches);
+    }
+  }
+  
+  return {
+    items: medicationsWithBatches,
+    page,
+    size,
+    totalItems,
     totalPages
   };
 };
