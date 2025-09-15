@@ -19,8 +19,9 @@ import type { Sale } from '@/shared/types/Sales';
 import type { AuthUser } from '@/shared/types/User';
 import type { Client } from '@/shared/types/Client';
 import type { Medic } from '@/shared/types/Sales';
-import { getMedicationViewById } from '@/shared/services';
+import { findMedicationBatchById, getMedicationViewById } from '@/shared/services';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
+import type { MedicationBatch } from '@/shared/types/Medication';
 
 interface SaleDetailsProps {
   sale: Sale;
@@ -205,6 +206,41 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
     return 'Sin médico asignado';
   };
 
+  const [batchesMap, setBatchesMap] = useState<Record<string, MedicationBatch | null>>({});
+  const [loadingBatches, setLoadingBatches] = useState<Set<string>>(new Set());
+
+  // Función para cargar un lote específico solo cuando sea necesario
+  const loadBatchIfNeeded = async (batchId: string) => {
+    // Si ya está cargado o se está cargando, no hacer nada
+    if (batchesMap[batchId] !== undefined || loadingBatches.has(batchId)) {
+      return;
+    }
+
+    // Marcar como cargando
+    setLoadingBatches(prev => new Set(prev).add(batchId));
+
+    try {
+      const batchData = await findMedicationBatchById(batchId);
+      setBatchesMap(prev => ({
+        ...prev,
+        [batchId]: batchData || null
+      }));
+    } catch (error) {
+      console.error('Error loading batch:', batchId, error);
+      setBatchesMap(prev => ({
+        ...prev,
+        [batchId]: null
+      }));
+    } finally {
+      // Remover del set de cargando
+      setLoadingBatches(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(batchId);
+        return newSet;
+      });
+    }
+  };
+
   return (
     <>
       <div className="bg-gray-50 p-4 border-t">
@@ -346,7 +382,7 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
                   <th className="text-right p-2 font-medium text-gray-700">Cantidad</th>
                   <th className="text-right p-2 font-medium text-gray-700">Precio Unit.</th>
                   {currentSale.items.some(item => item.listPrice) && (
-                    <th className="text-right p-2 font-medium text-gray-700">Precio Lista</th>
+                    <th className="text-right p-2 font-medium text-gray-700">Precio  Lista</th>
                   )}
                   {currentSale.items.some(item => item.discount) && (
                     <th className="text-right p-2 font-medium text-gray-700">Descuento por Unidad</th>
@@ -359,12 +395,35 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
                   const medication = medicationsMap[item.medicationId];
                   const medicationLabel = medication?.comercialName || "nada" || (medicationsLoading ? 'Cargando...' : 'Medicamento desconocido');
                   
+                  // Cargar lote de forma lazy cuando se renderiza
+                  const batch = batchesMap[item.batchId];
+                  const isBatchLoading = loadingBatches.has(item.batchId);
+                  
+                  // Trigger lazy loading si no está cargado
+                  if (batch === undefined && !isBatchLoading) {
+                    loadBatchIfNeeded(item.batchId);
+                  }
+                  
                   return (
                     <tr key={`${item.batchId}-${index}`} className="hover:bg-gray-50">
                       <td className="p-2">
                         <div>
                           <div className="font-medium">{medicationLabel}</div>
-                          <div className="text-gray-500">Lote: {item.batchId}</div>
+                          <div className="text-gray-500">
+                            Lote: {batch?.batchId}
+                            {batch && (
+                              <>
+                                {batch.expirationDate && (
+                                  <span className="ml-2 text-xs">
+                                    (Vence: {formatDate(batch.expirationDate)})
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {isBatchLoading && (
+                              <span className="ml-2 text-xs text-gray-400">Cargando...</span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="p-2 text-right">{item.quantity}</td>

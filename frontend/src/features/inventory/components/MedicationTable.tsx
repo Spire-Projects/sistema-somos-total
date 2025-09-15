@@ -207,7 +207,7 @@ export const MedicationTable = memo<MedicationTableProps>(
                   </Button>
                 </TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Vencimiento</TableHead>
+                <TableHead className="text-center">Vencimiento <br /> Lote</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

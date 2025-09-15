@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Box, Boxes, Clock } from 'lucide-react';
+import {  Box, Boxes, Clock } from 'lucide-react';
 import { StatsCard } from './StatsCard';
 import type { MedicationWithBatches } from '@/shared/types/Medication';
 import { useBatchStats } from '../hooks/useBatchStats';
@@ -41,13 +41,6 @@ export const BatchStatsCards: React.FC<BatchStatsCardsProps> = ({
         loading={loading}
       />
 
-      <StatsCard 
-        title="Stock Total"
-        value={displayStats.totalStock}
-        icon={Package}
-        color="purple"
-        loading={loading}
-      />
 
       <StatsCard 
         title="Próximos a Vencer"

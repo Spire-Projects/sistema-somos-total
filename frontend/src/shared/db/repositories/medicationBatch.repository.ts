@@ -74,6 +74,9 @@ export interface IMedicationBatchRepository {
     total: number;
   }>;
 
+  // 🆕 MÉTODO PARA CONTAR TOTAL DE LOTES ACTIVOS GLOBALMENTE
+  getTotalActiveBatchesCount(): Promise<number>;
+
   // Validaciones
   batchIdExistsForMedication(
     medicationId: string,
@@ -804,6 +807,25 @@ export class LocalMedicationBatchRepository
       total,
     };
   }
+
+  /**
+   * 🆕 Obtiene el total de lotes activos en toda la base de datos
+   * @returns Número total de lotes no eliminados
+   */
+  async getTotalActiveBatchesCount(): Promise<number> {
+    const collection = await this.getCollection();
+    
+    // Usar el índice simple 'isDeleted' para una consulta optimizada
+    const count = await collection
+      .count({
+        selector: {
+          isDeleted: false
+        },
+      })
+      .exec();
+
+    return count;
+  }
 }
 
 /**
@@ -930,6 +952,10 @@ export class FirestoreMedicationBatchRepository
     expired: number;
     total: number;
   }> {
+    throw new Error("Firestore implementation not yet available");
+  }
+
+  async getTotalActiveBatchesCount(): Promise<number> {
     throw new Error("Firestore implementation not yet available");
   }
 }

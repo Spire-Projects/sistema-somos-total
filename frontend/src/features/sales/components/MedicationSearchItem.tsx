@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { formatCurrency } from '@/shared/services/BatchService';
 import { Package } from 'lucide-react';
 import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
+import { config } from '@/shared/config/config';
 
 interface MedicationSearchItemProps {
   medication: MedicationCatalogView;
@@ -51,6 +52,18 @@ const MedicationSearchItem = memo(({ medication, onAddToSale }: MedicationSearch
                 Requiere receta
               </span>
             )}
+            {nearestBatch?.expirationDate &&
+              (() => {
+              const expiration = new Date(nearestBatch.expirationDate);
+              const now = new Date();
+              const diffDays = (expiration.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+              return diffDays > 0 && diffDays <= config.INVENTORY.EXPIRING_SOON_DAYS;
+              })() && (
+              <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                Lote actual próximo a vencer
+              </span>
+            )}
+              
           </div>
           <p className={`text-xs truncate ${hasStock ? 'text-gray-600' : 'text-gray-400'}`}>
             {medication.tradeName}

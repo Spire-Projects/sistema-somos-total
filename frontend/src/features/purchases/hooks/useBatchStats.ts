@@ -37,18 +37,18 @@ export const useBatchStats = (
       // Obtener repositorio
       const batchRepository = getMedicationBatchRepository();
 
-      // Calcular estadísticas locales para lotes y stock (de los medicamentos en memoria)
-      const totalBatches = medications.reduce((total, med) => total + med.batchCount, 0);
+      // Calcular stock total de los medicamentos en memoria (mantenemos esto local)
       const totalStock = medications.reduce((total, med) => total + med.totalStock, 0);
 
-      // Obtener estadísticas globales de lotes próximos a vencer desde la BD
-      const expiringStats = await batchRepository.getExpiringAndExpiredBatchesCount(
-        config.INVENTORY.EXPIRING_SOON_DAYS
-      );
+      // 🆕 Obtener total de lotes desde la BD completa
+      const [totalActiveBatches, expiringStats] = await Promise.all([
+        batchRepository.getTotalActiveBatchesCount(),
+        batchRepository.getExpiringAndExpiredBatchesCount(config.INVENTORY.EXPIRING_SOON_DAYS)
+      ]);
 
       const statsData: BatchStatsData = {
         totalMedications,
-        totalBatches,
+        totalBatches: totalActiveBatches, // 🆕 Ahora viene de la BD completa
         totalStock,
         expiringBatches: expiringStats.total, // Incluye vencidos + próximos a vencer
       };
@@ -61,7 +61,7 @@ export const useBatchStats = (
       // Fallback: usar cálculos en memoria si falla la consulta a BD
       const fallbackStats: BatchStatsData = {
         totalMedications,
-        totalBatches: medications.reduce((total, med) => total + med.batchCount, 0),
+        totalBatches: medications.reduce((total, med) => total + med.batchCount, 0), // Fallback local
         totalStock: medications.reduce((total, med) => total + med.totalStock, 0),
         expiringBatches: 0, // No podemos calcular esto sin acceso a BD
       };
