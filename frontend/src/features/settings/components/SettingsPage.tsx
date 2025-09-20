@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../../shared/components/ui/button';
 import { FilterTabs, type FilterOption } from '../../../shared/components/FilterTabs';
 import {
   findAllActiveIngredients,
@@ -7,7 +6,6 @@ import {
   findAllPharmaceuticalForms,
   findAllManufacturers
 } from '../../../shared/services';
-import { initializeMedicationData } from '../../../shared/utils/init-data.utils';
 import type { 
   ActiveIngredient, 
   MedicationCategory, 
@@ -38,8 +36,7 @@ export const SettingsPage = () => {
   const [pharmaceuticalForms, setPharmaceuticalForms] = useState<PharmaceuticalFormDoc[]>([]);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(false);
-  
+ 
   // Estado para el tab activo
   const [activeTab, setActiveTab] = useState('ingredients');
 
