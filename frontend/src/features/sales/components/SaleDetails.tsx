@@ -5,6 +5,7 @@ import { UserService } from '@/shared/services/UserService';
 import { getClientById } from '@/shared/services/ClientService';
 import { findMedicById } from '@/shared/services/MedicService';
 import { updateSaleFacturedStatus } from '@/shared/services/SalesService';
+import { generateSaleReport } from '@/shared/services/ReportService';
 import { Button } from '@/shared/components/ui/button';
 import { 
   Dialog, 
@@ -14,7 +15,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/shared/components/ui/dialog';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, FileText } from 'lucide-react';
 import type { Sale } from '@/shared/types/Sales';
 import type { AuthUser } from '@/shared/types/User';
 import type { Client } from '@/shared/types/Client';
@@ -35,6 +36,7 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   const [currentSale, setCurrentSale] = useState<Sale>(sale);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [updatingFactured, setUpdatingFactured] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   const [loading, setLoading] = useState({
     user: false,
@@ -81,6 +83,24 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   // Confirmar desmarcado de facturación
   const handleConfirmUnmark = async () => {
     await updateFacturedStatus(false);
+  };
+
+  // Generar reporte de venta
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true);
+    try {
+      const result = await generateSaleReport(currentSale.id);
+      if (!result.success) {
+        console.error('Error al generar el reporte:', result.error);
+        // Aquí puedes agregar una notificación de error si tienes un sistema de notificaciones
+        alert(`Error al generar el reporte: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error al generar el reporte:', error);
+      alert('Error inesperado al generar el reporte');
+    } finally {
+      setGeneratingReport(false);
+    }
   };
 
   // Cargar información del usuario que creó la venta
@@ -338,7 +358,25 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
         )}
 
         {/* Botón de facturación */}
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex gap-2 justify-end">
+          <Button
+            onClick={handleGenerateReport}
+            disabled={generatingReport}
+            size="sm"
+            variant={currentSale.factured ? "outline" : "default"}
+            >
+              {generatingReport ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <FileText className='h-4 w-4 mr-2' />
+                  Generar nota de venta
+                </>
+              )}
+            </Button>
           <Button
             onClick={handleToggleFactured}
             disabled={updatingFactured}

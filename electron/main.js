@@ -51,12 +51,32 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Manejar enlaces externos
+  // Manejar ventanas nuevas (incluyendo popups e impresión)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // Abrir enlaces externos en el navegador por defecto
+    // Si es una URL blob (para impresión) o about:blank, permitir
+    if (url.startsWith('blob:') || url === 'about:blank' || url === '') {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 800,
+          height: 600,
+          show: true,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            webSecurity: false // Permitir contenido local para impresión
+          }
+        }
+      };
+    }
+    
+    // Para URLs externas, abrir en navegador por defecto
     if (url.startsWith('http://') || url.startsWith('https://')) {
       shell.openExternal(url);
+      return { action: 'deny' };
     }
+    
+    // Denegar otras URLs por seguridad
     return { action: 'deny' };
   });
 

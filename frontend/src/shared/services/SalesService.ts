@@ -274,3 +274,16 @@ export const updateSaleFacturedStatus = async (id: string, factured: boolean): P
   const updateData = { ...currentData, factured };
   return await repository.update(id, updateData);
 };
+
+export const generateSaleReport = async (
+    idSale: string
+  ): Promise<{ success: boolean; url?: string; error?: string }> => {
+    try {
+      // Importar dinámicamente para evitar dependencias circulares
+      const { generateSaleReport: generateReportFromService } = await import('./ReportService');
+      return await generateReportFromService(idSale);
+    } catch (error) {
+      console.error('Error generating sale report:', error);
+      return { success: false, error: 'Error al generar el reporte' };
+    }
+  };

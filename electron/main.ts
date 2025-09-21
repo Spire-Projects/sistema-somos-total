@@ -59,6 +59,18 @@ function createWindow(): void {
     mainWindow = null;
   });
 
+ mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  return {
+    action: 'allow',
+    overrideBrowserWindowOptions: {
+      width: 500,
+      height: 400,
+      ...(mainWindow ? { parent: mainWindow } : {}),
+      modal: false
+    }
+  };
+});
+
   // Manejar enlaces externos
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // Abrir enlaces externos en el navegador por defecto
