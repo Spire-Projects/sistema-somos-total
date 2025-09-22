@@ -39,6 +39,7 @@ export interface  Sale {
   nitClient?: string; // Optional NIT of the client for invoicing purposes
   socialReasonClient?: string; // Optional social reason of the client for invoicing purposes
   saleNotes?: string; // Optional notes about the sale
+  numberInvoice?: string; // Optional invoice number associated with the sale
 }
 
 export interface BatchWithMedication extends MedicationBatch {

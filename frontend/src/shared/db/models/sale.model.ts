@@ -2,7 +2,7 @@ import type { RxJsonSchema, RxCollection } from "rxdb";
 import type { Sale } from "../../types/Sales";
 
 export const saleSchema: RxJsonSchema<Sale> = {
-  version: 3,
+  version: 4,
   primaryKey: "id",
   type: "object",
   properties: {
@@ -40,7 +40,8 @@ export const saleSchema: RxJsonSchema<Sale> = {
     factured: { type: "boolean" },
     nitClient: { type: "string", maxLength: 100 },
     socialReasonClient: { type: "string", maxLength: 200 },
-    saleNotes: { type: "string", maxLength: 1000 }
+    saleNotes: { type: "string", maxLength: 1000 },
+    numberInvoice: { type: "string", maxLength: 100 , default: "0000000"},
   },
   required: ["id", "items", "total", "paymentMethod", "createdAt", "createdBy", "factured"],
   indexes: [
@@ -59,7 +60,7 @@ export const saleSchema: RxJsonSchema<Sale> = {
 
 
 export const saleMigrationStrategies = {
-  // Migration from version 0 to 1: Add 'factured' field y cambiar 'tarjeta' a 'qr' en paymentMethod
+  
   1: (oldDoc: any) => {
     let paymentMethod = oldDoc.paymentMethod;
     if (paymentMethod === 'tarjeta') {
@@ -70,7 +71,7 @@ export const saleMigrationStrategies = {
       paymentMethod,
     };
   },
-  // Migration from version 1 to 2: Convert existing 'transferencia' values to 'qr' and remove 'transferencia' from enum
+  
   2: (oldDoc: any) => {
     let paymentMethod = oldDoc.paymentMethod;
     if (paymentMethod === 'transferencia') {
@@ -88,6 +89,13 @@ export const saleMigrationStrategies = {
       nitClient: oldDoc.nitClient || "",
       socialReasonClient: oldDoc.socialReasonClient || "",
       saleNotes: oldDoc.saleNotes || ""
+    };
+  },
+
+  4: (oldDoc: any) => {
+    return {
+      ...oldDoc,
+      numberInvoice: oldDoc.numberInvoice || "0000000"
     };
   }
 };
