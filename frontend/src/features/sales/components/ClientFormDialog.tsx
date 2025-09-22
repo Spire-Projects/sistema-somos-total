@@ -17,7 +17,8 @@ import type { Client } from "@/shared/types/Client";
 
 const clientSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  nit: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  email: z.string().email({ message: "Correo inválido" }).optional().or(z.literal("")),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -39,7 +40,8 @@ const ClientFormDialog = memo(({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: "",
-      nit: "",
+      phone: "",
+      email: "",
     },
   });
 
@@ -48,8 +50,9 @@ const ClientFormDialog = memo(({
     try {
       const clientData = {
         name: data.name.trim(),
-        nit: data.nit?.trim() || undefined,
-        createdBy: "current-user", // TODO: Get from auth context
+        phone: (data.phone || "").toString().trim(),
+        email: (data.email || "").toString().trim(),
+        createdBy: "system",
       };
 
       const newClient = await createClient(clientData);
@@ -58,7 +61,7 @@ const ClientFormDialog = memo(({
       onClose();
     } catch (error) {
       console.error("Error creating client:", error);
-      // TODO: Show error toast
+     
     } finally {
       setIsLoading(false);
     }
@@ -97,19 +100,36 @@ const ClientFormDialog = memo(({
             )}
           </div>
 
-          <div className="space-y-0">
-            <Label htmlFor="nit">NIT (opcional)</Label>
-            <Input
-              id="nit"
-              placeholder="Número de identificación tributaria"
-              {...form.register("nit")}
-              disabled={isLoading}
-            />
-            {form.formState.errors.nit && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.nit.message}
-              </p>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-0">
+              <Label htmlFor="phone">Teléfono (opcional)</Label>
+              <Input
+                id="phone"
+                placeholder="Número de teléfono"
+                {...form.register("phone")}
+                disabled={isLoading}
+              />
+              {form.formState.errors.phone && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.phone.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-0">
+              <Label htmlFor="email">Correo (opcional)</Label>
+              <Input
+                id="email"
+                placeholder="ejemplo@correo.com"
+                {...form.register("email")}
+                disabled={isLoading}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-2 pt-2">

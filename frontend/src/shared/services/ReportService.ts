@@ -252,7 +252,7 @@ const generateSaleHTML = (data: ReportData): string => {
         .invoice-title {
           font-size: 28px;
           font-weight: bold;
-          color: #4CAF50;
+          color: #dd1a80;
           margin-bottom: 15px;
           text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
           letter-spacing: 1px;
@@ -308,30 +308,47 @@ const generateSaleHTML = (data: ReportData): string => {
         
         .client-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
+          grid-template-columns: 180px 1fr;
+          gap: 8px 18px;
+          align-items: center;
         }
-        
-        .client-field {
-          display: flex;
-          flex-direction: column;
+
+        /* Cada fila del cliente: una etiqueta a la izquierda y el valor a la derecha */
+        .client-row {
+          display: contents; /* permite que los hijos participen del grid */
         }
-        
-        .client-field label {
-          font-weight: 600;
+
+        .client-label {
+          font-weight: 700;
           color: #495057;
           font-size: 11px;
-          margin-bottom: 4px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.6px;
+          padding: 6px 0;
         }
-        
-        .client-field span {
+
+        .client-value {
           border-bottom: 2px solid #dee2e6;
-          padding-bottom: 6px;
+          padding: 6px 0;
           min-height: 20px;
-          font-weight: 500;
-          transition: border-color 0.3s ease;
+          font-weight: 600;
+          color: #222;
+        }
+
+        @media (max-width: 520px) {
+          .client-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .client-label {
+            text-transform: none;
+            font-size: 12px;
+            color: #666;
+          }
+
+          .client-value {
+            padding-left: 0;
+          }
         }
         
         .items-table {
@@ -385,6 +402,7 @@ const generateSaleHTML = (data: ReportData): string => {
         
         .item-name {
           font-weight: 700;
+          text-align: left;
           margin-bottom: 4px;
           color: #2c3e50;
           font-size: 12px;
@@ -456,17 +474,16 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .footer {
-          margin-top: 40px;
+          
           text-align: center;
-          padding-top: 20px;
-          border-top: 1px solid #eee;
+          
           color: #666;
-          font-size: 10px;
+          font-size: 16px;
         }
         
         .company-footer {
           margin-top: 10px;
-          color: #4CAF50;
+          color: #dd1a80;
           font-weight: bold;
         }
         
@@ -520,24 +537,24 @@ const generateSaleHTML = (data: ReportData): string => {
       </div>
       
       <div class="client-info">
-        <h3>Información del Cliente</h3>
+       
         <div class="client-grid">
-          <div class="client-field">
-            <label>Nombre del cliente</label>
-            <span>${client?.name || 'Cliente general'}</span>
+          <div class="client-row">
+            <div class="client-label">Nombre del cliente</div>
+            <div class="client-value">${client?.name || 'Cliente general'}</div>
           </div>
-          <div class="client-field">
-            <label>Email</label>
-            <span>${client?.email || ''}</span>
+
+          <div class="client-row">
+            <div class="client-label">Email</div>
+            <div class="client-value">${client?.email || ''}</div>
           </div>
-          <div class="client-field">
-            <label>Teléfono</label>
-            <span>${client?.phone || ''}</span>
+
+          <div class="client-row">
+            <div class="client-label">Teléfono</div>
+            <div class="client-value">${client?.phone || ''}</div>
           </div>
-          <div class="client-field">
-            <label>Dirección</label>
-            <span>${client?.address || ''}</span>
-          </div>
+
+         
         </div>
       </div>
       
@@ -589,7 +606,11 @@ const generateSaleHTML = (data: ReportData): string => {
         <table class="totals-table">
           <tr>
             <td>Subtotal</td>
-            <td class="currency">${formatCurrency((sale.totalWithoutDiscount || sale.total) - (sale.totalDiscount || 0))}</td>
+            <td class="currency">${formatCurrency((sale.totalDiscount || 0) + (sale.total || 0))}</td>
+          </tr>
+           <tr>
+            <td>Descuento</td>
+            <td class="currency">${formatCurrency(sale.totalDiscount || 0)}</td>
           </tr>
          
           <tr class="total-final">
@@ -601,7 +622,7 @@ const generateSaleHTML = (data: ReportData): string => {
       
       <div class="footer">
         <div class="company-footer">Farmacia La Bonita</div>
-        <div>Sitio web / Correo electrónico / Teléfono</div>
+        <div>farmaciaslabonita@gmail.com / 76135456</div>
       </div>
     </body>
     </html>

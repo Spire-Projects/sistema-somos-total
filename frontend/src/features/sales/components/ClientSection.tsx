@@ -13,7 +13,8 @@ import type { Client } from "@/shared/types/Client";
 
 const clientSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  nit: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  email: z.string().email({ message: "Correo inválido" }).optional().or(z.literal("")),
 });
 
 type ClientFormData = z.infer<typeof clientSchema>;
@@ -32,7 +33,8 @@ const ClientForm = memo(({ onClientCreated }: { onClientCreated: (client: Client
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: "",
-      nit: "",
+      phone: "",
+      email: "",
     },
   });
 
@@ -41,7 +43,8 @@ const ClientForm = memo(({ onClientCreated }: { onClientCreated: (client: Client
     try {
       const clientData = {
         name: data.name.trim(),
-        nit: data.nit?.trim() || undefined,
+        phone: data.phone?.trim() || undefined,
+        email: data.email?.trim() || undefined,
         createdBy: "current-user", // TODO: Get from auth context
       };
 
@@ -76,15 +79,34 @@ const ClientForm = memo(({ onClientCreated }: { onClientCreated: (client: Client
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="nit" className="text-xs">NIT (opcional)</Label>
-        <Input
-          id="nit"
-          placeholder="Número de NIT"
-          {...form.register("nit")}
-          disabled={isLoading}
-          className="h-8 text-sm"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="phone" className="text-xs">Teléfono (opcional)</Label>
+          <Input
+            id="phone"
+            placeholder="Número de teléfono"
+            {...form.register("phone")}
+            disabled={isLoading}
+            className="h-8 text-sm"
+          />
+          {form.formState.errors.phone && (
+            <p className="text-xs text-red-500">{form.formState.errors.phone.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="email" className="text-xs">Correo (opcional)</Label>
+          <Input
+            id="email"
+            placeholder="ejemplo@correo.com"
+            {...form.register("email")}
+            disabled={isLoading}
+            className="h-8 text-sm"
+          />
+          {form.formState.errors.email && (
+            <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+          )}
+        </div>
       </div>
 
       <Button
