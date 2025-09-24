@@ -33,7 +33,7 @@ import {
   genericNameMigrationStrategies,
 } from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
-import { medicSchema } from "./models/medic.model";
+import { medicMigrationStrategies, medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
 import { saleMigrationStrategies, saleSchema } from "./models/sale.model";
 import { createLocalPriorityConflictHandler } from "./replication/conflictHandler";
@@ -171,6 +171,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         medics: {
           schema: medicSchema,
+          migrationStrategies: medicMigrationStrategies,
           conflictHandler: createLocalPriorityConflictHandler<Medic>(),
         },
         nits: {

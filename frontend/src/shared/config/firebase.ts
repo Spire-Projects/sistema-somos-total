@@ -2,7 +2,7 @@ import { getApps, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
- apiKey: "AIzaSyCbBE2Lk8vl776YbeVyXR0NEWd3b-CkVOg",
+  apiKey: "AIzaSyCbBE2Lk8vl776YbeVyXR0NEWd3b-CkVOg",
   authDomain: "snappy-beaker-451709-m5.firebaseapp.com",
   projectId: "snappy-beaker-451709-m5",
   storageBucket: "snappy-beaker-451709-m5.firebasestorage.app",

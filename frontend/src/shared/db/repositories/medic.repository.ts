@@ -8,12 +8,14 @@ import { generateId } from '@/shared/utils/id.utils';
 // Tipos para el repositorio
 export interface CreateMedicData {
   fullName: string;
+  specialty?: string;
   licenseNumber: string;
   createdBy: string;
 }
 
 export interface UpdateMedicData {
   fullName?: string;
+  specialty?: string;
   licenseNumber?: string;
   updatedBy: string;
 }
@@ -59,6 +61,7 @@ export class LocalMedicRepository implements IMedicRepository {
       id: generateId(),
       fullName: data.fullName,
       licenseNumber: data.licenseNumber,
+      specialty: data.specialty ?? 'General',
       isDeleted: false,
       sincronized: false,
       createdAt: new Date().toISOString(),

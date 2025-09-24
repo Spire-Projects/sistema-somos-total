@@ -8,12 +8,14 @@ import { Label } from "@/shared/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Stethoscope, Plus, Loader2, X } from "lucide-react";
 import CreatableSelect from "@/shared/components/CreatableSelect";
+import { toast } from "sonner";
 import { findMedicsPaginated, createMedic } from "@/shared/services/MedicService";
 import type { Medic } from "@/shared/types/Sales";
 
 const medicSchema = z.object({
   fullName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   licenseNumber: z.string().min(1, "El número de licencia es obligatorio"),
+  specialty: z.string().min(2, "La especialidad debe tener al menos 2 caracteres"),
 });
 
 type MedicFormData = z.infer<typeof medicSchema>;
@@ -33,6 +35,7 @@ const MedicForm = memo(({ onMedicCreated }: { onMedicCreated: (medic: Medic) => 
     defaultValues: {
       fullName: "",
       licenseNumber: "",
+      specialty: "",
     },
   });
 
@@ -42,6 +45,7 @@ const MedicForm = memo(({ onMedicCreated }: { onMedicCreated: (medic: Medic) => 
       const medicData = {
         fullName: data.fullName.trim(),
         licenseNumber: data.licenseNumber.trim(),
+        specialty: data.specialty.trim(),
         createdBy: "current-user", // TODO: Get from auth context
       };
 
@@ -50,7 +54,8 @@ const MedicForm = memo(({ onMedicCreated }: { onMedicCreated: (medic: Medic) => 
       form.reset();
     } catch (error) {
       console.error("Error creating medic:", error);
-      // TODO: Show error toast
+
+      toast.error(`No se pudo crear el médico, ya existe un médico con esta información`);
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +96,22 @@ const MedicForm = memo(({ onMedicCreated }: { onMedicCreated: (medic: Medic) => 
           <p className="text-xs text-red-500">
             {form.formState.errors.licenseNumber.message}
           </p>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="specialty" className="text-xs">
+          Especialidad <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="specialty"
+          placeholder="Especialidad del médico"
+          {...form.register("specialty")}
+          disabled={isLoading}
+          className="h-8 text-sm"
+        />
+        {form.formState.errors.specialty && (
+          <p className="text-xs text-red-500">{form.formState.errors.specialty.message}</p>
         )}
       </div>
 
@@ -209,6 +230,8 @@ const MedicSection = memo(({
               hideLabel={true}
               secondaryDisplayField="licenseNumber"
               secondaryLabel="Licencia"
+              tertiaryDisplayField="specialty"
+              tertiaryLabel="Especialidad"
             />
             
             <Button

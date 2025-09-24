@@ -68,10 +68,37 @@ export const cleanSaleData = (data: any):Sale => {
 };
 
 /**
+ * Generar el siguiente número de factura secuencial
+ */
+const getNextInvoiceNumber = async (): Promise<string> => {
+  try {
+    // Obtener el número de factura más alto actual
+    const highestNumber = await repository.getHighestInvoiceNumber();
+    
+    // Incrementar en 1
+    const nextNumber = highestNumber + 1;
+    
+    // Formatear como string de 7 dígitos con ceros a la izquierda
+    const formattedNumber = nextNumber.toString().padStart(7, '0');
+    
+    console.log(`📄 Generando número de factura: ${formattedNumber} (anterior: ${highestNumber.toString().padStart(7, '0')})`);
+    
+    return formattedNumber;
+  } catch (error) {
+    console.error('❌ Error al generar número de factura:', error);
+    // En caso de error, devolver un número por defecto
+    return '0000001';
+  }
+};
+
+/**
  * Crear una venta
  */
 export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<Sale> => {
   const cleanedData = cleanSaleData(data);
+  
+  // Generar el siguiente número de factura secuencial
+  const nextInvoiceNumber = await getNextInvoiceNumber();
   
   const newSale: Sale = {
     id: generateId(),
@@ -89,7 +116,8 @@ export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<
     factured: cleanedData.factured || false,
     nitClient: cleanedData.nitClient,
     socialReasonClient: cleanedData.socialReasonClient,
-    saleNotes: cleanedData.saleNotes
+    saleNotes: cleanedData.saleNotes,
+    numberInvoice: nextInvoiceNumber
   };
 
   // Crear la venta

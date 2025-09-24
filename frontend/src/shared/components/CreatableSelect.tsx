@@ -27,6 +27,8 @@ interface CreatableSelectProps<T> {
   onDeleteValue?: (item: T) => Promise<void>;
   secondaryDisplayField?: keyof T; // Nuevo campo opcional
   secondaryLabel?: string; // Nuevo campo opcional
+  tertiaryDisplayField?: keyof T; // Nuevo campo opcional para mostrar tercer renglón
+  tertiaryLabel?: string; // Nuevo label opcional para el tertiary
 }
 
 // Hook personalizado para debounce
@@ -62,6 +64,8 @@ function CreatableSelect<T extends Record<string, any>>({
   hideLabel = false,
   secondaryDisplayField,
   secondaryLabel,
+  tertiaryDisplayField,
+  tertiaryLabel,
 }: CreatableSelectProps<T>) {
   const [search, setSearch] = useState("");
   const [filteredValues, setFilteredValues] = useState<T[]>(values);
@@ -295,7 +299,7 @@ function CreatableSelect<T extends Record<string, any>>({
                             String(item[valueField])
                             ? "bg-accent/50"
                             : ""
-                        }`}
+                        } ${tertiaryDisplayField ? 'min-h-[75px] py-3' : ''}`}
                       >
                         <div 
                           className="cursor-pointer flex-1 pr-2  h-8 flex flex-col items-center"
@@ -313,13 +317,23 @@ function CreatableSelect<T extends Record<string, any>>({
                             {String(item[displayField])} 
                           </div>
                           {secondaryDisplayField && (
-                            <div className="text-xs text-gray-500 mt-1 text-wrap break-words w-full">
+                            <div className="text-xs text-gray-600 mt-1 text-wrap break-words w-full">
                               {secondaryLabel && (
                                 <span className="font-medium mr-1 w-full text-left">
                                   {secondaryLabel}:
                                 </span>
                               )}
                               <span>{String(item[secondaryDisplayField])}</span>
+                            </div>
+                          )}
+                          {tertiaryDisplayField && (
+                            <div className="text-xs text-gray-600 mt-0.5 text-wrap break-words w-full">
+                              {tertiaryLabel && (
+                                <span className="font-medium mr-1 w-full text-left">
+                                  {tertiaryLabel}:
+                                </span>
+                              )}
+                              <span>{String(item[tertiaryDisplayField ?? ""] ?? "")}</span>
                             </div>
                           )}
                         </div>

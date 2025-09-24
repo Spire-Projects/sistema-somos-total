@@ -525,7 +525,7 @@ const generateSaleHTML = (data: ReportData): string => {
             <table>
               <tr>
                 <td>Nota de venta No.:</td>
-                <td>A-00001</td>
+                <td>${sale.numberInvoice}</td>
               </tr>
               <tr>
                 <td>Fecha:</td>

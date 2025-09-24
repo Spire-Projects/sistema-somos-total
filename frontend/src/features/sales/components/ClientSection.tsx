@@ -10,6 +10,7 @@ import { User, Plus, Loader2, X } from "lucide-react";
 import CreatableSelect from "@/shared/components/CreatableSelect";
 import { getAllClientsPaginated, createClient } from "@/shared/services/ClientService";
 import type { Client } from "@/shared/types/Client";
+import { toast } from "sonner";
 
 const clientSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -52,8 +53,7 @@ const ClientForm = memo(({ onClientCreated }: { onClientCreated: (client: Client
       onClientCreated(newClient);
       form.reset();
     } catch (error) {
-      console.error("Error creating client:", error);
-      // TODO: Show error toast
+      toast.error(`No se pudo crear el cliente, ya existe un cliente con esta información`);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +79,7 @@ const ClientForm = memo(({ onClientCreated }: { onClientCreated: (client: Client
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-1 gap-3">
         <div className="space-y-1">
           <Label htmlFor="phone" className="text-xs">Teléfono (opcional)</Label>
           <Input
@@ -222,6 +222,9 @@ const ClientSection = memo(({
               valueField="id"
               placeholder="Buscar cliente..."
               hideLabel={true}
+              secondaryDisplayField="email"
+              secondaryLabel="Email"
+      
             />
             
             <Button

@@ -95,7 +95,7 @@ export const saleMigrationStrategies = {
   4: (oldDoc: any) => {
     return {
       ...oldDoc,
-      numberInvoice: oldDoc.numberInvoice || "0000000"
+      numberInvoice: "0000000"
     };
   }
 };

@@ -37,7 +37,7 @@ const SaleNotes = memo(
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span className="text-sm font-medium">
-                    Notas de Venta (opcional)
+                    Comentarios de venta (opcional)
                   </span>
                 </div>
                 {notes && notes.trim() && (

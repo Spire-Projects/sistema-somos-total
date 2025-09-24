@@ -351,7 +351,7 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
           <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="font-semibold text-sm text-gray-900 mb-2 flex items-center gap-2">
               <span>📝</span>
-              Notas de la Venta
+              Comentarios de la venta
             </h4>
             <p className="text-xs text-gray-700 whitespace-pre-wrap">{currentSale.saleNotes}</p>
           </div>

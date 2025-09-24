@@ -19,6 +19,7 @@ export interface ISaleRepository {
   findByDateRangeAndFacturedStatusPaginated(page: number, size: number, dateFrom: string, dateTo: string, factured: boolean, searchQuery?: string): Promise<ItemsResponse<Sale>>;
   delete(id: string): Promise<boolean>;
   search(searchText: string): Promise<Sale[]>;
+  getHighestInvoiceNumber(): Promise<number>;
 }
 
 export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRepository {
@@ -281,6 +282,25 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
     const results = await db.sales.find({ selector }).sort({ createdAt: 'desc' }).exec();
     return results.map(s => JSON.parse(JSON.stringify(s.toJSON())) as Sale);
   }
+
+  async getHighestInvoiceNumber(): Promise<number> {
+    const db = await initDatabase();
+    
+    // Obtener todas las ventas ordenadas por numero de factura descendente
+    const sales = await db.sales.find().sort({ numberInvoice: 'desc' }).limit(1).exec();
+    
+    if (sales.length === 0) {
+      return 0; // Si no hay ventas, empezar desde 0
+    }
+
+    const highestSale = sales[0];
+    const invoiceNumber = highestSale.numberInvoice || "0000000";
+    
+    // Convertir el string a número (remover ceros a la izquierda)
+    const numericValue = parseInt(invoiceNumber, 10);
+    
+    return isNaN(numericValue) ? 0 : numericValue;
+  }
 }
 
 export class FirestoreSaleRepository implements ISaleRepository {
@@ -321,6 +341,9 @@ export class FirestoreSaleRepository implements ISaleRepository {
     throw new Error('Firestore implementation not yet available');
   }
   async search(_searchText: string): Promise<Sale[]> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async getHighestInvoiceNumber(): Promise<number> {
     throw new Error('Firestore implementation not yet available');
   }
 }

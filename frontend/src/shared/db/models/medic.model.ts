@@ -3,7 +3,7 @@ import type { Medic } from '../../types/Sales';
 
 // Esquema RxDB para Medic
 export const medicSchema: RxJsonSchema<Medic> = {
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -18,6 +18,10 @@ export const medicSchema: RxJsonSchema<Medic> = {
     licenseNumber: {
       type: 'string',
       maxLength: 50
+    },
+    specialty: {
+      type: 'string',
+      maxLength: 100,
     },
     isDeleted: {
       type: 'boolean'
@@ -61,5 +65,15 @@ export const medicSchema: RxJsonSchema<Medic> = {
   ]
 };
 
-// Tipo para el documento RxDB
+
+export const medicMigrationStrategies = {
+  1: (oldDoc: any) => {
+    return {
+      ...oldDoc,
+      specialty: "General",
+    };
+  },
+};
+
+
 export type MedicDocument = RxCollection<Medic>;

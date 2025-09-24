@@ -14,6 +14,7 @@ export interface Medic {
   id: string; // Unique identifier for the medic
   fullName: string; // Full name of the medic
   licenseNumber: string; // License number of the medic
+  specialty?: string; // Specialty of the medic
   isDeleted?: boolean; // Indicates if the medic is deleted
   sincronized?: boolean; // Indicates if the medic is synchronized with the server
   createdAt?: string; // ISO date string when created

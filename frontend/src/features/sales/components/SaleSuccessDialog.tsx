@@ -62,7 +62,7 @@ const SaleSuccessDialog = memo(({
               <Receipt className="h-4 w-4 text-gray-500" />
               <div className="flex-1">
                 <div className="text-xs text-gray-600">Número de venta</div>
-                <div className="font-mono text-sm">{sale.id.slice(-8).toUpperCase()}</div>
+                <div className="font-mono text-sm">{sale.numberInvoice}</div>
               </div>
             </div>
 
