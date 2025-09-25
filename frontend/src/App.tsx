@@ -32,6 +32,11 @@ function App() {
         const db = await initDatabase();
         await syncService.initialize();
         startAllReplications(db);
+        
+        // Inicializar el servicio de números de factura
+        const { InvoiceNumberService } = await import('./shared/services/InvoiceNumberService');
+        await InvoiceNumberService.initialize();
+        
         console.log("✅ Aplicación inicializada correctamente");
         isInitialized.current = true;
         dispatch(loadAndValidateUser());

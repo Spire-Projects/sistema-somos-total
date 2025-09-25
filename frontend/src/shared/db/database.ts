@@ -39,6 +39,11 @@ import { saleMigrationStrategies, saleSchema } from "./models/sale.model";
 import { createLocalPriorityConflictHandler } from "./replication/conflictHandler";
 import { nitMigrationStrategies, nitSchema } from "./models/nit.model";
 import type { NIT } from "../types/Nit";
+import { 
+  numberInvoiceRangeSchema, 
+  numberInvoiceRangeMigrationStrategies,
+  type NumberInvoiceRangeDocument 
+} from "./models/numberInvoiceRange.model";
 
 // Configurar plugins según entorno
 const setupRxDBPlugins = async () => {
@@ -78,6 +83,7 @@ export interface DatabaseCollections {
   sales: RxCollection<Sale>;
   medics: RxCollection<Medic>;
   nits: RxCollection<NIT>;
+  number_invoice_ranges: RxCollection<NumberInvoiceRangeDocument>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -178,6 +184,11 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
           schema: nitSchema,
           migrationStrategies: nitMigrationStrategies,
           conflictHandler: createLocalPriorityConflictHandler<NIT>(),
+        },
+        number_invoice_ranges: {
+          schema: numberInvoiceRangeSchema,
+          migrationStrategies: numberInvoiceRangeMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler<NumberInvoiceRangeDocument>(),
         },
       });
 

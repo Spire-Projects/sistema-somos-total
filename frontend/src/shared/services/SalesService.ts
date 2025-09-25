@@ -68,26 +68,31 @@ export const cleanSaleData = (data: any):Sale => {
 };
 
 /**
- * Generar el siguiente número de factura secuencial
+ * Generar el siguiente número de factura secuencial usando el nuevo sistema de rangos
  */
 const getNextInvoiceNumber = async (): Promise<string> => {
   try {
-    // Obtener el número de factura más alto actual
-    const highestNumber = await repository.getHighestInvoiceNumber();
+    // Importación dinámica para evitar problemas de dependencias circulares
+    const { InvoiceNumberService } = await import('./InvoiceNumberService');
     
-    // Incrementar en 1
-    const nextNumber = highestNumber + 1;
+    const invoiceNumber = await InvoiceNumberService.getNextInvoiceNumber();
+    console.log(`📄 Número de factura generado: ${invoiceNumber}`);
     
-    // Formatear como string de 7 dígitos con ceros a la izquierda
-    const formattedNumber = nextNumber.toString().padStart(7, '0');
-    
-    console.log(`📄 Generando número de factura: ${formattedNumber} (anterior: ${highestNumber.toString().padStart(7, '0')})`);
-    
-    return formattedNumber;
+    return invoiceNumber;
   } catch (error) {
     console.error('❌ Error al generar número de factura:', error);
-    // En caso de error, devolver un número por defecto
-    return '0000001';
+    
+    // Fallback: usar el sistema anterior como último recurso
+    try {
+      const highestNumber = await repository.getHighestInvoiceNumber();
+      const nextNumber = highestNumber + 1;
+      const formattedNumber = nextNumber.toString().padStart(7, '0');
+      console.log(`📄 Fallback: usando número ${formattedNumber}`);
+      return formattedNumber;
+    } catch (fallbackError) {
+      console.error('❌ Error en fallback:', fallbackError);
+      return '0000001';
+    }
   }
 };
 
