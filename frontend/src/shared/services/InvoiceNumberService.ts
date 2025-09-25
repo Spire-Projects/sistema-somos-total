@@ -13,26 +13,17 @@ export class InvoiceNumberService {
   /**
    * Obtiene el ID único de la terminal actual
    */
-  private static getTerminalId(): string {
-    // Intentar obtener ID de localStorage primero
-    let terminalId = localStorage.getItem('terminal_id');
-    
-    if (!terminalId) {
-      // Generar ID único basado en características del dispositivo
-      const userAgent = navigator.userAgent;
-      const screenResolution = `${screen.width}x${screen.height}`;
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      
-      // Crear hash simple del dispositivo
-      const deviceFingerprint = btoa(`${userAgent}-${screenResolution}-${timezone}`).slice(0, 8);
-      terminalId = `PC-${deviceFingerprint}`;
-      
-      // Guardar para próximas sesiones
-      localStorage.setItem('terminal_id', terminalId);
-    }
-    
-    return terminalId;
+ private static getTerminalId(): string {
+  
+  let terminalId = localStorage.getItem('terminal_id');
+  if (!terminalId) {
+    // Genera un UUID único para cada navegador/pestaña
+    terminalId = `PC-${crypto.randomUUID()}`;
+    localStorage.setItem('terminal_id', terminalId);
   }
+  console.log(`🖥️ Terminal ID: ${terminalId}`);
+  return terminalId;
+}
 
   /**
    * Función principal: obtiene el siguiente número de factura
@@ -41,6 +32,7 @@ export class InvoiceNumberService {
   static async getNextInvoiceNumber(): Promise<string> {
     try {
       console.log('🎯 Obteniendo siguiente número de factura...');
+      console.log('terminal:: getting next number for terminal:');
       
       // 1. Limpiar rangos expirados (proceso en segundo plano)
       this.cleanupExpiredRanges();
@@ -65,6 +57,7 @@ export class InvoiceNumberService {
 
       // 4. Usar el primer rango activo disponible
       const currentRange = activeRanges[0];
+
       const nextNumber = await this.getNextNumberFromRange(currentRange);
       
       if (nextNumber) {
@@ -91,6 +84,7 @@ export class InvoiceNumberService {
   private static async createNewRange(terminalId: string): Promise<NumberInvoiceRangeDocument[]> {
     try {
       // 1. Buscar números reciclables primero
+      console.log('terminal:: creating new range for:', terminalId);
       const recyclableNumbers = await this.repository.findRecyclableNumbers();
       
       let startNumber: number;
@@ -99,6 +93,17 @@ export class InvoiceNumberService {
       if (recyclableNumbers.length > 0) {
         // Usar números reciclados (prioritario)
         const recyclable = recyclableNumbers[0];
+
+
+        console.log('terminal:: recyclable found by range:', recyclable.sourceRangeId);
+        const sourceRangeOriginal = await this.repository.findById(recyclable.sourceRangeId);
+        console.log('terminal:: source range original:', sourceRangeOriginal);
+        await this.repository.updateRange(recyclable.sourceRangeId, {
+          active: false,
+          range: [sourceRangeOriginal?.range[0] ?? 0, recyclable.startNumber - 1],
+          size: sourceRangeOriginal?.numbersUsed.length ?? 0,
+          status: NumberInvoiceStatus.COMPLETED
+        });
         startNumber = recyclable.startNumber;
         endNumber = Math.min(recyclable.endNumber, startNumber + this.RANGE_SIZE - 1);
         console.log(`♻️ Reciclando números ${startNumber}-${endNumber}`);

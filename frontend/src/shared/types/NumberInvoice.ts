@@ -2,7 +2,7 @@ export enum NumberInvoiceStatus {
   ACTIVE = 'active',
   EXPIRED = 'expired',
   COMPLETED = 'completed',
-  RECYCLED = 'recycled'
+  RECYCLED = 'recycled'//nunca se usa
 }
 
 export interface NumberInvoiceRange {

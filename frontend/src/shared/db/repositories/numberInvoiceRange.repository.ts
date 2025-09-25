@@ -10,7 +10,7 @@ export interface INumberInvoiceRangeRepository {
   findAll(): Promise<NumberInvoiceRangeDocument[]>;
   findActiveRangesByTerminal(terminalId: string): Promise<NumberInvoiceRangeDocument[]>;
   findExpiredRanges(): Promise<NumberInvoiceRangeDocument[]>;
-  findRecyclableNumbers(): Promise<{ startNumber: number; endNumber: number }[]>;
+  findRecyclableNumbers(): Promise<{ startNumber: number; endNumber: number; sourceRangeId: string }[]>;
   updateRange(id: string, updateData: Partial<NumberInvoiceRangeDocument>): Promise<NumberInvoiceRangeDocument | null>;
   markRangeAsUsed(id: string, numberUsed: number): Promise<NumberInvoiceRangeDocument | null>;
   expireOldRanges(): Promise<number>; // Retorna cantidad de rangos expirados
@@ -97,7 +97,7 @@ export class LocalNumberInvoiceRangeRepository
     return ranges.map(range => range.toJSON() as NumberInvoiceRangeDocument);
   }
 
-  async findRecyclableNumbers(): Promise<{ startNumber: number; endNumber: number }[]> {
+  async findRecyclableNumbers(): Promise<{ startNumber: number; endNumber: number; sourceRangeId: string }[]> {
     const db = await initDatabase();
     const now = Date.now();
 
@@ -106,20 +106,25 @@ export class LocalNumberInvoiceRangeRepository
       selector: {
         $or: [
           { status: NumberInvoiceStatus.EXPIRED },
-          { status: NumberInvoiceStatus.COMPLETED, expiredAt: { $lt: now } }
-        ],
-        // Que tengan números sin usar (used < size)
-        used: { $lt: 999999 } // Usamos un número alto como placeholder
+          { status: NumberInvoiceStatus.ACTIVE, expiredAt: { $lt: now } }
+        ]
       }
     }).exec();
 
-    const recyclableNumbers: { startNumber: number; endNumber: number }[] = [];
+    // Filtrar en memoria los que tienen números sin usar (used < size)
+    const filteredRanges = ranges.filter(rangeDoc => {
+      const range = rangeDoc.toJSON() as NumberInvoiceRangeDocument;
+      return range.used < range.size;
+    });
 
-    ranges.forEach(rangeDoc => {
+  const recyclableNumbers: { startNumber: number; endNumber: number; sourceRangeId: string }[] = [];
+    console.log("terminal:: ranges:", ranges);
+    console.log("terminal:: filteredRanges:", filteredRanges);
+
+    filteredRanges.forEach(rangeDoc => {
       const range = rangeDoc.toJSON() as NumberInvoiceRangeDocument;
       const [startRange, endRange] = range.range;
       const numbersUsedSet = new Set(range.numbersUsed);
-      
       // Encontrar números no usados en el rango
       for (let num = startRange; num <= endRange; num++) {
         if (!numbersUsedSet.has(num)) {
@@ -128,18 +133,18 @@ export class LocalNumberInvoiceRangeRepository
           while (endSequence + 1 <= endRange && !numbersUsedSet.has(endSequence + 1)) {
             endSequence++;
           }
-          
           recyclableNumbers.push({
             startNumber: num,
-            endNumber: endSequence
+            endNumber: endSequence,
+            sourceRangeId: range.id
           });
-          
           // Saltar la secuencia que ya procesamos
           num = endSequence;
         }
       }
     });
 
+   
     // Ordenar por número de inicio
     return recyclableNumbers.sort((a, b) => a.startNumber - b.startNumber);
   }
@@ -217,7 +222,7 @@ export class FirestoreNumberInvoiceRangeRepository implements INumberInvoiceRang
   async findExpiredRanges(): Promise<NumberInvoiceRangeDocument[]> {
     throw new Error('Firestore implementation not yet available');
   }
-  async findRecyclableNumbers(): Promise<{ startNumber: number; endNumber: number }[]> {
+  async findRecyclableNumbers(): Promise<{ startNumber: number; endNumber: number; sourceRangeId: string }[]> {
     throw new Error('Firestore implementation not yet available');
   }
   async updateRange(_id: string, _updateData: Partial<NumberInvoiceRangeDocument>): Promise<NumberInvoiceRangeDocument | null> {
