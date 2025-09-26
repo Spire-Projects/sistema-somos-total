@@ -5,6 +5,7 @@ export const startAllReplications = (collections: DatabaseCollections) => {
   console.log("🔄 Iniciando todas las replicaciones...");
 
   replicateCollection("users", collections.users);
+  replicateCollection("number_invoice_ranges", collections.number_invoice_ranges);
   replicateCollection("generic_names", collections.generic_names);
   replicateCollection("manufacturers", collections.manufacturers);
   replicateCollection("active_ingredients", collections.active_ingredients);
@@ -21,7 +22,7 @@ export const startAllReplications = (collections: DatabaseCollections) => {
 
   replicateCollection("daily_cash_closures", collections.daily_cash_closures);
   replicateCollection("nits", collections.nits);
-  replicateCollection("number_invoice_ranges", collections.number_invoice_ranges);
+
 
   console.log("✅ Todas las replicaciones iniciadas");
 };

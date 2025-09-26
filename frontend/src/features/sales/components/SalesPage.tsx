@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/shared/components/ui/button.tsx";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { BriefcaseMedical, Search } from "lucide-react";
@@ -7,10 +7,12 @@ import SalesFilters from "./SalesFilters";
 import SalesTable from "./SalesTable";
 import { DataPagination } from "@/shared/components/DataPagination";
 import { useSalesSearch } from "../hooks/useSalesSearch";
+import { InvoiceNumberService } from "@/shared/services/InvoiceNumberService.ts";
+import { toast } from "sonner";
 
 export const SalesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  
+
   const {
     sales,
     isLoading,
@@ -22,18 +24,49 @@ export const SalesPage = () => {
     clearFilters,
     changePage,
     changeItemsPerPage,
-    refetch
+    refetch,
   } = useSalesSearch(300);
 
   // Manejar cambio en el input de búsqueda
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, [setSearchQuery]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+    },
+    [setSearchQuery]
+  );
 
   // Manejar cambio de rango de fechas
-  const handleDateRangeChange = useCallback((dateFrom?: string, dateTo?: string) => {
-    setDateRange(dateFrom, dateTo);
-  }, [setDateRange]);
+  const handleDateRangeChange = useCallback(
+    (dateFrom?: string, dateTo?: string) => {
+      setDateRange(dateFrom, dateTo);
+    },
+    [setDateRange]
+  );
+
+  useEffect(() => {
+    const runResolve = async () => {
+      if (!navigator.onLine) return;
+      toast.info("Resolviendo números de factura temporales...");
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+      const response = await InvoiceNumberService.resolveTemporaryNumbers();
+      if (response) {
+        toast.success(
+        "✅ Números de factura temporales resueltos correctamente, salga y vuelva a entrar a la página de ventas para ver los cambios."
+        );
+        refetch();
+      }
+      } catch (err) {
+      console.error("Error resolviendo números temporales:", err);
+      }
+    };
+
+    runResolve();
+    const onOnline = () => runResolve();
+    window.addEventListener("online", onOnline);
+
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -60,7 +93,7 @@ export const SalesPage = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar por método de pago"
+              placeholder="Buscar por método de pago o numero de venta"
               value={filters.searchQuery}
               onChange={handleSearchChange}
               className="pl-10 border-gray-300"
@@ -82,11 +115,7 @@ export const SalesPage = () => {
         />
 
         {/* Tabla de ventas */}
-        <SalesTable
-          sales={sales}
-          isLoading={isLoading}
-          error={error}
-        />
+        <SalesTable sales={sales} isLoading={isLoading} error={error} />
 
         {/* Paginación */}
         {!isLoading && sales.length > 0 && (
@@ -97,16 +126,21 @@ export const SalesPage = () => {
             itemsPerPage={pagination.itemsPerPage}
             onPageChange={changePage}
             onItemsPerPageChange={changeItemsPerPage}
-            startIndex={(pagination.currentPage - 1) * pagination.itemsPerPage + 1}
-            endIndex={Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+            startIndex={
+              (pagination.currentPage - 1) * pagination.itemsPerPage + 1
+            }
+            endIndex={Math.min(
+              pagination.currentPage * pagination.itemsPerPage,
+              pagination.totalItems
+            )}
             itemName="ventas"
           />
         )}
       </div>
 
       {/* Diálogo de nueva venta */}
-      <NewSaleDialog 
-        open={dialogOpen} 
+      <NewSaleDialog
+        open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSaleSuccess={refetch}
       />

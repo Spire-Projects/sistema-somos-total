@@ -308,6 +308,26 @@ export const updateSaleFacturedStatus = async (id: string, factured: boolean): P
   return await repository.update(id, updateData);
 };
 
+/**
+ * Actualizar el número de factura de una venta
+ * - Si se pasa un número sólo con dígitos, lo formatea a 7 caracteres con ceros a la izquierda.
+ */
+export const updateSaleNumberInvoice = async (id: string, numberInvoice: string): Promise<Sale> => {
+  const currentData = await repository.findById(id);
+  if (!currentData) {
+    throw new Error(`Sale with ID "${id}" not found`);
+  }
+
+  // Normalizar: si es sólo dígitos, formatear a 7 caracteres (0000001)
+  let formattedNumber = numberInvoice;
+  if (/^\d+$/.test(numberInvoice)) {
+    formattedNumber = numberInvoice.padStart(7, '0');
+  }
+
+  const updateData = { ...currentData, numberInvoice: formattedNumber };
+  return await repository.update(id, updateData);
+};
+
 export const generateSaleReport = async (
     idSale: string
   ): Promise<{ success: boolean; url?: string; error?: string }> => {

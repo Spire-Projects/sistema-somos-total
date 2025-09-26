@@ -62,6 +62,7 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
       selector = {
         $or: [
           { client: { $regex: q, $options: 'i' } },
+          { numberInvoice: { $regex: q, $options: 'i' } },
           { paymentMethod: { $regex: q, $options: 'i' } },
           { createdBy: { $regex: q, $options: 'i' } },
           { idMedic: { $regex: q, $options: 'i' } }
@@ -120,6 +121,7 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
             {
               $or: [
                 { client: { $regex: q, $options: 'i' } },
+                { numberInvoice: { $regex: q, $options: 'i' } },
                 { paymentMethod: { $regex: q, $options: 'i' } },
                 { createdBy: { $regex: q, $options: 'i' } },
                 { idMedic: { $regex: q, $options: 'i' } }
@@ -165,6 +167,7 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
             {
               $or: [
                 { client: { $regex: q, $options: 'i' } },
+                { numberInvoice: { $regex: q, $options: 'i' } },
                 { paymentMethod: { $regex: q, $options: 'i' } },
                 { createdBy: { $regex: q, $options: 'i' } },
                 { idMedic: { $regex: q, $options: 'i' } }
@@ -236,6 +239,7 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
           {
             $or: [
               { client: { $regex: q, $options: 'i' } },
+                { numberInvoice: { $regex: q, $options: 'i' } },
               { paymentMethod: { $regex: q, $options: 'i' } },
               { createdBy: { $regex: q, $options: 'i' } },
               { idMedic: { $regex: q, $options: 'i' } }
@@ -273,6 +277,7 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
     const selector = {
       $or: [
         { client: { $regex: q, $options: 'i' } },
+        { numberInvoice: { $regex: q, $options: 'i' } },
         { paymentMethod: { $regex: q, $options: 'i' } },
         { createdBy: { $regex: q, $options: 'i' } },
         { idMedic: { $regex: q, $options: 'i' } }

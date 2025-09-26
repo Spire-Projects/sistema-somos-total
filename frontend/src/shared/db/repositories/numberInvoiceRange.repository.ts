@@ -16,6 +16,7 @@ export interface INumberInvoiceRangeRepository {
   expireOldRanges(): Promise<number>; // Retorna cantidad de rangos expirados
   getNextAvailableNumberForNewRange(): Promise<number>;
   delete(id: string): Promise<boolean>;
+  findRangeByStartAndEnd(start: number, end: number): Promise<NumberInvoiceRangeDocument | null>;
 }
 
 export class LocalNumberInvoiceRangeRepository 
@@ -26,6 +27,8 @@ export class LocalNumberInvoiceRangeRepository
     const db = await initDatabase();
     return db.number_invoice_ranges;
   }
+
+ 
 
   async create(rangeData: Omit<NumberInvoiceRangeDocument, 'id'>): Promise<NumberInvoiceRangeDocument> {
     const id = crypto.randomUUID();
@@ -204,6 +207,18 @@ export class LocalNumberInvoiceRangeRepository
     const lastRange = allRanges[0].toJSON() as NumberInvoiceRangeDocument;
     return lastRange.range[1] + 1; // Siguiente número después del último rango
   }
+
+  async findRangeByStartAndEnd(start: number, end: number): Promise<NumberInvoiceRangeDocument | null> {
+    const db = await initDatabase();
+    const result = await db.number_invoice_ranges.findOne({
+      selector: {
+        'range.0': { $eq: start },
+        'range.1': { $eq: end }
+      }
+    }).exec();
+
+    return result ? (result.toJSON() as NumberInvoiceRangeDocument) : null;
+  }
 }
 
 export class FirestoreNumberInvoiceRangeRepository implements INumberInvoiceRangeRepository {
@@ -238,6 +253,9 @@ export class FirestoreNumberInvoiceRangeRepository implements INumberInvoiceRang
     throw new Error('Firestore implementation not yet available');
   }
   async delete(_id: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async findRangeByStartAndEnd(_start: number, _end: number): Promise<NumberInvoiceRangeDocument | null> {
     throw new Error('Firestore implementation not yet available');
   }
 }
