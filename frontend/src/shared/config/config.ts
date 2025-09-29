@@ -51,7 +51,7 @@ export const config = {
 
   // Configuración de inventario y lotes
   INVENTORY: {
-    EXPIRING_SOON_DAYS: parseInt(import.meta.env.VITE_EXPIRING_SOON_DAYS || '30'), // Días para considerar "próximo a vencer"
+    EXPIRING_SOON_DAYS: 90, // Días para considerar "próximo a vencer"
   }
 };
 

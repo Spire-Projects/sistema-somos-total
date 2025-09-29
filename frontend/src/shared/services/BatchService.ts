@@ -1,3 +1,4 @@
+import { config } from '../config/config';
 import type { MedicationBatch, BatchStatistics } from '../types/Medication';
 
 /**
@@ -32,8 +33,9 @@ export const formatDate = (dateString: string): string => {
 export const getBatchStatus = (expirationDate: string): 'valid' | 'expiring' | 'expired' => {
   const today = new Date();
   const expDate = new Date(expirationDate);
-  const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000));
-  
+  const daysToAdvice = config.INVENTORY.EXPIRING_SOON_DAYS;
+  const thirtyDaysFromNow = new Date(today.getTime() + (daysToAdvice * 24 * 60 * 60 * 1000));
+
   if (expDate < today) {
     return 'expired';
   } else if (expDate <= thirtyDaysFromNow) {
