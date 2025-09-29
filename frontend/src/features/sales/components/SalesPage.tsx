@@ -46,18 +46,24 @@ export const SalesPage = () => {
   useEffect(() => {
     const runResolve = async () => {
       if (!navigator.onLine) return;
-      toast.info("Resolviendo números de factura temporales...");
+
       await new Promise((resolve) => setTimeout(resolve, 3000));
       try {
-      const response = await InvoiceNumberService.resolveTemporaryNumbers();
-      if (response) {
-        toast.success(
-        "✅ Números de factura temporales resueltos correctamente, salga y vuelva a entrar a la página de ventas para ver los cambios."
-        );
-        refetch();
-      }
+        const numberTemporary =
+          await InvoiceNumberService.getTemporaryNumberCount();
+        if (numberTemporary === 0) {
+          return;
+        }
+        toast.info("Resolviendo números de venta temporales, por favor espera...");
+        const response = await InvoiceNumberService.resolveTemporaryNumbers();
+        if (response) {
+          toast.success(
+            "✅ Números de venta temporales resueltos correctamente"
+          );
+          refetch();
+        }
       } catch (err) {
-      console.error("Error resolviendo números temporales:", err);
+        toast.error("Error resolviendo números de venta temporales, revise la conexión a internet");
       }
     };
 

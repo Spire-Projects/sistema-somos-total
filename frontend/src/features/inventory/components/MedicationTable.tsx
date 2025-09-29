@@ -20,6 +20,7 @@ import type {
 import AddMedicationDialog from "./AddMedicationDialog";
 import DeleteDialog from "@/shared/components/DeleteDialog";
 import { deleteMedication } from "@/shared/services";
+import { config } from "@/shared/config/config";
 
 interface MedicationTableProps {
   medications: MedicationCatalogView[];
@@ -47,7 +48,7 @@ const getStockStatusBadge = (status: MedicationCatalogView["stockStatus"]) => {
     in_stock: { variant: "default" as const, label: "En Stock" },
     low_stock: { variant: "secondary" as const, label: "Stock Bajo" },
     out_of_stock: { variant: "destructive" as const, label: "Sin Stock" },
-    overstocked: { variant: "outline" as const, label: "Exceso" },
+    overstocked: { variant: "default" as const, label: "En Stock" },
   };
 
   const config = variants[status];
@@ -275,7 +276,7 @@ export const MedicationTable = memo<MedicationTableProps>(
                       {medication.oldestActiveBatch ? (
                         <div className="flex items-center gap-1">
                           {medication.oldestActiveBatch.daysToExpiration <=
-                            30 && (
+                            config.INVENTORY.EXPIRING_SOON_DAYS && (
                             <AlertTriangle className="h-3 w-3 text-orange-500" />
                           )}
                           <div className="text-xs">

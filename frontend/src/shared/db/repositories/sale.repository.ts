@@ -276,11 +276,10 @@ export class LocalSaleRepository extends BaseRepository<Sale> implements ISaleRe
     const q = searchText.trim();
     const selector = {
       $or: [
-        { client: { $regex: q, $options: 'i' } },
+        
         { numberInvoice: { $regex: q, $options: 'i' } },
         { paymentMethod: { $regex: q, $options: 'i' } },
-        { createdBy: { $regex: q, $options: 'i' } },
-        { idMedic: { $regex: q, $options: 'i' } }
+       
       ]
     };
 

@@ -1,10 +1,10 @@
-import type { Sale } from '../types/Sales';
-import type { ItemsResponse } from '../types/UtilTypes';
-import { getSaleRepository } from '../db/repositories/sale.repository';
-import { addSaleToClientHistory, getClientById } from './ClientService';
-import { UserService } from './UserService';
-import { generateId } from '../utils/id.utils';
-import { getCachedValue, setCachedValue } from '../utils/entity-cache.utils';
+import type { Sale } from "../types/Sales";
+import type { ItemsResponse } from "../types/UtilTypes";
+import { getSaleRepository } from "../db/repositories/sale.repository";
+import { addSaleToClientHistory, getClientById } from "./ClientService";
+import { UserService } from "./UserService";
+import { generateId } from "../utils/id.utils";
+import { getCachedValue, setCachedValue } from "../utils/entity-cache.utils";
 
 const repository = getSaleRepository();
 
@@ -13,7 +13,7 @@ const repository = getSaleRepository();
  */
 const getClientName = async (clientId: string): Promise<string> => {
   const cacheKey = `client_name_${clientId}`;
-  
+
   // Intentar obtener del cache
   const cachedName = getCachedValue<string>(cacheKey);
   if (cachedName !== null) {
@@ -23,7 +23,7 @@ const getClientName = async (clientId: string): Promise<string> => {
   // Si no está en cache, buscar en la base de datos
   const client = await getClientById(clientId);
   const name = client?.name || "Cliente no encontrado";
-  
+
   // Guardar en cache
   setCachedValue(cacheKey, name);
   return name;
@@ -34,7 +34,7 @@ const getClientName = async (clientId: string): Promise<string> => {
  */
 const getSellerName = async (userId: string): Promise<string> => {
   const cacheKey = `seller_name_${userId}`;
-  
+
   // Intentar obtener del cache
   const cachedName = getCachedValue<string>(cacheKey);
   if (cachedName !== null) {
@@ -44,7 +44,7 @@ const getSellerName = async (userId: string): Promise<string> => {
   // Si no está en cache, buscar en la base de datos
   const result = await UserService.getUserById(userId);
   const name = result.user?.fullName || "Vendedor no encontrado";
-  
+
   // Guardar en cache
   setCachedValue(cacheKey, name);
   return name;
@@ -53,7 +53,7 @@ const getSellerName = async (userId: string): Promise<string> => {
 /**
  * Limpiar datos de venta para evitar valores undefined que causan problemas en Firestore
  */
-export const cleanSaleData = (data: any):Sale => {
+export const cleanSaleData = (data: any): Sale => {
   console.log("Cleaning sale data:", data);
   return {
     ...data,
@@ -73,25 +73,25 @@ export const cleanSaleData = (data: any):Sale => {
 const getNextInvoiceNumber = async (): Promise<string> => {
   try {
     // Importación dinámica para evitar problemas de dependencias circulares
-    const { InvoiceNumberService } = await import('./InvoiceNumberService');
-    
+    const { InvoiceNumberService } = await import("./InvoiceNumberService");
+
     const invoiceNumber = await InvoiceNumberService.getNextInvoiceNumber();
     console.log(`📄 Número de factura generado: ${invoiceNumber}`);
-    
+
     return invoiceNumber;
   } catch (error) {
-    console.error('❌ Error al generar número de factura:', error);
-    
+    console.error("❌ Error al generar número de factura:", error);
+
     // Fallback: usar el sistema anterior como último recurso
     try {
       const highestNumber = await repository.getHighestInvoiceNumber();
       const nextNumber = highestNumber + 1;
-      const formattedNumber = nextNumber.toString().padStart(7, '0');
+      const formattedNumber = nextNumber.toString().padStart(7, "0");
       console.log(`📄 Fallback: usando número ${formattedNumber}`);
       return formattedNumber;
     } catch (fallbackError) {
-      console.error('❌ Error en fallback:', fallbackError);
-      return '0000001';
+      console.error("❌ Error en fallback:", fallbackError);
+      return "0000001";
     }
   }
 };
@@ -99,12 +99,18 @@ const getNextInvoiceNumber = async (): Promise<string> => {
 /**
  * Crear una venta
  */
-export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<Sale> => {
+export const createSale = async (
+  data: Omit<Sale, "id" | "createdAt">
+): Promise<Sale> => {
   const cleanedData = cleanSaleData(data);
-  
-  // Generar el siguiente número de factura secuencial
-  const nextInvoiceNumber = await getNextInvoiceNumber();
-  
+  let nextInvoiceNumber;
+  let exist = [] as Sale[];
+
+  do {
+    nextInvoiceNumber = await getNextInvoiceNumber();
+    exist = await repository.search(nextInvoiceNumber);
+  } while (exist.length > 0);
+
   const newSale: Sale = {
     id: generateId(),
     items: cleanedData.items,
@@ -122,20 +128,22 @@ export const createSale = async (data: Omit<Sale, 'id' | 'createdAt'>): Promise<
     nitClient: cleanedData.nitClient,
     socialReasonClient: cleanedData.socialReasonClient,
     saleNotes: cleanedData.saleNotes,
-    numberInvoice: nextInvoiceNumber
+    numberInvoice: nextInvoiceNumber,
   };
 
-  // Crear la venta
   const createdSale = await repository.create(newSale);
-
-  // Si hay un cliente seleccionado, agregar la venta a su historial
   if (createdSale.client && createdSale.client.trim() !== "") {
     try {
       await addSaleToClientHistory(createdSale.client, createdSale.id);
-      console.log(`✅ Venta ${createdSale.id} agregada al historial del cliente ${createdSale.client}`);
+      console.log(
+        `✅ Venta ${createdSale.id} agregada al historial del cliente ${createdSale.client}`
+      );
     } catch (error) {
-      console.error(`❌ Error al agregar venta al historial del cliente:`, error);
-      // No fallar la venta por este error, solo registrar
+      console.error(
+        `❌ Error al agregar venta al historial del cliente:`,
+        error
+      );
+      
     }
   }
 
@@ -190,20 +198,22 @@ export const findSalesPaginated = async (
 ): Promise<ItemsResponse<ExtendedSale>> => {
   // 1. Obtener las ventas base
   const response = await repository.findAllPaginated(page, size, searchQuery);
-  
+
   // 2. Enriquecer las ventas con nombres resueltos
   const extendedSales = await Promise.all(
     response.items.map(async (sale) => {
       // Resolver nombres en paralelo si existen IDs
       const [clientName, sellerName] = await Promise.all([
         sale.client ? getClientName(sale.client) : Promise.resolve(undefined),
-        sale.createdBy ? getSellerName(sale.createdBy) : Promise.resolve(undefined)
+        sale.createdBy
+          ? getSellerName(sale.createdBy)
+          : Promise.resolve(undefined),
       ]);
 
       return {
         ...sale,
         clientName,
-        sellerName
+        sellerName,
       };
     })
   );
@@ -212,12 +222,13 @@ export const findSalesPaginated = async (
   let filteredSales = extendedSales;
   if (searchQuery && searchQuery.trim()) {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-    filteredSales = extendedSales.filter(sale => 
-      sale.clientName?.toLowerCase().includes(normalizedQuery) ||
-      sale.sellerName?.toLowerCase().includes(normalizedQuery) ||
-      sale.id.toLowerCase().includes(normalizedQuery) ||
-      sale.nitClient?.toLowerCase().includes(normalizedQuery) ||
-      sale.socialReasonClient?.toLowerCase().includes(normalizedQuery)
+    filteredSales = extendedSales.filter(
+      (sale) =>
+        sale.clientName?.toLowerCase().includes(normalizedQuery) ||
+        sale.sellerName?.toLowerCase().includes(normalizedQuery) ||
+        sale.id.toLowerCase().includes(normalizedQuery) ||
+        sale.nitClient?.toLowerCase().includes(normalizedQuery) ||
+        sale.socialReasonClient?.toLowerCase().includes(normalizedQuery)
     );
   }
 
@@ -225,7 +236,7 @@ export const findSalesPaginated = async (
     ...response,
     items: filteredSales,
     // Actualizar total si se filtraron resultados
-    totalItems: searchQuery ? filteredSales.length : response.totalItems
+    totalItems: searchQuery ? filteredSales.length : response.totalItems,
   };
 };
 
@@ -249,13 +260,21 @@ export const findSalesByDateRangePaginated = async (
   dateTo: string,
   searchQuery?: string
 ): Promise<ItemsResponse<Sale>> => {
-  return await repository.findByDateRangePaginated(page, size, dateFrom, dateTo, searchQuery);
+  return await repository.findByDateRangePaginated(
+    page,
+    size,
+    dateFrom,
+    dateTo,
+    searchQuery
+  );
 };
 
 /**
  * Obtener ventas por estado de facturación
  */
-export const findSalesByFacturedStatus = async (factured: boolean): Promise<Sale[]> => {
+export const findSalesByFacturedStatus = async (
+  factured: boolean
+): Promise<Sale[]> => {
   return await repository.findByFacturedStatus(factured);
 };
 
@@ -268,7 +287,12 @@ export const findSalesByFacturedStatusPaginated = async (
   factured: boolean,
   searchQuery?: string
 ): Promise<ItemsResponse<Sale>> => {
-  return await repository.findByFacturedStatusPaginated(page, size, factured, searchQuery);
+  return await repository.findByFacturedStatusPaginated(
+    page,
+    size,
+    factured,
+    searchQuery
+  );
 };
 
 /**
@@ -279,7 +303,11 @@ export const findSalesByDateRangeAndFacturedStatus = async (
   dateTo: string,
   factured: boolean
 ): Promise<Sale[]> => {
-  return await repository.findByDateRangeAndFacturedStatus(dateFrom, dateTo, factured);
+  return await repository.findByDateRangeAndFacturedStatus(
+    dateFrom,
+    dateTo,
+    factured
+  );
 };
 
 /**
@@ -293,13 +321,23 @@ export const findSalesByDateRangeAndFacturedStatusPaginated = async (
   factured: boolean,
   searchQuery?: string
 ): Promise<ItemsResponse<Sale>> => {
-  return await repository.findByDateRangeAndFacturedStatusPaginated(page, size, dateFrom, dateTo, factured, searchQuery);
+  return await repository.findByDateRangeAndFacturedStatusPaginated(
+    page,
+    size,
+    dateFrom,
+    dateTo,
+    factured,
+    searchQuery
+  );
 };
 
 /**
  * Actualizar estado de facturación de una venta
  */
-export const updateSaleFacturedStatus = async (id: string, factured: boolean): Promise<Sale> => {
+export const updateSaleFacturedStatus = async (
+  id: string,
+  factured: boolean
+): Promise<Sale> => {
   const currentData = await repository.findById(id);
   if (!currentData) {
     throw new Error(`Sale with ID "${id}" not found`);
@@ -312,7 +350,10 @@ export const updateSaleFacturedStatus = async (id: string, factured: boolean): P
  * Actualizar el número de factura de una venta
  * - Si se pasa un número sólo con dígitos, lo formatea a 7 caracteres con ceros a la izquierda.
  */
-export const updateSaleNumberInvoice = async (id: string, numberInvoice: string): Promise<Sale> => {
+export const updateSaleNumberInvoice = async (
+  id: string,
+  numberInvoice: string
+): Promise<Sale> => {
   const currentData = await repository.findById(id);
   if (!currentData) {
     throw new Error(`Sale with ID "${id}" not found`);
@@ -321,7 +362,7 @@ export const updateSaleNumberInvoice = async (id: string, numberInvoice: string)
   // Normalizar: si es sólo dígitos, formatear a 7 caracteres (0000001)
   let formattedNumber = numberInvoice;
   if (/^\d+$/.test(numberInvoice)) {
-    formattedNumber = numberInvoice.padStart(7, '0');
+    formattedNumber = numberInvoice.padStart(7, "0");
   }
 
   const updateData = { ...currentData, numberInvoice: formattedNumber };
@@ -329,14 +370,16 @@ export const updateSaleNumberInvoice = async (id: string, numberInvoice: string)
 };
 
 export const generateSaleReport = async (
-    idSale: string
-  ): Promise<{ success: boolean; url?: string; error?: string }> => {
-    try {
-      // Importar dinámicamente para evitar dependencias circulares
-      const { generateSaleReport: generateReportFromService } = await import('./ReportService');
-      return await generateReportFromService(idSale);
-    } catch (error) {
-      console.error('Error generating sale report:', error);
-      return { success: false, error: 'Error al generar el reporte' };
-    }
-  };
+  idSale: string
+): Promise<{ success: boolean; url?: string; error?: string }> => {
+  try {
+    // Importar dinámicamente para evitar dependencias circulares
+    const { generateSaleReport: generateReportFromService } = await import(
+      "./ReportService"
+    );
+    return await generateReportFromService(idSale);
+  } catch (error) {
+    console.error("Error generating sale report:", error);
+    return { success: false, error: "Error al generar el reporte" };
+  }
+};

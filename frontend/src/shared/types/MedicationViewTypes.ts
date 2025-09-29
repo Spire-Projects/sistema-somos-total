@@ -215,7 +215,6 @@ export const getStockStatus = (
 ): MedicationCatalogView["stockStatus"] => {
   if (stock === 0) return "out_of_stock";
   if (stock <= thresholds.lowStock) return "low_stock";
-  if (stock >= thresholds.overstock) return "overstocked";
   return "in_stock";
 };
 
