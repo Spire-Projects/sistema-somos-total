@@ -72,7 +72,7 @@ export const cleanSaleData = (data: any): Sale => {
  */
 const getNextInvoiceNumber = async (): Promise<string> => {
   try {
-    // Importación dinámica para evitar problemas de dependencias circulares
+    
     const { InvoiceNumberService } = await import("./InvoiceNumberService");
 
     const invoiceNumber = await InvoiceNumberService.getNextInvoiceNumber();
@@ -143,7 +143,7 @@ export const createSale = async (
         `❌ Error al agregar venta al historial del cliente:`,
         error
       );
-      
+
     }
   }
 

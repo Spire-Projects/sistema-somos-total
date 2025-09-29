@@ -16,6 +16,7 @@ import {
   DialogTitle 
 } from '@/shared/components/ui/dialog';
 import { CheckCircle, XCircle, Loader2, FileText } from 'lucide-react';
+import { Info } from 'lucide-react';
 import type { Sale } from '@/shared/types/Sales';
 import type { AuthUser } from '@/shared/types/User';
 import type { Client } from '@/shared/types/Client';
@@ -37,6 +38,9 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [updatingFactured, setUpdatingFactured] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
+
+  // Modal para info completa de cliente y médico
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const [loading, setLoading] = useState({
     user: false,
@@ -286,7 +290,12 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
 
           {/* Cliente y médico */}
           <div className="space-y-2">
-            <h4 className="font-semibold text-sm text-gray-900">Cliente y Médico</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-sm text-gray-900">Cliente y Médico</h4>
+              <Button variant="ghost" size="icon" onClick={() => setShowInfoModal(true)} aria-label="Ver información completa">
+                <Info className="h-4 w-4 text-blue-600" />
+              </Button>
+            </div>
             <div className="space-y-1 text-xs">
               <div>
                 <span className="text-gray-600">Cliente:</span>
@@ -303,6 +312,35 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
                 </span>
               </div>
             </div>
+            {/* Modal de información completa */}
+            <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Info className="h-5 w-5 text-blue-600" />
+                    Información completa de Cliente y Médico
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-xs">
+                  <div>
+                    <h5 className="font-semibold text-gray-800 mb-1">Cliente</h5>
+                    <div><span className="text-gray-600">Nombre:</span> <span className="ml-1">{client?.name || getClientDisplay()}</span></div>
+                    {client?.email && (<div><span className="text-gray-600">Email:</span> <span className="ml-1">{client.email}</span></div>)}
+                    {client?.address && (<div><span className="text-gray-600">Dirección:</span> <span className="ml-1">{client.address}</span></div>)}
+                    {client?.phone && (<div><span className="text-gray-600">Teléfono:</span> <span className="ml-1">{client.phone}</span></div>)}
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-gray-800 mb-1">Médico</h5>
+                    <div><span className="text-gray-600">Nombre:</span> <span className="ml-1">{medic?.fullName || getMedicDisplay()}</span></div>
+                    {medic?.licenseNumber && (<div><span className="text-gray-600">Licencia:</span> <span className="ml-1">{medic.licenseNumber}</span></div>)}
+                    {medic?.specialty && (<div><span className="text-gray-600">Especialidad:</span> <span className="ml-1">{medic.specialty}</span></div>)}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowInfoModal(false)}>Cerrar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Información de NIT */}

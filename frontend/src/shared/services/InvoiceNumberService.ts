@@ -6,7 +6,6 @@ import {
   findSalesByDateRangePaginated,
   updateSaleNumberInvoice,
 } from "./SalesService";
-import { get } from "http";
 
 export class InvoiceNumberService {
   private static readonly RANGE_SIZE = 10; // Tamaño por defecto de cada rango
@@ -37,31 +36,24 @@ export class InvoiceNumberService {
   static async getNextInvoiceNumber(): Promise<string> {
     try {
       
-      // 1. Limpiar rangos expirados (proceso en segundo plano)
+     
       this.cleanupExpiredRanges();
-
       const terminalId = this.getTerminalId();
-
-      // 2. Buscar rangos activos para esta terminal
       let activeRanges = await this.repository.findActiveRangesByTerminal(
         terminalId
       );
 
-      
+    
       if (activeRanges.length === 0) {
-        
+
         if (navigator.onLine) {
-   
           activeRanges = await this.createNewRange(terminalId);
         } else {
-          // Offline: usar números temporales
           return this.generateTemporaryNumber(terminalId);
         }
       }
 
-      // 4. Usar el primer rango activo disponible
       const currentRange = activeRanges[0];
-
       const nextNumber = await this.getNextNumberFromRange(currentRange);
 
       if (nextNumber) {
@@ -71,8 +63,7 @@ export class InvoiceNumberService {
         return nextNumber;
       }
 
-      // 5. Si no se pudo obtener número del rango, generar temporal
-      console.log("⚠️ No se pudo obtener número del rango, usando temporal");
+   
       return this.generateTemporaryNumber(terminalId);
     } catch (error) {
       console.error("❌ Error obteniendo número de factura:", error);
@@ -98,6 +89,8 @@ export class InvoiceNumberService {
       let rangeFound = false;
 
       for (const recyclable of recyclableNumbers) {
+        startNumber = recyclable.startNumber;
+        endNumber = recyclable.endNumber;
         let rangeExist = await this.repository.findRangeByStartAndEnd(
           startNumber,
           endNumber
@@ -136,11 +129,13 @@ export class InvoiceNumberService {
       let verifyRange = { exist: true, range: null as NumberInvoiceRangeDocument | null };
       if (!rangeFound) {
         do {
+          console.log("infomau: buscando rango desde:", from);
+          console.log("infomau: buscando rango desde (max):", Math.max(startNumber, from));
         startNumber = await this.repository.getNextAvailableNumberForNewRange();
-        
-        endNumber = this.getNextEndNumber(Math.max(startNumber, from));
-
-         verifyRange = await this.fullVerifyRange(startNumber, endNumber);
+        startNumber = Math.max(startNumber, from);
+        endNumber = this.getNextEndNumber(startNumber);
+        console.log("infomau: buscando rango:", startNumber, " - ", endNumber);
+        verifyRange = await this.fullVerifyRange(startNumber, endNumber);
         if (verifyRange.exist) {
           from = verifyRange.range ? verifyRange?.range.range[1] + 1 : 0;
         }
