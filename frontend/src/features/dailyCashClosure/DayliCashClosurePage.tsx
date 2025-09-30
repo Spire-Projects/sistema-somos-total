@@ -266,7 +266,7 @@ export const DailyCashClosuresPage = () => {
             <h3 className={`font-semibold ${
               (!hasEdited || isEvaluating) ? 'text-amber-800' : (isArcheoCorrect ? 'text-green-800' : 'text-red-800')
             }`}>
-              {(!hasEdited || isEvaluating) ? 'En revisión...' : (isArcheoCorrect ? 'Arqueo Correcto' : 'Arqueo Incorrecto')}
+              {(!hasEdited || isEvaluating) ? 'En revisión...(Inserte monto por QR o efectivo para continuar con la revisión)' : (isArcheoCorrect ? 'Arqueo Correcto' : 'Arqueo Incorrecto')}
             </h3>
             <p className={`text-sm ${
               (!hasEdited || isEvaluating) ? 'text-amber-600' : (isArcheoCorrect ? 'text-green-600' : 'text-red-600')

@@ -30,13 +30,15 @@ export const formatDate = (dateString: string): string => {
 /**
  * Obtener estado del lote basado en fecha de vencimiento
  */
-export const getBatchStatus = (expirationDate: string): 'valid' | 'expiring' | 'expired' => {
+export const getBatchStatus = (expirationDate: string, quantity: number): 'valid' | 'expiring' | 'expired' | 'sold' => {
   const today = new Date();
   const expDate = new Date(expirationDate);
   const daysToAdvice = config.INVENTORY.EXPIRING_SOON_DAYS;
   const thirtyDaysFromNow = new Date(today.getTime() + (daysToAdvice * 24 * 60 * 60 * 1000));
 
-  if (expDate < today) {
+  if (expDate < today && quantity === 0) {
+    return 'sold';
+  } else if (expDate < today) {
     return 'expired';
   } else if (expDate <= thirtyDaysFromNow) {
     return 'expiring';
@@ -56,6 +58,8 @@ export const getBatchStatusColor = (status: string): string => {
       return 'bg-yellow-100 text-yellow-800';
     case 'valid':
       return 'bg-green-100 text-green-800';
+    case 'sold':
+      return 'bg-gray-100 text-gray-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -72,6 +76,8 @@ export const getBatchStatusText = (status: string): string => {
       return 'Por vencer';
     case 'valid':
       return 'Vigente';
+    case 'sold':
+      return 'Vendido';
     default:
       return 'Desconocido';
   }
@@ -135,9 +141,9 @@ export const sortBatchesByExpiration = (batches: MedicationBatch[]): MedicationB
  */
 export const filterBatchesByStatus = (
   batches: MedicationBatch[], 
-  status: 'valid' | 'expiring' | 'expired'
+  status: 'valid' | 'expiring' | 'expired' | 'sold'
 ): MedicationBatch[] => {
-  return batches.filter(batch => getBatchStatus(batch.expirationDate) === status);
+  return batches.filter(batch => getBatchStatus(batch.expirationDate, batch.quantity) === status);
 };
 
 /**

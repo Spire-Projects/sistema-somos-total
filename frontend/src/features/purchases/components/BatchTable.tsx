@@ -34,14 +34,16 @@ export const BatchTable: React.FC<BatchTableProps> = ({
     return new Date(dateString).toLocaleDateString('es-BO');
   };
 
-  const getExpirationStatus = (expirationDate: string) => {
+  const getExpirationStatus = (expirationDate: string, quantity: number) => {
     const today = new Date();
     const expDate = new Date(expirationDate);
     const diffTime = expDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) {
-      return { status: 'expired', label: 'Vencido', color: 'destructive' };
+    if (diffDays < 0 && quantity === 0) {
+      return { status: 'sold', label: 'Vendido', color: 'default' };
+    } else if (diffDays < 0 && quantity > 0) {
+      return { status: 'out_of_stock', label: 'Sin stock', color: 'default' };
     } else if (diffDays <= 1) {
       return { status: 'expiring', label: 'Por vencer', color: 'warning' };
     } else if (diffDays <= config.INVENTORY.EXPIRING_SOON_DAYS) {
@@ -109,7 +111,7 @@ export const BatchTable: React.FC<BatchTableProps> = ({
                 <TableHead>F. Vencimiento</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>P. Compra</TableHead>
-                <TableHead>P. Venta</TableHead>
+                <TableHead>P. Venta modificado</TableHead>
                 <TableHead>Margen</TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Acciones</TableHead>
@@ -118,7 +120,7 @@ export const BatchTable: React.FC<BatchTableProps> = ({
             <TableBody>
               {batches.map((batch) => {
                 
-                const expirationStatus = getExpirationStatus(batch.expirationDate);
+                const expirationStatus = getExpirationStatus(batch.expirationDate, batch.quantity);
                 const margin = batch.sellingPrice > 0 
                   ? (((batch.sellingPrice - batch.purchasePrice) / batch.purchasePrice) * 100)
                   : 0;

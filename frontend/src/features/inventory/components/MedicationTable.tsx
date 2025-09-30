@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { ArrowUpDown, Package, AlertTriangle } from "lucide-react";
 import {
   Table,
@@ -19,6 +19,7 @@ import type {
 } from "@/shared/types/MedicationViewTypes";
 import AddMedicationDialog from "./AddMedicationDialog";
 import DeleteDialog from "@/shared/components/DeleteDialog";
+import MedicationDetailsDialog from "./MedicationDetailsDialog";
 import { deleteMedication } from "@/shared/services";
 import { config } from "@/shared/config/config";
 
@@ -105,6 +106,10 @@ export const MedicationTable = memo<MedicationTableProps>(
     onRowClick,
     handleRefresh,
   }) => {
+    const [selectedMedication, setSelectedMedication] = useState<
+      MedicationCatalogView | undefined
+    >(undefined);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const handleSort = useCallback(
       (field: MedicationCatalogSortField) => {
         if (!onSort) return;
@@ -127,6 +132,9 @@ export const MedicationTable = memo<MedicationTableProps>(
     const handleRowClick = useCallback(
       (medication: MedicationCatalogView) => {
         onRowClick?.(medication);
+        // open details dialog
+        setSelectedMedication(medication);
+        setIsDetailsOpen(true);
       },
       [onRowClick]
     );
@@ -159,6 +167,14 @@ export const MedicationTable = memo<MedicationTableProps>(
 
         {/* Desktop/Tablet View - Hidden below MD */}
         <div className="hidden md:block">
+          <MedicationDetailsDialog
+            medication={selectedMedication}
+            open={isDetailsOpen}
+            onOpenChange={(v) => {
+              setIsDetailsOpen(v);
+              if (!v) setSelectedMedication(undefined);
+            }}
+          />
           <Table>
             <TableHeader>
               <TableRow>
@@ -184,7 +200,7 @@ export const MedicationTable = memo<MedicationTableProps>(
                     {getSortIcon("genericName")}
                   </Button>
                 </TableHead>
-                <TableHead>Concentración</TableHead>
+                <TableHead>Concentración </TableHead>
                 <TableHead className="text-center">
                   <Button
                     variant="ghost"
@@ -208,7 +224,9 @@ export const MedicationTable = memo<MedicationTableProps>(
                   </Button>
                 </TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead className="text-center">Vencimiento <br /> Lote</TableHead>
+                <TableHead className="text-center">
+                  Vencimiento <br /> Lote
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -296,17 +314,21 @@ export const MedicationTable = memo<MedicationTableProps>(
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      <AddMedicationDialog
-                        medicationId={medication.id}
-                        onMedicationAdded={handleRefresh}
-                        edit
-                      />
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <AddMedicationDialog
+                          medicationId={medication.id}
+                          onMedicationAdded={handleRefresh}
+                          edit
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <DeleteDialog
-                        onConfirm={() => handleDeleteMedication(medication)}
-                        name={"Medicamento " + medication.tradeName}
-                      />
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <DeleteDialog
+                          onConfirm={() => handleDeleteMedication(medication)}
+                          name={"Medicamento " + medication.tradeName}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

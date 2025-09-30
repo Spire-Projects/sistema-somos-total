@@ -48,11 +48,16 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
     setExpandedMedications(newExpanded);
   };
 
-  const getExpirationStatus = (expirationDate: string) => {
-    const status = getBatchStatus(expirationDate);
+  const getExpirationStatus = (expirationDate: string, quantity: number) => {
+    const status = getBatchStatus(expirationDate, quantity);
     const label = getBatchStatusText(status);
-    const color = status === 'expired' ? 'destructive' : 
-                  status === 'expiring' ? 'warning' : 'default';
+    const color = status === 'expired'
+      ? 'destructive'
+      : status === 'expiring'
+      ? 'warning'
+      : status === 'sold'
+      ? 'primary'
+      : 'default';
     
     return { status, label, color };
   };
@@ -149,7 +154,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                 <TableHead>Lotes</TableHead>
                 <TableHead>Stock Total</TableHead>
                 <TableHead>Próximo Vencimiento</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>Estado <br/> Ultimo Lote</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -158,7 +163,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                 const medicationData = getMedicationData(medication);
                 const isExpanded = expandedMedications.has(medication.medication.id);
                 const oldestBatchStatus = medicationData.oldestBatch 
-                  ? getExpirationStatus(medicationData.oldestBatch.expirationDate)
+                  ? getExpirationStatus(medicationData.oldestBatch.expirationDate, medicationData.oldestBatch.quantity)
                   : null;
 
                 return (
@@ -251,7 +256,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                                   </TableHeader>
                                   <TableBody>
                                     {medication.batches.map((batch) => {
-                                      const batchStatus = getExpirationStatus(batch.expirationDate);
+                                      const batchStatus = getExpirationStatus(batch.expirationDate, batch.quantity);
                                       const margin = batch.sellingPrice > 0 
                                         ? (((batch.sellingPrice - batch.purchasePrice) / batch.purchasePrice) * 100)
                                         : 0;
@@ -338,7 +343,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
               const medicationData = getMedicationData(medication);
               const isExpanded = expandedMedications.has(medication.medication.id);
               const oldestBatchStatus = medicationData.oldestBatch 
-                ? getExpirationStatus(medicationData.oldestBatch.expirationDate)
+                ? getExpirationStatus(medicationData.oldestBatch.expirationDate, medicationData.oldestBatch.quantity)
                 : null;
 
               return (
@@ -402,7 +407,7 @@ export const MedicationAccordionTable: React.FC<MedicationAccordionTableProps> =
                         {medication.batches.length > 0 ? (
                           <div className="space-y-3">
                             {medication.batches.map((batch) => {
-                              const batchStatus = getExpirationStatus(batch.expirationDate);
+                              const batchStatus = getExpirationStatus(batch.expirationDate, batch.quantity);
                               const margin = batch.sellingPrice > 0 
                                 ? (((batch.sellingPrice - batch.purchasePrice) / batch.purchasePrice) * 100)
                                 : 0;

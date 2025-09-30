@@ -771,23 +771,19 @@ export class LocalMedicationBatchRepository
     const expiringThreshold = new Date();
     expiringThreshold.setDate(now.getDate() + daysToExpire);
 
-    // Convertir fechas a strings en formato ISO para comparación
-    const nowISODate = now.toISOString().split('T')[0]; // Solo la fecha, sin tiempo
+    const nowISODate = now.toISOString().split('T')[0];
     const expiringISODate = expiringThreshold.toISOString().split('T')[0];
-
-    // Usar una sola consulta find con el índice ['isDeleted', 'expirationDate'] 
-    // y procesar en memoria para evitar el slow count
     const docs = await collection
       .find({
         selector: {
           isDeleted: false,
-          expirationDate: { $lte: expiringISODate } // Todos los lotes hasta el umbral
+          expirationDate: { $lte: expiringISODate },
+          quantity: { $gt: 0 }
         },
-        // Este selector coincide con el índice ['isDeleted', 'expirationDate']
       })
       .exec();
 
-    // Procesar en memoria (más eficiente que múltiples count queries)
+   
     let expiredCount = 0;
     let expiringCount = 0;
 
@@ -849,7 +845,8 @@ export class LocalMedicationBatchRepository
       .find({
         selector: {
           isDeleted: false,
-          expirationDate: { $lte: expiringISODate } // Lotes que vencen hasta el umbral
+          expirationDate: { $lte: expiringISODate }, // Lotes que vencen hasta el umbral
+          quantity: { $gt: 0 } // Solo lotes con stock positivo
         },
       })
       .exec();

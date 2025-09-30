@@ -398,9 +398,7 @@ export const getBatchWithMedicationInfo = async (batchId: string): Promise<Batch
   } as BatchWithMedication;
 };
 
-/**
- * Crear estadísticas rápidas para dashboard
- */
+
 export const getDashboardStatistics = async (): Promise<{
   totalMedications: number;
   totalBatches: number;
@@ -427,9 +425,7 @@ export const getDashboardStatistics = async (): Promise<{
   };
 };
 
-/**
- * Buscar lotes con información del medicamento para tabla acordeón
- */
+
 export const searchBatchesWithMedicationInfo = async (
   searchTerm: string,
   page: number = 1,
@@ -543,12 +539,9 @@ export const getMedicationsWithExpiringBatches = async (
   daysToExpire: number = config.INVENTORY.EXPIRING_SOON_DAYS
 ): Promise<ItemsResponse<MedicationWithBatches>> => {
   const batchDB = medicationBatchDb;
-  
-  // 🚀 Obtener IDs de medicamentos con lotes próximos a vencer de forma optimizada
   const medicationIdsWithExpiringBatches = await batchDB.findMedicationIdsWithExpiringBatches(daysToExpire);
   
   if (medicationIdsWithExpiringBatches.length === 0) {
-    // No hay medicamentos con lotes próximos a vencer
     return {
       items: [],
       page,
