@@ -88,6 +88,21 @@ export default function MedicationDetailsDialog({
               <div className="font-medium">{medication.categoryName ?? "-"}</div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm text-gray-500">Forma Farmacéutica</div>
+                <div className="font-medium">{medication.pharmaceuticalFormName ?? "-"}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">Requiere Receta</div>
+                <div className="font-medium">
+                  <Badge variant={medication.prescriptionRequired ? "destructive" : "default"} className="text-xs">
+                    {medication.prescriptionRequired ? "Sí" : "No"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
             <div>
               <div className="text-sm text-gray-500">Estado de stock</div>
               <div className="mt-1">{

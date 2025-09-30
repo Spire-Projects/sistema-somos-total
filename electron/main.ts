@@ -14,7 +14,7 @@ const isDev = process.env.NODE_ENV === 'development';
 function getFrontendUrl(): string {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:5176';
+    return 'http://localhost:5179';
   }
   
   // En producción, usar archivos estáticos desde file://

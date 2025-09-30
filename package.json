@@ -8,7 +8,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "dev:electron": "cross-env NODE_ENV=development electron --inspect=5858 electron/main.cjs",
     "dev:electron:watch": "tsc -p electron/tsconfig.json --watch",
-    "dev": "concurrently \"npm run dev:frontend\" \"wait-on http://localhost:5176 && npm run dev:electron\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"wait-on http://localhost:5179 && npm run dev:electron\"",
     "build:frontend": "cd frontend && npm run build:local",
     "build:frontend:deploy": "cd frontend && npm run build:production",
     "build:electron": "echo 'Electron ya está en JavaScript'",    "build": "npm run build:frontend",

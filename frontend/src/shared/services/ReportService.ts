@@ -161,8 +161,17 @@ const generateSaleHTML = (data: ReportData): string => {
       <title>Nota de Venta - ${sale.id}</title>
       <style>
         @page {
-          margin: 15mm;
+          margin: 10mm;
           size: A4;
+        }
+        
+        html {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: auto;
+          height: auto;
+          padding: 0;
         }
         
         * {
@@ -177,7 +186,7 @@ const generateSaleHTML = (data: ReportData): string => {
           line-height: 1.5;
           color: #333;
           background-color: #fff;
-          max-width: 210mm;
+          min-width: 210mm;
           margin: 0 auto;
           padding: 20px;
         }
@@ -288,7 +297,7 @@ const generateSaleHTML = (data: ReportData): string => {
          
           border-radius: 12px;
           
-          box-shadow: 0 3px 12px rgba(76, 175, 80, 0.15);
+         
         }
         
         .client-info h3 {
@@ -401,7 +410,7 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .item-name {
-          font-weight: 700;
+          font-weight: 500;
           text-align: left;
           margin-bottom: 4px;
           color: #2c3e50;

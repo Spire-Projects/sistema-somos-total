@@ -1,4 +1,45 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+// Modal bloqueante con loader y mensajes animados
+function ResolvingTemporaryNumbersModal({ open, messages }: { open: boolean; messages: string[] }) {
+  const [messageIndex, setMessageIndex] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setMessageIndex(0);
+      intervalRef.current = setInterval(() => {
+        setMessageIndex((prev) => (prev + 1) % messages.length);
+      }, 2000);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [open, messages.length]);
+
+  return (
+    <Dialog open={open} onOpenChange={() => {}}>
+  <DialogContent className="flex flex-col items-center gap-4 select-none" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>Actualizando números de venta</DialogTitle>
+        </DialogHeader>
+        <Loader2 className="animate-spin text-blue-600 w-12 h-12 mx-auto" />
+        <div className="text-lg font-medium text-center min-h-[2.5rem]">
+          {messages[messageIndex]}
+        </div>
+        <div className="text-xs text-gray-400 text-center">Por favor espera, este proceso es automático y puede tardar unos segundos...</div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 import { Button } from "@/shared/components/ui/button.tsx";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { BriefcaseMedical, Search } from "lucide-react";
@@ -12,6 +53,16 @@ import { toast } from "sonner";
 
 export const SalesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [resolvingModalOpen, setResolvingModalOpen] = useState(false);
+
+  // Mensajes animados para el modal
+  const resolvingMessages = [
+    "Actualizando números de nota de venta...",
+    "Ya casi terminamos...",
+    "Sincronizando con el servidor...",
+    "Verificando integridad de datos...",
+    "¡No cierres la ventana!",
+  ];
 
   const {
     sales,
@@ -27,7 +78,6 @@ export const SalesPage = () => {
     refetch,
   } = useSalesSearch(300);
 
-  // Manejar cambio en el input de búsqueda
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
@@ -35,7 +85,6 @@ export const SalesPage = () => {
     [setSearchQuery]
   );
 
-  // Manejar cambio de rango de fechas
   const handleDateRangeChange = useCallback(
     (dateFrom?: string, dateTo?: string) => {
       setDateRange(dateFrom, dateTo);
@@ -49,20 +98,19 @@ export const SalesPage = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
       try {
-        const numberTemporary =
-          await InvoiceNumberService.getTemporaryNumberCount();
+        const numberTemporary = await InvoiceNumberService.getTemporaryNumberCount();
         if (numberTemporary === 0) {
           return;
         }
-        toast.info("Resolviendo números de venta temporales, por favor espera...");
+        setResolvingModalOpen(true);
         const response = await InvoiceNumberService.resolveTemporaryNumbers();
+        setResolvingModalOpen(false);
         if (response) {
-          toast.success(
-            "✅ Números de venta temporales resueltos correctamente"
-          );
+          toast.success("✅ Números de venta temporales resueltos correctamente");
           refetch();
         }
       } catch (err) {
+        setResolvingModalOpen(false);
         toast.error("Error resolviendo números de venta temporales, revise la conexión a internet");
       }
     };
@@ -75,7 +123,9 @@ export const SalesPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <ResolvingTemporaryNumbersModal open={resolvingModalOpen} messages={resolvingMessages} />
+      <div className="min-h-screen bg-gray-50">
       <div className="p-0 xs:p-1 sm:p-2 md:p-4 lg:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -151,5 +201,6 @@ export const SalesPage = () => {
         onSaleSuccess={refetch}
       />
     </div>
+    </>
   );
-};
+}
