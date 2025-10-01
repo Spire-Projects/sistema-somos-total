@@ -8,7 +8,7 @@ import {
 } from "./SalesService";
 
 export class InvoiceNumberService {
-  private static readonly RANGE_SIZE = 10; // Tamaño por defecto de cada rango
+
   private static readonly EXPIRATION_TIME = 15 * 60 * 1000; // 15 minutos en milliseconds
   private static readonly TEMP_NUMBER_PREFIX = "TEMP-";
   private static tempCounter = 0; // Contador para números temporales

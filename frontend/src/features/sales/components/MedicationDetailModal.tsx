@@ -128,7 +128,7 @@ const MedicationDetailModal = memo(({ open, onOpenChange, medicationItem }: Medi
                 </h3>
                 <div className="space-y-3 max-h-48 overflow-y-auto">
                   {medication.activeBatches.map((batch) => {
-                    const status = getBatchStatus(batch.expirationDate);
+                    const status = getBatchStatus(batch.expirationDate, batch.quantity);
                     return (
                       <div key={batch.id} className="border rounded-lg p-3 bg-gray-50">
                         <div className="flex items-center justify-between mb-2">

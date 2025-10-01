@@ -64,12 +64,12 @@ function createLocalServer() {
       });
     });
 
-    httpServer.listen(8080, 'localhost', (err) => {
+    httpServer.listen(8081, 'localhost', (err) => {
       if (err) {
         console.error('❌ Error iniciando servidor local:', err);
         reject(err);
       } else {
-        console.log('✅ Servidor local iniciado en http://localhost:8080');
+        console.log('✅ Servidor local iniciado en http://localhost:8081');
         resolve();
       }
     });
@@ -79,11 +79,11 @@ function createLocalServer() {
 function getFrontendUrl() {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:9999';
+    return 'http://localhost:4321';
   }
   
   // En producción, usar servidor HTTP local
-  return 'http://localhost:8080';
+  return 'http://localhost:8081';
 }
 
 function createWindow() {

@@ -71,7 +71,7 @@ async function generatePDFFromHTML(htmlContent: string): Promise<string> {
 function getFrontendUrl(): string {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:9999';
+    return 'http://localhost:4321';
   }
   
   // En producción, usar archivos estáticos desde file://

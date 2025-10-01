@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     host: true,
-    port: 9999,
+    port: 4321,
     hmr: {
       overlay: mode === "development", // Solo en desarrollo
     },
