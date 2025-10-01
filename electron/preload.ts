@@ -18,7 +18,10 @@ const electronAPI = {
     electron: process.versions.electron,
     chrome: process.versions.chrome,
     node: process.versions.node
-  }
+  },
+
+  // Imprimir desde el renderer
+  printSaleReport: (options?: any) => ipcRenderer.invoke('print-sale-report', options)
 };
 
 // Tipos para TypeScript

@@ -1,3 +1,12 @@
+// Para TypeScript: declarar electronAPI en window si existe
+declare global {
+  interface Window {
+    electronAPI?: {
+      printSaleReport?: (options?: any) => Promise<any>;
+      [key: string]: any;
+    };
+  }
+}
 import type { Sale } from '../types/Sales';
 import { findSaleById } from './SalesService';
 import { findMedicationById } from './MedicationService';
@@ -162,7 +171,7 @@ const generateSaleHTML = (data: ReportData): string => {
       <style>
 
         @page {
-          margin: 0mm 10mm 10mm 10mm; /* top, right, bottom, left */
+          margin: 0mm 10mm 10mm 10mm !important; /* top, right, bottom, left */
           size: Letter;
         }
         
@@ -188,8 +197,8 @@ const generateSaleHTML = (data: ReportData): string => {
           color: #333;
           background-color: #fff;
           min-width: 250mm;
-          margin: 0 auto;
-          padding: 0px;
+          margin: 0 !important;
+          padding: 0 1em !important;
         }
         
         @media screen {
@@ -678,6 +687,13 @@ export const generateSaleReport = async (saleId: string): Promise<{ success: boo
  */
 const generateSaleReportElectron = async (htmlContent: string): Promise<{ success: boolean; error?: string }> => {
   try {
+    // Si existe la API de Electron, usar impresión nativa
+    if (window.electronAPI && typeof window.electronAPI.printSaleReport === 'function') {
+      await window.electronAPI.printSaleReport();
+      return { success: true };
+    }
+    // Fallback: método anterior (iframe/modal)
+    // ...existing code...
     // Crear un iframe oculto para contener el contenido de impresión
     const printFrame = document.createElement('iframe');
     printFrame.style.position = 'absolute';
@@ -686,20 +702,14 @@ const generateSaleReportElectron = async (htmlContent: string): Promise<{ succes
     printFrame.style.width = '0';
     printFrame.style.height = '0';
     printFrame.style.border = 'none';
-    
     document.body.appendChild(printFrame);
-    
-    // Escribir el contenido al iframe
     const frameDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
     if (!frameDoc) {
       throw new Error('No se pudo acceder al documento del iframe');
     }
-    
     frameDoc.open();
     frameDoc.write(htmlContent);
     frameDoc.close();
-    
-    // Esperar a que el contenido cargue completamente
     await new Promise<void>((resolve) => {
       const checkLoaded = () => {
         if (frameDoc.readyState === 'complete') {
@@ -710,20 +720,14 @@ const generateSaleReportElectron = async (htmlContent: string): Promise<{ succes
       };
       checkLoaded();
     });
-    
-    // Crear una ventana de vista previa usando un div modal
     const modal = createPrintModal(htmlContent);
     document.body.appendChild(modal);
-    
-    // Limpiar el iframe
     setTimeout(() => {
       if (printFrame.parentNode) {
         printFrame.parentNode.removeChild(printFrame);
       }
     }, 100);
-    
     return { success: true };
-    
   } catch (error) {
     console.error('Error en generateSaleReportElectron:', error);
     return { 

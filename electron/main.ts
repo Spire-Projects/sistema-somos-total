@@ -1,3 +1,18 @@
+// Handler para imprimir desde el renderer
+ipcMain.handle('print-sale-report', async (_event, options) => {
+  if (!mainWindow) throw new Error('No mainWindow');
+  return new Promise((resolve, reject) => {
+    mainWindow!.webContents.print({
+      silent: false,
+      printBackground: true,
+      margins: { marginType: 'none' },
+      ...options
+    }, (success, errorType) => {
+      if (success) resolve({ success: true });
+      else reject(new Error(errorType));
+    });
+  });
+});
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
