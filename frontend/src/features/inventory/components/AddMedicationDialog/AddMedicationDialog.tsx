@@ -28,7 +28,6 @@ import { Switch } from "@/shared/components/ui/switch.tsx";
 import { useSelector } from "react-redux";
 import CustomDialog from "../../../../shared/components/CustomDialog";
 
-
 interface AddMedicationDialogProps {
   onMedicationAdded?: () => void;
   medicationId?: string;
@@ -58,14 +57,16 @@ const defaultValues: Partial<MedicationFormData> = {
 };
 
 // Mover patrones regex fuera del componente para evitar recreaciones
-const CONCENTRATION_PATTERN = /^[\d.,]+\s*(mg|g|ml|l|UI|mcg|µg|%|mEq|mmol)\s*$/i;
+const CONCENTRATION_PATTERN =
+  /^[\d.,]+\s*(mg|g|ml|l|UI|mcg|µg|%|mEq|mmol)\s*$/i;
 const BARCODE_PATTERN = /^[0-9]+$/;
 
 const AddMedicationDialog = memo(
   ({ onMedicationAdded, medicationId, edit }: AddMedicationDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const [showValidationErrors, setShowValidationErrors] = useState(false);
-  const [showConfirmClose, setShowConfirmClose] = useState(false);    const {
+    const [open, setOpen] = useState(false);
+    const [showValidationErrors, setShowValidationErrors] = useState(false);
+    const [showConfirmClose, setShowConfirmClose] = useState(false);
+    const {
       register,
       handleSubmit,
       setValue,
@@ -98,22 +99,20 @@ const AddMedicationDialog = memo(
         if (medicationId && open) {
           try {
             const medicationData = await findMedicationById(medicationId);
-            console.log("Fetched add dialog medication data:", medicationData);
+
             if (!medicationData) return;
 
             // Usar batch update más eficiente
             Object.entries(medicationData).forEach(([key, value]) => {
               if (key in defaultValues) {
-                
                 setValue(
                   key as keyof MedicationFormData,
                   value,
                   { shouldDirty: false, shouldValidate: false } // Evitar validación excesiva
                 );
-               
               }
             });
-            
+
             // Para el modo editar, activar validación después de cargar los datos
             // para que el usuario vea inmediatamente si hay algún problema
             if (edit) {
@@ -173,7 +172,7 @@ const AddMedicationDialog = memo(
         try {
           // Activar visualización de errores en el primer intento de submit
           setShowValidationErrors(true);
-          
+
           // Validation: At least one active ingredient is required
           if (
             !data.activeIngredientIds ||
@@ -185,11 +184,8 @@ const AddMedicationDialog = memo(
 
           const medicationData: CreateMedicationData = {
             ...data,
-            createdBy: authUser?.id || "current-user", 
+            createdBy: authUser?.id || "current-user",
           };
-
-          console.log("Medication Data to submit:", medicationData);
-
           if (medicationId) {
             await updateMedication(medicationId, medicationData);
             toast.success("Medicamento actualizado exitosamente");
@@ -251,14 +247,17 @@ const AddMedicationDialog = memo(
 
     const handleFieldChange = useCallback(
       (field: keyof MedicationFormData, value: any) => {
-        if (field === 'prescriptionRequired') {
-          console.log('handleFieldChange called for prescriptionRequired with value:', value);
+        if (field === "prescriptionRequired") {
+          console.log(
+            "handleFieldChange called for prescriptionRequired with value:",
+            value
+          );
         }
-        setValue(field, value, { 
-          shouldDirty: true, 
-          shouldValidate: false // Reducir validación automática para mejor rendimiento
+        setValue(field, value, {
+          shouldDirty: true,
+          shouldValidate: false, // Reducir validación automática para mejor rendimiento
         });
-        
+
         // Activar validación después de la primera interacción con cualquier campo
         if (!showValidationErrors) {
           setShowValidationErrors(true);
@@ -280,7 +279,17 @@ const AddMedicationDialog = memo(
         concentration?.trim() &&
         activeIngredientIds?.length > 0
       );
-    }, [comercialName, tradeName, categoryId, genericName, manufacturerId, pharmaceuticalFormId, presentation, concentration, activeIngredientIds]);
+    }, [
+      comercialName,
+      tradeName,
+      categoryId,
+      genericName,
+      manufacturerId,
+      pharmaceuticalFormId,
+      presentation,
+      concentration,
+      activeIngredientIds,
+    ]);
 
     // Errores condicionales para componentes hijos
     const conditionalErrors = useMemo(() => {
@@ -346,7 +355,9 @@ const AddMedicationDialog = memo(
               onChange={(generic) =>
                 handleFieldChange("genericName", generic.id)
               }
-              error={showValidationErrors ? errors.genericName?.message : undefined}
+              error={
+                showValidationErrors ? errors.genericName?.message : undefined
+              }
             />
 
             {/* Selects de Catálogos */}
@@ -442,7 +453,11 @@ const AddMedicationDialog = memo(
               onChange={(ids: string[]) =>
                 handleFieldChange("activeIngredientIds", ids)
               }
-              error={showValidationErrors ? errors.activeIngredientIds?.message : undefined}
+              error={
+                showValidationErrors
+                  ? errors.activeIngredientIds?.message
+                  : undefined
+              }
               selected={activeIngredientIds}
             />
 
@@ -451,7 +466,9 @@ const AddMedicationDialog = memo(
               <Switch
                 id="prescriptionRequired"
                 checked={prescriptionRequired}
-                onCheckedChange={(checked: boolean) => handleFieldChange("prescriptionRequired", checked)}
+                onCheckedChange={(checked: boolean) =>
+                  handleFieldChange("prescriptionRequired", checked)
+                }
               />
               <Label htmlFor="prescriptionRequired" className="font-medium">
                 Requiere Receta Médica

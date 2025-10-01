@@ -76,7 +76,7 @@ function createLocalServer() {
 function getFrontendUrl() {
   // En desarrollo, usar el dev server de Vite
   if (isDev && !app.isPackaged) {
-    return 'http://localhost:5179';
+    return 'http://localhost:9999';
   }
   
   // En producción, usar servidor HTTP local

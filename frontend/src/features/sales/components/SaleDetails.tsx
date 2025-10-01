@@ -1,29 +1,32 @@
-import { memo, useState, useEffect } from 'react';
-import { formatCurrency } from '@/shared/services/BatchService';
-import { formatDate } from '@/shared/utils/date.utils';
-import { UserService } from '@/shared/services/UserService';
-import { getClientById } from '@/shared/services/ClientService';
-import { findMedicById } from '@/shared/services/MedicService';
-import { updateSaleFacturedStatus } from '@/shared/services/SalesService';
-import { generateSaleReport } from '@/shared/services/ReportService';
-import { Button } from '@/shared/components/ui/button';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/shared/components/ui/dialog';
-import { CheckCircle, XCircle, Loader2, FileText } from 'lucide-react';
-import { Info } from 'lucide-react';
-import type { Sale } from '@/shared/types/Sales';
-import type { AuthUser } from '@/shared/types/User';
-import type { Client } from '@/shared/types/Client';
-import type { Medic } from '@/shared/types/Sales';
-import { findMedicationBatchById, getMedicationViewById } from '@/shared/services';
-import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
-import type { MedicationBatch } from '@/shared/types/Medication';
+import { memo, useState, useEffect } from "react";
+import { formatCurrency } from "@/shared/services/BatchService";
+import { formatDate } from "@/shared/utils/date.utils";
+import { UserService } from "@/shared/services/UserService";
+import { getClientById } from "@/shared/services/ClientService";
+import { findMedicById } from "@/shared/services/MedicService";
+import { updateSaleFacturedStatus } from "@/shared/services/SalesService";
+import { generateSaleReport } from "@/shared/services/ReportService";
+import { Button } from "@/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import { CheckCircle, XCircle, Loader2, FileText } from "lucide-react";
+import { Info } from "lucide-react";
+import type { Sale } from "@/shared/types/Sales";
+import type { AuthUser } from "@/shared/types/User";
+import type { Client } from "@/shared/types/Client";
+import type { Medic } from "@/shared/types/Sales";
+import {
+  findMedicationBatchById,
+  getMedicationViewById,
+} from "@/shared/services";
+import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
+import type { MedicationBatch } from "@/shared/types/Medication";
 
 interface SaleDetailsProps {
   sale: Sale;
@@ -45,7 +48,7 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   const [loading, setLoading] = useState({
     user: false,
     client: false,
-    medic: false
+    medic: false,
   });
 
   // Actualizar el estado local cuando cambie la prop sale
@@ -68,15 +71,18 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   const updateFacturedStatus = async (factured: boolean) => {
     try {
       setUpdatingFactured(true);
-      const updatedSale = await updateSaleFacturedStatus(currentSale.id, factured);
+      const updatedSale = await updateSaleFacturedStatus(
+        currentSale.id,
+        factured
+      );
       setCurrentSale(updatedSale);
-      
+
       // Notificar al componente padre si existe la función
       if (onSaleUpdate) {
         onSaleUpdate(updatedSale);
       }
     } catch (error) {
-      console.error('Error updating factured status:', error);
+      console.error("Error updating factured status:", error);
       // TODO: Mostrar toast de error
     } finally {
       setUpdatingFactured(false);
@@ -95,13 +101,13 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
     try {
       const result = await generateSaleReport(currentSale.id);
       if (!result.success) {
-        console.error('Error al generar el reporte:', result.error);
+        console.error("Error al generar el reporte:", result.error);
         // Aquí puedes agregar una notificación de error si tienes un sistema de notificaciones
         alert(`Error al generar el reporte: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error al generar el reporte:', error);
-      alert('Error inesperado al generar el reporte');
+      console.error("Error al generar el reporte:", error);
+      alert("Error inesperado al generar el reporte");
     } finally {
       setGeneratingReport(false);
     }
@@ -110,21 +116,17 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   // Cargar información del usuario que creó la venta
   useEffect(() => {
     const fetchCreatedByUser = async () => {
-      console.log('Cargando usuario creado por:', currentSale.createdBy);
       if (!currentSale.createdBy) return;
-
       try {
-        setLoading(prev => ({ ...prev, user: true }));
+        setLoading((prev) => ({ ...prev, user: true }));
         const response = await UserService.getUserById(currentSale.createdBy);
-        console.log('Respuesta del usuario:', response);
         if (response.success && response.user) {
           setCreatedByUser(response.user);
-          console.log('Usuario creado por:', response.user);
         }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error("Error fetching user:", error);
       } finally {
-        setLoading(prev => ({ ...prev, user: false }));
+        setLoading((prev) => ({ ...prev, user: false }));
       }
     };
 
@@ -137,15 +139,15 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
       if (!currentSale.client) return;
 
       try {
-        setLoading(prev => ({ ...prev, client: true }));
+        setLoading((prev) => ({ ...prev, client: true }));
         const clientData = await getClientById(currentSale.client);
         if (clientData) {
           setClient(clientData);
         }
       } catch (error) {
-        console.error('Error fetching client:', error);
+        console.error("Error fetching client:", error);
       } finally {
-        setLoading(prev => ({ ...prev, client: false }));
+        setLoading((prev) => ({ ...prev, client: false }));
       }
     };
 
@@ -158,15 +160,15 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
       if (!currentSale.idMedic) return;
 
       try {
-        setLoading(prev => ({ ...prev, medic: true }));
+        setLoading((prev) => ({ ...prev, medic: true }));
         const medicData = await findMedicById(currentSale.idMedic);
         if (medicData) {
           setMedic(medicData);
         }
       } catch (error) {
-        console.error('Error fetching medic:', error);
+        console.error("Error fetching medic:", error);
       } finally {
-        setLoading(prev => ({ ...prev, medic: false }));
+        setLoading((prev) => ({ ...prev, medic: false }));
       }
     };
 
@@ -174,63 +176,69 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   }, [currentSale.idMedic]);
 
   // Cargar información del medicamento
-  const [medicationsMap, setMedicationsMap] = useState<Record<string, MedicationCatalogView | null>>({});
+  const [medicationsMap, setMedicationsMap] = useState<
+    Record<string, MedicationCatalogView | null>
+  >({});
   const [medicationsLoading, setMedicationsLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
-        const fetchMedications = async () => {
-          setMedicationsLoading(true);
-          const map: Record<string, MedicationCatalogView | null> = {};
+    const fetchMedications = async () => {
+      setMedicationsLoading(true);
+      const map: Record<string, MedicationCatalogView | null> = {};
 
+      try {
+        for (const item of currentSale.items) {
           try {
-            for (const item of currentSale.items) {
-              try {
-                const med = await getMedicationViewById(item.medicationId);
-                map[item.medicationId] = med ?? null;
-              } catch (err) {
-                console.error('Error fetching medication', item.medicationId, err);
-                map[item.medicationId] = null;
-              }
-            }
-          } finally {
-            if (mounted) {
-              setMedicationsMap(map);
-              setMedicationsLoading(false);
-            }
+            const med = await getMedicationViewById(item.medicationId);
+            map[item.medicationId] = med ?? null;
+          } catch (err) {
+            console.error("Error fetching medication", item.medicationId, err);
+            map[item.medicationId] = null;
           }
-        };
-
-        if (currentSale.items && currentSale.items.length > 0) {
-          fetchMedications();
         }
+      } finally {
+        if (mounted) {
+          setMedicationsMap(map);
+          setMedicationsLoading(false);
+        }
+      }
+    };
 
-        return () => { mounted = false; };
-      }, [currentSale.items]);
+    if (currentSale.items && currentSale.items.length > 0) {
+      fetchMedications();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentSale.items]);
 
   // Funciones para mostrar la información
   const getCreatedByDisplay = () => {
-    if (loading.user) return 'Cargando...';
+    if (loading.user) return "Cargando...";
     if (createdByUser) return createdByUser.fullName;
-    return currentSale.createdBy || 'Usuario desconocido';
+    return currentSale.createdBy || "Usuario desconocido";
   };
 
   const getClientDisplay = () => {
-    if (loading.client) return 'Cargando...';
+    if (loading.client) return "Cargando...";
     if (client) return client.name;
     if (currentSale.client) return currentSale.client;
-    return 'Cliente general';
+    return "Cliente general";
   };
 
   const getMedicDisplay = () => {
-    if (loading.medic) return 'Cargando...';
+    if (loading.medic) return "Cargando...";
     if (medic) return medic.fullName;
     if (currentSale.idMedic) return currentSale.idMedic;
-    return 'Sin médico asignado';
+    return "Sin médico asignado";
   };
 
-  const [batchesMap, setBatchesMap] = useState<Record<string, MedicationBatch | null>>({});
+  const [batchesMap, setBatchesMap] = useState<
+    Record<string, MedicationBatch | null>
+  >({});
   const [loadingBatches, setLoadingBatches] = useState<Set<string>>(new Set());
 
   // Función para cargar un lote específico solo cuando sea necesario
@@ -241,23 +249,23 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
     }
 
     // Marcar como cargando
-    setLoadingBatches(prev => new Set(prev).add(batchId));
+    setLoadingBatches((prev) => new Set(prev).add(batchId));
 
     try {
       const batchData = await findMedicationBatchById(batchId);
-      setBatchesMap(prev => ({
+      setBatchesMap((prev) => ({
         ...prev,
-        [batchId]: batchData || null
+        [batchId]: batchData || null,
       }));
     } catch (error) {
-      console.error('Error loading batch:', batchId, error);
-      setBatchesMap(prev => ({
+      console.error("Error loading batch:", batchId, error);
+      setBatchesMap((prev) => ({
         ...prev,
-        [batchId]: null
+        [batchId]: null,
       }));
     } finally {
       // Remover del set de cargando
-      setLoadingBatches(prev => {
+      setLoadingBatches((prev) => {
         const newSet = new Set(prev);
         newSet.delete(batchId);
         return newSet;
@@ -271,15 +279,21 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {/* Información general */}
           <div className="space-y-2">
-            <h4 className="font-semibold text-sm text-gray-900">Información General</h4>
+            <h4 className="font-semibold text-sm text-gray-900">
+              Información General
+            </h4>
             <div className="space-y-1 text-xs">
               <div>
                 <span className="text-gray-600">Fecha:</span>
-                <span className="ml-1">{formatDate(currentSale.createdAt)}</span>
+                <span className="ml-1">
+                  {formatDate(currentSale.createdAt)}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600">Método de pago:</span>
-                <span className="ml-1 capitalize">{currentSale.paymentMethod}</span>
+                <span className="ml-1 capitalize">
+                  {currentSale.paymentMethod}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600">Creado por:</span>
@@ -291,8 +305,15 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
           {/* Cliente y médico */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <h4 className="font-semibold text-sm text-gray-900">Cliente y Médico</h4>
-              <Button variant="ghost" size="icon" onClick={() => setShowInfoModal(true)} aria-label="Ver información completa">
+              <h4 className="font-semibold text-sm text-gray-900">
+                Cliente y Médico
+              </h4>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowInfoModal(true)}
+                aria-label="Ver información completa"
+              >
                 <Info className="h-4 w-4 text-blue-600" />
               </Button>
             </div>
@@ -307,8 +328,12 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
               </div>
               <div>
                 <span className="text-gray-600">Facturado:</span>
-                <span className={`ml-1 ${currentSale.factured ? 'text-green-600' : 'text-orange-600'}`}>
-                  {currentSale.factured ? 'Sí' : 'No'}
+                <span
+                  className={`ml-1 ${
+                    currentSale.factured ? "text-green-600" : "text-orange-600"
+                  }`}
+                >
+                  {currentSale.factured ? "Sí" : "No"}
                 </span>
               </div>
             </div>
@@ -323,21 +348,63 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
                 </DialogHeader>
                 <div className="space-y-4 text-xs">
                   <div>
-                    <h5 className="font-semibold text-gray-800 mb-1">Cliente</h5>
-                    <div><span className="text-gray-600">Nombre:</span> <span className="ml-1">{client?.name || getClientDisplay()}</span></div>
-                    {client?.email && (<div><span className="text-gray-600">Email:</span> <span className="ml-1">{client.email}</span></div>)}
-                    {client?.address && (<div><span className="text-gray-600">Dirección:</span> <span className="ml-1">{client.address}</span></div>)}
-                    {client?.phone && (<div><span className="text-gray-600">Teléfono:</span> <span className="ml-1">{client.phone}</span></div>)}
+                    <h5 className="font-semibold text-gray-800 mb-1">
+                      Cliente
+                    </h5>
+                    <div>
+                      <span className="text-gray-600">Nombre:</span>{" "}
+                      <span className="ml-1">
+                        {client?.name || getClientDisplay()}
+                      </span>
+                    </div>
+                    {client?.email && (
+                      <div>
+                        <span className="text-gray-600">Email:</span>{" "}
+                        <span className="ml-1">{client.email}</span>
+                      </div>
+                    )}
+                    {client?.address && (
+                      <div>
+                        <span className="text-gray-600">Dirección:</span>{" "}
+                        <span className="ml-1">{client.address}</span>
+                      </div>
+                    )}
+                    {client?.phone && (
+                      <div>
+                        <span className="text-gray-600">Teléfono:</span>{" "}
+                        <span className="ml-1">{client.phone}</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h5 className="font-semibold text-gray-800 mb-1">Médico</h5>
-                    <div><span className="text-gray-600">Nombre:</span> <span className="ml-1">{medic?.fullName || getMedicDisplay()}</span></div>
-                    {medic?.licenseNumber && (<div><span className="text-gray-600">Licencia:</span> <span className="ml-1">{medic.licenseNumber}</span></div>)}
-                    {medic?.specialty && (<div><span className="text-gray-600">Especialidad:</span> <span className="ml-1">{medic.specialty}</span></div>)}
+                    <div>
+                      <span className="text-gray-600">Nombre:</span>{" "}
+                      <span className="ml-1">
+                        {medic?.fullName || getMedicDisplay()}
+                      </span>
+                    </div>
+                    {medic?.licenseNumber && (
+                      <div>
+                        <span className="text-gray-600">Licencia:</span>{" "}
+                        <span className="ml-1">{medic.licenseNumber}</span>
+                      </div>
+                    )}
+                    {medic?.specialty && (
+                      <div>
+                        <span className="text-gray-600">Especialidad:</span>{" "}
+                        <span className="ml-1">{medic.specialty}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowInfoModal(false)}>Cerrar</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowInfoModal(false)}
+                  >
+                    Cerrar
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -345,15 +412,21 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
 
           {/* Información de NIT */}
           <div className="space-y-2">
-            <h4 className="font-semibold text-sm text-gray-900">Información de NIT</h4>
+            <h4 className="font-semibold text-sm text-gray-900">
+              Información de NIT
+            </h4>
             <div className="space-y-1 text-xs">
               <div>
                 <span className="text-gray-600">NIT:</span>
-                <span className="ml-1">{currentSale.nitClient || 'No especificado'}</span>
+                <span className="ml-1">
+                  {currentSale.nitClient || "No especificado"}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600">Razón Social:</span>
-                <span className="ml-1">{currentSale.socialReasonClient || 'No especificada'}</span>
+                <span className="ml-1">
+                  {currentSale.socialReasonClient || "No especificada"}
+                </span>
               </div>
             </div>
           </div>
@@ -364,21 +437,29 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
             <div className="space-y-1 text-xs">
               <div>
                 <span className="text-gray-600">Monto sin desc.:</span>
-                <span className="ml-1">{formatCurrency(currentSale.totalWithoutDiscount ?? 0)}</span>
+                <span className="ml-1">
+                  {formatCurrency(currentSale.totalWithoutDiscount ?? 0)}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600">Subtotal con desc.:</span>
                 <span className="ml-1">
-                  {formatCurrency((currentSale.total ?? 0) + (currentSale.totalDiscount ?? 0))}
+                  {formatCurrency(
+                    (currentSale.total ?? 0) + (currentSale.totalDiscount ?? 0)
+                  )}
                 </span>
               </div>
               <div>
                 <span className="text-gray-600">Descuento venta:</span>
-                <span className="ml-1 text-red-600">-{formatCurrency(currentSale.totalDiscount ?? 0)}</span>
+                <span className="ml-1 text-red-600">
+                  -{formatCurrency(currentSale.totalDiscount ?? 0)}
+                </span>
               </div>
               <div>
                 <span className="text-gray-600 font-semibold">Total:</span>
-                <span className="ml-1 font-semibold text-green-600">{formatCurrency(currentSale.total)}</span>
+                <span className="ml-1 font-semibold text-green-600">
+                  {formatCurrency(currentSale.total)}
+                </span>
               </div>
             </div>
           </div>
@@ -391,7 +472,9 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
               <span>📝</span>
               Comentarios de la venta
             </h4>
-            <p className="text-xs text-gray-700 whitespace-pre-wrap">{currentSale.saleNotes}</p>
+            <p className="text-xs text-gray-700 whitespace-pre-wrap">
+              {currentSale.saleNotes}
+            </p>
           </div>
         )}
 
@@ -402,27 +485,27 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
             disabled={generatingReport}
             size="sm"
             variant={currentSale.factured ? "outline" : "default"}
-            >
-              {generatingReport ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <FileText className='h-4 w-4 mr-2' />
-                  Generar nota de venta
-                </>
-              )}
-            </Button>
+          >
+            {generatingReport ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <FileText className="h-4 w-4 mr-2" />
+                Generar nota de venta
+              </>
+            )}
+          </Button>
           <Button
             onClick={handleToggleFactured}
             disabled={updatingFactured}
             size="sm"
             variant={currentSale.factured ? "outline" : "default"}
             className={`${
-              currentSale.factured 
-                ? "text-red-600 border-red-600 hover:bg-red-50" 
+              currentSale.factured
+                ? "text-red-600 border-red-600 hover:bg-red-50"
                 : "bg-green-600 hover:bg-green-700 text-white"
             }`}
           >
@@ -454,34 +537,54 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
             <table className="w-full text-xs">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="text-left p-2 font-medium text-gray-700">Medicamento</th>
-                  <th className="text-right p-2 font-medium text-gray-700">Cantidad</th>
-                  <th className="text-right p-2 font-medium text-gray-700">Precio Unit.</th>
-                  {currentSale.items.some(item => item.listPrice) && (
-                    <th className="text-right p-2 font-medium text-gray-700">Precio  Lista</th>
+                  <th className="text-left p-2 font-medium text-gray-700">
+                    Medicamento
+                  </th>
+                  <th className="text-right p-2 font-medium text-gray-700">
+                    Cantidad
+                  </th>
+                  <th className="text-right p-2 font-medium text-gray-700">
+                    Precio Unit.
+                  </th>
+                  {currentSale.items.some((item) => item.listPrice) && (
+                    <th className="text-right p-2 font-medium text-gray-700">
+                      Precio Lista
+                    </th>
                   )}
-                  {currentSale.items.some(item => item.discount) && (
-                    <th className="text-right p-2 font-medium text-gray-700">Descuento por Unidad</th>
+                  {currentSale.items.some((item) => item.discount) && (
+                    <th className="text-right p-2 font-medium text-gray-700">
+                      Descuento por Unidad
+                    </th>
                   )}
-                  <th className="text-right p-2 font-medium text-gray-700">Total</th>
+                  <th className="text-right p-2 font-medium text-gray-700">
+                    Total
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {currentSale.items.map((item, index) => {
                   const medication = medicationsMap[item.medicationId];
-                  const medicationLabel = medication?.comercialName || "nada" || (medicationsLoading ? 'Cargando...' : 'Medicamento desconocido');
-                  
+                  const medicationLabel =
+                    medication?.comercialName ||
+                    "nada" ||
+                    (medicationsLoading
+                      ? "Cargando..."
+                      : "Medicamento desconocido");
+
                   // Cargar lote de forma lazy cuando se renderiza
                   const batch = batchesMap[item.batchId];
                   const isBatchLoading = loadingBatches.has(item.batchId);
-                  
+
                   // Trigger lazy loading si no está cargado
                   if (batch === undefined && !isBatchLoading) {
                     loadBatchIfNeeded(item.batchId);
                   }
-                  
+
                   return (
-                    <tr key={`${item.batchId}-${index}`} className="hover:bg-gray-50">
+                    <tr
+                      key={`${item.batchId}-${index}`}
+                      className="hover:bg-gray-50"
+                    >
                       <td className="p-2">
                         <div>
                           <div className="font-medium">{medicationLabel}</div>
@@ -497,24 +600,34 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
                               </>
                             )}
                             {isBatchLoading && (
-                              <span className="ml-2 text-xs text-gray-400">Cargando...</span>
+                              <span className="ml-2 text-xs text-gray-400">
+                                Cargando...
+                              </span>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="p-2 text-right">{item.quantity}</td>
-                      <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                      {currentSale.items.some(i => i.listPrice) && (
+                      <td className="p-2 text-right">
+                        {formatCurrency(item.unitPrice)}
+                      </td>
+                      {currentSale.items.some((i) => i.listPrice) && (
                         <td className="p-2 text-right">
-                          {item.listPrice ? formatCurrency(item.listPrice) : '-'}
+                          {item.listPrice
+                            ? formatCurrency(item.listPrice)
+                            : "-"}
                         </td>
                       )}
-                      {currentSale.items.some(i => i.discount) && (
+                      {currentSale.items.some((i) => i.discount) && (
                         <td className="p-2 text-right text-red-600">
-                          {item.discount ? `-${formatCurrency(item.discount)}` : '-'}
+                          {item.discount
+                            ? `-${formatCurrency(item.discount)}`
+                            : "-"}
                         </td>
                       )}
-                      <td className="p-2 text-right font-medium">{formatCurrency(item.total)}</td>
+                      <td className="p-2 text-right font-medium">
+                        {formatCurrency(item.total)}
+                      </td>
                     </tr>
                   );
                 })}
@@ -534,19 +647,20 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
             </DialogTitle>
             <DialogDescription>
               ¿Estás seguro de que deseas desmarcar esta venta como facturada?
-              Esta acción cambiará el estado de facturación de "Facturado" a "Pendiente".
+              Esta acción cambiará el estado de facturación de "Facturado" a
+              "Pendiente".
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowConfirmDialog(false)}
               disabled={updatingFactured}
             >
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleConfirmUnmark}
               disabled={updatingFactured}
             >
@@ -556,7 +670,7 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
                   Actualizando...
                 </>
               ) : (
-                'Sí, Desmarcar'
+                "Sí, Desmarcar"
               )}
             </Button>
           </DialogFooter>
@@ -566,6 +680,6 @@ const SaleDetails = memo(({ sale, onSaleUpdate }: SaleDetailsProps) => {
   );
 });
 
-SaleDetails.displayName = 'SaleDetails';
+SaleDetails.displayName = "SaleDetails";
 
 export default SaleDetails;

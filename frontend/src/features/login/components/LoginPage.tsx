@@ -1,26 +1,26 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import logoImage from '../../../assets/logo.png';
+import { useState } from "react";
+import { Navigate } from "react-router";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import logoImage from "../../../assets/logo.png";
 
-import { Button } from '../../../shared/components/ui/button';
+import { Button } from "../../../shared/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-} from '../../../shared/components/ui/card';
-import { Input } from '../../../shared/components/ui/input';
-import { Label } from '../../../shared/components/ui/label';
-import { UserService } from '../../../shared/services/UserService';
-import { useAppDispatch, useAppSelector } from '../../../shared/store/hooks';
-import { loginSuccess } from '../../../shared/store/authSlice';
-import type { LoginCredentials } from '../../../shared/db/models/user.model';
+} from "../../../shared/components/ui/card";
+import { Input } from "../../../shared/components/ui/input";
+import { Label } from "../../../shared/components/ui/label";
+import { UserService } from "../../../shared/services/UserService";
+import { useAppDispatch, useAppSelector } from "../../../shared/store/hooks";
+import { loginSuccess } from "../../../shared/store/authSlice";
+import type { LoginCredentials } from "../../../shared/db/models/user.model";
 
 export const LoginPage = () => {
   const [formData, setFormData] = useState<LoginCredentials>({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +40,9 @@ export const LoginPage = () => {
     setError(null);
 
     try {
-      console.log('🔑 Intentando login con:', formData.email);
       const response = await UserService.login(formData);
 
       if (response.success && response.user && response.token) {
-        console.log('✅ Login exitoso, redirigiendo...');
         dispatch(
           loginSuccess({
             user: response.user,
@@ -52,14 +50,14 @@ export const LoginPage = () => {
           })
         );
       } else {
-        console.log('❌ Login fallido:', response.error);
         setError(
-          response.error || 'Credenciales inválidas. Por favor, inténtalo de nuevo.'
+          response.error ||
+            "Credenciales inválidas. Por favor, inténtalo de nuevo."
         );
       }
     } catch (error) {
-      console.error('❌ Error inesperado en login:', error);
-      setError('Error de conexión. Por favor, inténtalo de nuevo.');
+      console.error("❌ Error inesperado en login:", error);
+      setError("Error de conexión. Por favor, inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +108,7 @@ export const LoginPage = () => {
                 <Input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   required
                   value={formData.password}
                   onChange={handleChange}
@@ -132,14 +130,21 @@ export const LoginPage = () => {
             </div>
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative" role="alert">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative"
+                role="alert"
+              >
                 <span className="block sm:inline">{error}</span>
               </div>
             )}
 
-            <Button type="submit" className="w-full bg-secondary" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-secondary"
+              disabled={isLoading}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </Button>
           </form>
         </CardContent>

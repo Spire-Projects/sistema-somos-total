@@ -160,6 +160,7 @@ const generateSaleHTML = (data: ReportData): string => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Nota de Venta - ${sale.id}</title>
       <style>
+      
         @page {
           margin: 10mm;
           size: A4;
@@ -191,7 +192,6 @@ const generateSaleHTML = (data: ReportData): string => {
           padding: 20px;
         }
         
-        /* Mejoras para vista previa en pantalla */
         @media screen {
           body {
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
@@ -268,12 +268,9 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .invoice-details {
-          
           padding-left: 20px;
           padding-right: 20px;
           border-radius: 12px;
-         
-          
         }
         
         .invoice-details table {
@@ -292,12 +289,8 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .client-info {
-          
           padding: 0px 20px 20px 20px;
-         
           border-radius: 12px;
-          
-         
         }
         
         .client-info h3 {

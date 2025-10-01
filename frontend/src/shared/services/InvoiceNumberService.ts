@@ -35,17 +35,13 @@ export class InvoiceNumberService {
    */
   static async getNextInvoiceNumber(): Promise<string> {
     try {
-      
-     
       this.cleanupExpiredRanges();
       const terminalId = this.getTerminalId();
       let activeRanges = await this.repository.findActiveRangesByTerminal(
         terminalId
       );
 
-    
       if (activeRanges.length === 0) {
-
         if (navigator.onLine) {
           activeRanges = await this.createNewRange(terminalId);
         } else {
@@ -63,7 +59,6 @@ export class InvoiceNumberService {
         return nextNumber;
       }
 
-   
       return this.generateTemporaryNumber(terminalId);
     } catch (error) {
       console.error("❌ Error obteniendo número de factura:", error);
@@ -81,7 +76,6 @@ export class InvoiceNumberService {
     terminalId: string
   ): Promise<NumberInvoiceRangeDocument[]> {
     try {
-      
       const recyclableNumbers = await this.repository.findRecyclableNumbers();
 
       let startNumber = 0;
@@ -104,7 +98,7 @@ export class InvoiceNumberService {
             rangeExist = response.range;
           }
         }
-       
+
         if (!rangeExist) {
           rangeFound = true;
           const sourceRangeOriginal = await this.repository.findById(
@@ -126,21 +120,22 @@ export class InvoiceNumberService {
       }
 
       let from = 0;
-      let verifyRange = { exist: true, range: null as NumberInvoiceRangeDocument | null };
+      let verifyRange = {
+        exist: true,
+        range: null as NumberInvoiceRangeDocument | null,
+      };
       if (!rangeFound) {
         do {
-          console.log("infomau: buscando rango desde:", from);
-          console.log("infomau: buscando rango desde (max):", Math.max(startNumber, from));
-        startNumber = await this.repository.getNextAvailableNumberForNewRange();
-        startNumber = Math.max(startNumber, from);
-        endNumber = this.getNextEndNumber(startNumber);
-        console.log("infomau: buscando rango:", startNumber, " - ", endNumber);
-        verifyRange = await this.fullVerifyRange(startNumber, endNumber);
-        if (verifyRange.exist) {
-          from = verifyRange.range ? verifyRange?.range.range[1] + 1 : 0;
-        }
+          startNumber =
+            await this.repository.getNextAvailableNumberForNewRange();
+          startNumber = Math.max(startNumber, from);
+          endNumber = this.getNextEndNumber(startNumber);
+
+          verifyRange = await this.fullVerifyRange(startNumber, endNumber);
+          if (verifyRange.exist) {
+            from = verifyRange.range ? verifyRange?.range.range[1] + 1 : 0;
+          }
         } while (verifyRange.exist);
-        
       }
 
       // 2. Crear el documento del rango
@@ -173,8 +168,8 @@ export class InvoiceNumberService {
   }
 
   private static getNextEndNumber(startNumber: number): number {
-  return Math.ceil(startNumber / 10) * 10;
-}
+    return Math.ceil(startNumber / 10) * 10;
+  }
   /**
    * Obtiene el siguiente número disponible del rango
    */
@@ -256,7 +251,7 @@ export class InvoiceNumberService {
 
   public static async getTemporaryNumberCount(): Promise<number> {
     try {
-        const page = 1;
+      const page = 1;
       const size = 100;
       const dateFrom = new Date(Date.UTC(2025, 7, 1, 0, 0, 0, 0)).toISOString();
       const now = new Date();
@@ -275,7 +270,6 @@ export class InvoiceNumberService {
       );
       return sales.totalItems;
     } catch (error) {
-
       console.error("❌ Error obteniendo conteo de números temporales:", error);
       return 0;
     }
@@ -310,15 +304,12 @@ export class InvoiceNumberService {
         dateTo,
         searchQuery
       );
-    
 
       for (const sale of sales.items) {
         try {
-         
           const current = await findSaleById(sale.id);
           if (!current) continue;
 
-        
           if (
             !current.numberInvoice ||
             !current.numberInvoice.startsWith(this.TEMP_NUMBER_PREFIX)
@@ -332,7 +323,6 @@ export class InvoiceNumberService {
           }
         } catch (err) {
           console.error(`❌ Error resolviendo venta ${sale.id}:`, err);
-          
         }
       }
 
@@ -415,8 +405,10 @@ export class InvoiceNumberService {
     }
   }
 
-
-  static async fullVerifyRange(start: number, end: number): Promise<{ exist: boolean; range: NumberInvoiceRangeDocument | null }> {
+  static async fullVerifyRange(
+    start: number,
+    end: number
+  ): Promise<{ exist: boolean; range: NumberInvoiceRangeDocument | null }> {
     try {
       let rangeExist = await this.repository.findRangeByStartAndEnd(start, end);
       if (navigator.onLine && !rangeExist) {
@@ -428,7 +420,7 @@ export class InvoiceNumberService {
       if (rangeExist) {
         return { exist: true, range: rangeExist };
       } else {
-        return { exist: false, range: null};
+        return { exist: false, range: null };
       }
     } catch (error) {
       console.error("❌ Error verificando rango completo:", error);
@@ -436,10 +428,11 @@ export class InvoiceNumberService {
     }
   }
 
-  static async verifyRangeByCloud(start: number, end: number): Promise<{ exist: boolean; range?: NumberInvoiceRangeDocument }> {
+  static async verifyRangeByCloud(
+    start: number,
+    end: number
+  ): Promise<{ exist: boolean; range?: NumberInvoiceRangeDocument }> {
     try {
-    
-
       const { firestore } = await import("@/shared/config/firebase");
       const { collection, query, where, getDocs, limit } = await import(
         "firebase/firestore"
@@ -459,7 +452,6 @@ export class InvoiceNumberService {
       console.error("❌ Error verificando rango en la nube:", error);
       return { exist: false };
     }
-
   }
 
   /**
@@ -474,6 +466,4 @@ export class InvoiceNumberService {
       console.error("❌ Error finalizando InvoiceNumberService:", error);
     }
   }
-
-
 }

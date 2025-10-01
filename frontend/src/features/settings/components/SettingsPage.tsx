@@ -38,7 +38,7 @@ export const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
  
   // Estado para el tab activo
-  const [activeTab, setActiveTab] = useState('ingredients');
+  const [activeTab, setActiveTab] = useState('categories');
 
   // Opciones para los filtros/tabs
   const tabOptions: FilterOption[] = [
