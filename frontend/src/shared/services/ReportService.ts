@@ -160,10 +160,10 @@ const generateSaleHTML = (data: ReportData): string => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Nota de Venta - ${sale.id}</title>
       <style>
-      
+
         @page {
-          margin: 10mm;
-          size: A4;
+          margin: 0mm 10mm 10mm 10mm; /* top, right, bottom, left */
+          size: Letter;
         }
         
         html {
@@ -187,9 +187,9 @@ const generateSaleHTML = (data: ReportData): string => {
           line-height: 1.5;
           color: #333;
           background-color: #fff;
-          min-width: 210mm;
+          min-width: 250mm;
           margin: 0 auto;
-          padding: 20px;
+          padding: 0px;
         }
         
         @media screen {
@@ -294,8 +294,7 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .client-info h3 {
-          margin-bottom: 15px;
-          
+          margin-bottom: 15px; 
           font-size: 16px;
           font-weight: 600;
           display: flex;
@@ -323,7 +322,7 @@ const generateSaleHTML = (data: ReportData): string => {
         .client-label {
           font-weight: 700;
           color: #495057;
-          font-size: 11px;
+          font-size: 12px;
           text-transform: uppercase;
           letter-spacing: 0.6px;
           padding: 6px 0;
@@ -335,6 +334,7 @@ const generateSaleHTML = (data: ReportData): string => {
           min-height: 20px;
           font-weight: 600;
           color: #222;
+          font-size: 14px;
         }
 
         @media (max-width: 520px) {
@@ -344,7 +344,7 @@ const generateSaleHTML = (data: ReportData): string => {
 
           .client-label {
             text-transform: none;
-            font-size: 12px;
+            font-size: 14px;
             color: #666;
           }
 
@@ -376,7 +376,7 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .items-table td {
-          padding: 14px 12px;
+          padding: 10px 12px;
           text-align: center;
           border-bottom: 1px solid #e9ecef;
           font-size: 11px;
@@ -418,14 +418,14 @@ const generateSaleHTML = (data: ReportData): string => {
         
         .currency {
           text-align: right;
-          font-weight: 600;
-         
+          font-weight: 500;
+          font-size: 12px !important;
         }
         
         .totals-section {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 30px;
+          margin-bottom: 10px;
         }
         
         .comments-section {
@@ -449,11 +449,11 @@ const generateSaleHTML = (data: ReportData): string => {
         
         .totals-table {
           border-collapse: collapse;
-          min-width: 250px;
+          min-width: 180px;
         }
         
         .totals-table td {
-          padding: 8px 15px;
+          padding: 2px 6px;
           border: none;
         }
         
@@ -511,6 +511,11 @@ const generateSaleHTML = (data: ReportData): string => {
           .totals-section {
             page-break-inside: avoid;
           }
+        }
+
+        .row-table {
+          padding-top: 0px !important;
+          padding-bottom: 0px !important;
         }
       </style>
     </head>
@@ -585,8 +590,8 @@ const generateSaleHTML = (data: ReportData): string => {
               <td class="currency">${formatCurrency(item.total)}</td>
             </tr>
           `).join('')}
-          ${Array.from({ length: Math.max(0, 10 - items.length) }, (_, index) => `
-            <tr>
+          ${Array.from({ length: Math.max(0, 3 - items.length) }, (_, index) => `
+            <tr class="row-table">
               <td>${items.length + index + 1}</td>
               <td></td>
               <td class="item-description"></td>
