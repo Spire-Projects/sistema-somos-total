@@ -18,7 +18,10 @@ const electronAPI = {
     electron: process.versions.electron,
     chrome: process.versions.chrome,
     node: process.versions.node
-  }
+  },
+
+  // Generar PDF e imprimir desde el renderer
+  generateAndPrintPDF: (htmlContent) => ipcRenderer.invoke('generate-and-print-pdf', htmlContent)
 };
 
 // Exponer la API al contexto del renderer

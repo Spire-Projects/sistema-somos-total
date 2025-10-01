@@ -2,7 +2,7 @@
 declare global {
   interface Window {
     electronAPI?: {
-      printSaleReport?: (options?: any) => Promise<any>;
+      generateAndPrintPDF?: (htmlContent: string) => Promise<any>;
       [key: string]: any;
     };
   }
@@ -13,6 +13,7 @@ import { findMedicationById } from './MedicationService';
 import { findMedicationBatchById } from './MedicationBatchService';
 import { getClientById } from './ClientService';
 import { UserService } from './UserService';
+import logoBase64 from '../assets/logoBase64';
 
 interface ReportData {
   sale: Sale;
@@ -171,7 +172,7 @@ const generateSaleHTML = (data: ReportData): string => {
       <style>
 
         @page {
-          margin: 0mm 10mm 10mm 10mm !important; /* top, right, bottom, left */
+          margin: 4px 0 0 0 !important;
           size: Letter;
         }
         
@@ -192,13 +193,14 @@ const generateSaleHTML = (data: ReportData): string => {
         
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           line-height: 1.5;
           color: #333;
           background-color: #fff;
-          min-width: 250mm;
+          min-width: 200mm;
+          max-width: 230mm;
           margin: 0 !important;
-          padding: 0 1em !important;
+          padding: 0 !important;
         }
         
         @media screen {
@@ -250,9 +252,9 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .logo {
-          width: 250px;
+          width: 200px;
           height: auto;
-          margin-bottom: 15px;
+          margin-bottom: 12px;
          
         }
         
@@ -271,7 +273,7 @@ const generateSaleHTML = (data: ReportData): string => {
           font-size: 28px;
           font-weight: bold;
           color: #dd1a80;
-          margin-bottom: 15px;
+          margin-bottom: 5px;
           text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
           letter-spacing: 1px;
         }
@@ -279,7 +281,7 @@ const generateSaleHTML = (data: ReportData): string => {
         .invoice-details {
           padding-left: 20px;
           padding-right: 20px;
-          border-radius: 12px;
+          border-radius: 11px;
         }
         
         .invoice-details table {
@@ -287,8 +289,8 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .invoice-details td {
-          padding: 6px 0;
-          font-size: 12px;
+          padding: 2px 0;
+          font-size: 11px;
         }
         
         .invoice-details td:first-child {
@@ -298,12 +300,12 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .client-info {
-          padding: 0px 20px 20px 20px;
-          border-radius: 12px;
+          padding: 0px 20px 10px 20px;
+          border-radius: 5px;
         }
         
         .client-info h3 {
-          margin-bottom: 15px; 
+          margin-bottom: 10px; 
           font-size: 16px;
           font-weight: 600;
           display: flex;
@@ -331,19 +333,19 @@ const generateSaleHTML = (data: ReportData): string => {
         .client-label {
           font-weight: 700;
           color: #495057;
-          font-size: 12px;
+          font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.6px;
-          padding: 6px 0;
+          padding: 2px 0;
         }
 
         .client-value {
           border-bottom: 2px solid #dee2e6;
-          padding: 6px 0;
-          min-height: 20px;
+          padding: 2px 0;
+          min-height: 16px;
           font-weight: 600;
           color: #222;
-          font-size: 14px;
+          font-size: 11px;
         }
 
         @media (max-width: 520px) {
@@ -353,7 +355,7 @@ const generateSaleHTML = (data: ReportData): string => {
 
           .client-label {
             text-transform: none;
-            font-size: 14px;
+            font-size: 11px;
             color: #666;
           }
 
@@ -365,7 +367,7 @@ const generateSaleHTML = (data: ReportData): string => {
         .items-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 30px;
+          margin-bottom: 15px;
           box-shadow: 0 4px 16px rgba(0,0,0,0.1);
           border-radius: 12px;
           overflow: hidden;
@@ -374,7 +376,7 @@ const generateSaleHTML = (data: ReportData): string => {
         .items-table th {
           background: linear-gradient(135deg, #FF6B6B 0%, #ee5555 100%);
           color: white;
-          padding: 16px 12px;
+          padding: 10px 12px;
           text-align: center;
           font-size: 11px;
           font-weight: 700;
@@ -385,7 +387,7 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .items-table td {
-          padding: 10px 12px;
+          padding: 8px 12px;
           text-align: center;
           border-bottom: 1px solid #e9ecef;
           font-size: 11px;
@@ -416,7 +418,7 @@ const generateSaleHTML = (data: ReportData): string => {
           text-align: left;
           margin-bottom: 4px;
           color: #2c3e50;
-          font-size: 12px;
+          font-size: 11px;
         }
         
         .item-details {
@@ -428,7 +430,7 @@ const generateSaleHTML = (data: ReportData): string => {
         .currency {
           text-align: right;
           font-weight: 500;
-          font-size: 12px !important;
+          font-size: 11px !important;
         }
         
         .totals-section {
@@ -444,10 +446,13 @@ const generateSaleHTML = (data: ReportData): string => {
         
         .comments-box {
           border: 1px solid #ddd;
-          padding: 15px;
-          min-height: 80px;
+          padding: 8px;
+          min-height: 40px;
+          height: 40px;
           border-radius: 4px;
           background-color: #fafafa;
+          display: flex;
+          align-items: flex-start;
         }
         
         .comments-title {
@@ -462,7 +467,7 @@ const generateSaleHTML = (data: ReportData): string => {
         }
         
         .totals-table td {
-          padding: 2px 6px;
+          padding: 0px 6px;
           border: none;
         }
         
@@ -481,7 +486,7 @@ const generateSaleHTML = (data: ReportData): string => {
          
           
           font-weight: bold;
-          font-size: 14px;
+          font-size: 11px;
         }
         
         .footer {
@@ -489,7 +494,7 @@ const generateSaleHTML = (data: ReportData): string => {
           text-align: center;
           
           color: #666;
-          font-size: 16px;
+          font-size: 11px;
         }
         
         .company-footer {
@@ -531,7 +536,9 @@ const generateSaleHTML = (data: ReportData): string => {
     <body>
       <div class="header">
         <div class="logo-section">
-          <img src="/logo.png" alt="Logo de la empresa" class="logo" />
+          <img src="data:image/png;base64,${logoBase64}" alt="Logo de la empresa" class="logo" />
+
+
           
         </div>
         
@@ -687,11 +694,21 @@ export const generateSaleReport = async (saleId: string): Promise<{ success: boo
  */
 const generateSaleReportElectron = async (htmlContent: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Si existe la API de Electron, usar impresión nativa
-    if (window.electronAPI && typeof window.electronAPI.printSaleReport === 'function') {
-      await window.electronAPI.printSaleReport();
-      return { success: true };
+    // Debug: verificar qué está disponible
+    console.log('🔍 Debug - window.electronAPI:', window.electronAPI);
+    console.log('🔍 Debug - typeof window.electronAPI:', typeof window.electronAPI);
+    if (window.electronAPI) {
+      console.log('🔍 Debug - keys:', Object.keys(window.electronAPI));
+      console.log('🔍 Debug - generateAndPrintPDF:', window.electronAPI.generateAndPrintPDF);
     }
+    
+    // Si existe la API de Electron, usar generación de PDF
+    if (window.electronAPI && typeof window.electronAPI.generateAndPrintPDF === 'function') {
+      console.log('✅ Usando API de Electron para generar PDF');
+      const result = await window.electronAPI.generateAndPrintPDF(htmlContent);
+      return result;
+    }
+    console.log('⚠️ No se encontró la API de Electron, usando método alternativo');
     // Fallback: método anterior (iframe/modal)
     // ...existing code...
     // Crear un iframe oculto para contener el contenido de impresión

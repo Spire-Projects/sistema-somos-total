@@ -1,21 +1,9 @@
-// Handler para imprimir desde el renderer
-ipcMain.handle('print-sale-report', async (_event, options) => {
-  if (!mainWindow) throw new Error('No mainWindow');
-  return new Promise((resolve, reject) => {
-    mainWindow!.webContents.print({
-      silent: false,
-      printBackground: true,
-      margins: { marginType: 'none' },
-      ...options
-    }, (success, errorType) => {
-      if (success) resolve({ success: true });
-      else reject(new Error(errorType));
-    });
-  });
-});
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import puppeteer from 'puppeteer';
+import { writeFileSync, unlinkSync, mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
 
 // Para ES modules compatibility
 const __dirname = __filename ? dirname(__filename) : process.cwd();
@@ -25,6 +13,60 @@ let mainWindow: BrowserWindow | null = null;
 
 // Configuración
 const isDev = process.env.NODE_ENV === 'development';
+
+// Función para generar PDF usando Puppeteer
+async function generatePDFFromHTML(htmlContent: string): Promise<string> {
+  let browser;
+  let tempDir;
+  
+  try {
+    // Crear directorio temporal
+    tempDir = mkdtempSync(join(tmpdir(), 'farmacia-pdf-'));
+    const tempHtmlPath = join(tempDir, 'report.html');
+    const tempPdfPath = join(tempDir, 'report.pdf');
+    
+    // Escribir HTML temporal
+    writeFileSync(tempHtmlPath, htmlContent, 'utf8');
+    
+    // Lanzar Puppeteer
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
+    const page = await browser.newPage();
+    
+    // Cargar el HTML
+    await page.goto(`file://${tempHtmlPath}`, { 
+      waitUntil: 'networkidle0',
+      timeout: 10000 
+    });
+    
+    // Generar PDF con configuración exacta
+    await page.pdf({
+      path: tempPdfPath,
+      format: 'Letter',
+      margin: {
+        top: '0mm',
+        right: '10mm', 
+        bottom: '10mm',
+        left: '10mm'
+      },
+      printBackground: true,
+      preferCSSPageSize: true
+    });
+    
+    // Limpiar HTML temporal
+    try { unlinkSync(tempHtmlPath); } catch (e) {}
+    
+    return tempPdfPath;
+    
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
 
 function getFrontendUrl(): string {
   // En desarrollo, usar el dev server de Vite
@@ -259,6 +301,39 @@ ipcMain.handle('get-app-info', async () => {
     isDev: isDev,
     platform: process.platform
   };
+});
+
+// Handler para generar PDF e imprimir
+ipcMain.handle('generate-and-print-pdf', async (_event, htmlContent: string) => {
+  try {
+    console.log('📄 Generando PDF desde HTML...');
+    
+    // Generar PDF usando Puppeteer
+    const pdfPath = await generatePDFFromHTML(htmlContent);
+    console.log('✅ PDF generado:', pdfPath);
+    
+    // Abrir el PDF con el visor por defecto para imprimir
+    await shell.openPath(pdfPath);
+    
+    // Limpiar PDF después de 30 segundos (tiempo para que se abra)
+    setTimeout(() => {
+      try {
+        unlinkSync(pdfPath);
+        console.log('🗑️ PDF temporal eliminado');
+      } catch (e) {
+        console.warn('⚠️ No se pudo eliminar PDF temporal:', e);
+      }
+    }, 30000);
+    
+    return { success: true };
+    
+  } catch (error) {
+    console.error('❌ Error generando PDF:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    };
+  }
 });
 
 module.exports = { app, mainWindow };

@@ -20,8 +20,8 @@ const electronAPI = {
     node: process.versions.node
   },
 
-  // Imprimir desde el renderer
-  printSaleReport: (options?: any) => ipcRenderer.invoke('print-sale-report', options)
+  // Generar PDF e imprimir desde el renderer
+  generateAndPrintPDF: (htmlContent: string) => ipcRenderer.invoke('generate-and-print-pdf', htmlContent)
 };
 
 // Tipos para TypeScript
