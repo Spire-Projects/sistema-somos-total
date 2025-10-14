@@ -33,19 +33,33 @@ export class LocalGenericNameDocRepository
 
   async findByName(name: string): Promise<GenericNameDoc | null> {
     const db = await initDatabase();
-    const item = await db.generic_names.findOne({ selector: { name } }).exec();
+    const item = await db.generic_names.findOne({ 
+      selector: { 
+        name,
+        isDeleted: { $ne: true }
+      } 
+    }).exec();
     return item ? (item.toJSON() as GenericNameDoc) : null;
   }
 
   async findById(id: string): Promise<GenericNameDoc | null> {
     const db = await initDatabase();
-    const item = await db.generic_names.findOne(id).exec();
+    const item = await db.generic_names.findOne({
+      selector: {
+        id,
+        isDeleted: { $ne: true }
+      }
+    }).exec();
     return item ? (item.toJSON() as GenericNameDoc) : null;
   }
 
   async findAll(): Promise<GenericNameDoc[]> {
     const db = await initDatabase();
-    const items = await db.generic_names.find().exec();
+    const items = await db.generic_names.find({
+      selector: {
+        isDeleted: { $ne: true }
+      }
+    }).exec();
     return items.map((i) => i.toJSON() as GenericNameDoc);
   }
 
@@ -61,14 +75,23 @@ export class LocalGenericNameDocRepository
       const normalized = searchQuery.trim().toLowerCase();
       query = db.generic_names.find({
         selector: {
-          $or: [
-            { name: { $regex: normalized, $options: "i" } },
-            { description: { $regex: normalized, $options: "i" } },
-          ],
+          $and: [
+            { isDeleted: { $ne: true } },
+            {
+              $or: [
+                { name: { $regex: normalized, $options: "i" } },
+                { description: { $regex: normalized, $options: "i" } },
+              ]
+            }
+          ]
         },
       });
     } else {
-      query = db.generic_names.find();
+      query = db.generic_names.find({
+        selector: {
+          isDeleted: { $ne: true }
+        }
+      });
     }
 
     const allItems = await query.exec();
@@ -103,7 +126,14 @@ export class LocalGenericNameDocRepository
     const db = await initDatabase();
     const item = await db.generic_names.findOne(id).exec();
     if (!item) return false;
-    await item.remove();
+    
+    // Soft delete - marcar como eliminado en lugar de borrar permanentemente
+    await item.update({
+      $set: {
+        isDeleted: true,
+        updatedAt: new Date().toISOString()
+      }
+    });
     return true;
   }
 
@@ -112,7 +142,11 @@ export class LocalGenericNameDocRepository
 
     const db = await initDatabase();
     const normalized = searchText.trim().toLowerCase();
-    const allItems = await db.generic_names.find().exec();
+    const allItems = await db.generic_names.find({
+      selector: {
+        isDeleted: { $ne: true }
+      }
+    }).exec();
     const filtered = allItems.filter((i) => {
       const doc = i.toJSON();
       return (

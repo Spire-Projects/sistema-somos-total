@@ -43,7 +43,12 @@ export class LocalDailyCashClosureRepository
 
   async findById(id: string): Promise<DailyCashClosure | null> {
     const db = await initDatabase();
-    const item = await db.daily_cash_closures.findOne(id).exec();
+    const item = await db.daily_cash_closures.findOne({
+      selector: {
+        id,
+        isDeleted: { $ne: true }
+      }
+    }).exec();
     return item
       ? (JSON.parse(JSON.stringify(item.toJSON())) as DailyCashClosure)
       : null;
@@ -52,16 +57,23 @@ export class LocalDailyCashClosureRepository
   async findByDate(date: string): Promise<DailyCashClosure[]> {
     const db = await initDatabase();
     const items = await db.daily_cash_closures
-      .find()
-      .where("date")
-      .eq(date)
+      .find({
+        selector: {
+          date,
+          isDeleted: { $ne: true }
+        }
+      })
       .exec();
     return items.map((i) => i.toJSON());
   }
 
   async findAll(): Promise<DailyCashClosure[]> {
     const db = await initDatabase();
-    const all = await db.daily_cash_closures.find().exec();
+    const all = await db.daily_cash_closures.find({
+      selector: {
+        isDeleted: { $ne: true }
+      }
+    }).exec();
     return all.map((i) => i.toJSON());
   }
 
@@ -123,7 +135,14 @@ export class LocalDailyCashClosureRepository
     const db = await initDatabase();
     const doc = await db.daily_cash_closures.findOne(id).exec();
     if (!doc) return false;
-    await doc.remove();
+    
+    // Soft delete - marcar como eliminado en lugar de borrar permanentemente
+    await doc.update({
+      $set: { 
+        isDeleted: true, 
+        updatedAt: new Date().toISOString() 
+      },
+    });
     return true;
   }
 
