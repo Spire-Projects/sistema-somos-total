@@ -26,7 +26,7 @@ export const config = {
   
   // Configuración de base de datos local
   DB: {
-    NAME: 'farmaapp_db_v8',
+    NAME: 'somostotal_db_v1',
     PATH: './data/rxdb',
     VERSION: 1,
   },

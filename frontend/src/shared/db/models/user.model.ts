@@ -5,7 +5,7 @@ import type { UserRole } from '../../types/User';
 export const userSchema: RxJsonSchema<UserDocument> = {
   title: 'user schema',
   description: 'describes a user',
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {

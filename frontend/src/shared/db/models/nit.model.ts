@@ -3,7 +3,7 @@ import type { NIT } from '@/shared/types/Nit';
 
 // Esquema RxDB para NIT
 export const nitSchema: RxJsonSchema<NIT> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {

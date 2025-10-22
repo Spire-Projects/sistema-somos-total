@@ -1,6 +1,5 @@
 import { useCallback, memo } from "react";
 import { Warehouse, Download } from "lucide-react";
-import { AddMedicationDialog } from "./AddMedicationDialog";
 import { MedicationSearch } from "./MedicationSearch";
 import { MedicationFilters } from "./MedicationFilters";
 import { MedicationTable } from "./MedicationTable";
@@ -130,11 +129,11 @@ const InventoryPageComponent = () => {
               Inventario
             </p>
             <p className="text-gray-500 text-sm sm:text-gray-600">
-              Gestión de medicamentos y control de stock
+              Gestión de productos y control de stock
             </p>
           </div>
         </div>
-        <AddMedicationDialog onMedicationAdded={handleMedicationAdded} />
+     
       </div>
 
       {/* Search and Filters */}
@@ -184,26 +183,12 @@ const InventoryPageComponent = () => {
       <div>
         {/* Desktop/Tablet container */}
         <div className="hidden md:block bg-white rounded-lg shadow-sm border">
-          <MedicationTable
-            medications={medications}
-            loading={loading}
-            sort={sort}
-            onSort={setSort}
-            onRowClick={handleRowClick}
-            handleRefresh={handleMedicationAdded}
-          />
+          
         </div>
 
         {/* Mobile view - no container */}
         <div className="md:hidden">
-          <MedicationTable
-            medications={medications}
-            loading={loading}
-            sort={sort}
-            onSort={setSort}
-            onRowClick={handleRowClick}
-            handleRefresh={handleMedicationAdded}
-          />
+          
         </div>
       </div>
 

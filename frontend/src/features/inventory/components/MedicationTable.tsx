@@ -17,9 +17,7 @@ import type {
   MedicationCatalogSort,
   MedicationCatalogSortField,
 } from "@/shared/types/MedicationViewTypes";
-import AddMedicationDialog from "./AddMedicationDialog";
 import DeleteDialog from "@/shared/components/DeleteDialog";
-import MedicationDetailsDialog from "./MedicationDetailsDialog";
 import { deleteMedication } from "@/shared/services";
 import { config } from "@/shared/config/config";
 
@@ -167,14 +165,7 @@ export const MedicationTable = memo<MedicationTableProps>(
 
         {/* Desktop/Tablet View - Hidden below MD */}
         <div className="hidden md:block">
-          <MedicationDetailsDialog
-            medication={selectedMedication}
-            open={isDetailsOpen}
-            onOpenChange={(v) => {
-              setIsDetailsOpen(v);
-              if (!v) setSelectedMedication(undefined);
-            }}
-          />
+          
           <Table>
             <TableHeader>
               <TableRow>
@@ -315,11 +306,7 @@ export const MedicationTable = memo<MedicationTableProps>(
                     </TableCell>
                     <TableCell className="text-center">
                       <div onClick={(e) => e.stopPropagation()}>
-                        <AddMedicationDialog
-                          medicationId={medication.id}
-                          onMedicationAdded={handleRefresh}
-                          edit
-                        />
+                        
                       </div>
                     </TableCell>
                     <TableCell className="text-center">

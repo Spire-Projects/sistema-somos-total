@@ -61,7 +61,7 @@ const BatchMedicationCard: React.FC<BatchMedicationCardProps> = ({
             displayField="tradeName"
             secondaryDisplayField="comercialName"
             valueField="id"
-            placeholder="Buscar medicamento..."
+            placeholder="Buscar producto..."
             disabled={mode === "edit"} 
             hideLabel
           />

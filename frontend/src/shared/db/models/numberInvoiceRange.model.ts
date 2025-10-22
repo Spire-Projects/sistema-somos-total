@@ -3,7 +3,7 @@ import type { NumberInvoiceRange } from '../../types/NumberInvoice';
 
 // Esquema RxDB para rangos de números de factura
 export const numberInvoiceRangeSchema: RxJsonSchema<NumberInvoiceRange> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {

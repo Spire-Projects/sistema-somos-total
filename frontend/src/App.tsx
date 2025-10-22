@@ -7,6 +7,7 @@ import { initDatabase } from "./shared/db/database";
 import { startAllReplications } from "./shared/db/replication/startReplications";
 
 import { syncService } from "./shared/services/SyncService";
+import { checkAndInitializeData } from "./shared/utils/init-data.utils";
 
 
 function App() {
@@ -30,12 +31,13 @@ function App() {
     const init = async () => {
       try {
         const db = await initDatabase();
-        await syncService.initialize();
-        startAllReplications(db);
+        //await syncService.initialize();
+        //startAllReplications(db);
         
         // Inicializar el servicio de números de factura
         const { InvoiceNumberService } = await import('./shared/services/InvoiceNumberService');
         await InvoiceNumberService.initialize();
+        await checkAndInitializeData();
         
         console.log("✅ Aplicación inicializada correctamente");
         isInitialized.current = true;

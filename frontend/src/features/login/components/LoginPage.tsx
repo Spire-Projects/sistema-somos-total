@@ -76,19 +76,19 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <img src={logoImage} alt="FarmaApp Logo" className="h-16 w-auto" />
+      <Card className="mx-auto max-w-sm w-full !bg-secondary !gap-3">
+        <CardHeader className="text-center text-white">
+          <div className="flex justify-center mb-0">
+            <img src={logoImage} alt="Somos total Logo" className="h-24 w-auto" />
           </div>
-          <CardDescription>Iniciar Sesión</CardDescription>
+          
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Credenciales de prueba */}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-white/90">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -99,11 +99,12 @@ export const LoginPage = () => {
                 onChange={handleChange}
                 autoComplete="email"
                 disabled={isLoading}
+                className="!bg-white text-gray-900 placeholder-gray-400 border border-white/40 focus:border-primary-600 focus:ring-2 focus:ring-primary-200" 
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" className="text-white/90">Contraseña</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -115,23 +116,24 @@ export const LoginPage = () => {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   disabled={isLoading}
+                  className="bg-white text-gray-900 placeholder-gray-400 border border-white/40 focus:border-primary-600 focus:ring-2 focus:ring-primary-200" 
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-gray-500"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-white/80"
                   onClick={togglePasswordVisibility}
                   disabled={isLoading}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff className="text-primary" size={16} /> : <Eye className="text-primary" size={16} />}
                 </Button>
               </div>
             </div>
 
             {error && (
               <div
-                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative"
+                className="bg-red-600/90 text-white px-4 py-3 rounded-md relative"
                 role="alert"
               >
                 <span className="block sm:inline">{error}</span>
@@ -140,7 +142,7 @@ export const LoginPage = () => {
 
             <Button
               type="submit"
-              className="w-full bg-secondary"
+              className="w-full bg-white text-gray-900 hover:bg-gray-100 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

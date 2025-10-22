@@ -5,7 +5,7 @@ import type { Client } from '../../types/Client';
 export const clientSchema: RxJsonSchema<Client> = {
   title: 'client schema',
   description: 'describes a client',
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {

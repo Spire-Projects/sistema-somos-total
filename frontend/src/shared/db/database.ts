@@ -4,112 +4,68 @@ import { RxDBQueryBuilderPlugin } from "rxdb/plugins/query-builder";
 import { RxDBMigrationSchemaPlugin } from "rxdb/plugins/migration-schema";
 import { RxDBUpdatePlugin } from "rxdb/plugins/update";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
-import { userMigrationStrategies, userSchema } from "./models/user.model";
+import { userSchema } from "./models/user.model";
 import type { UserDocument } from "./models/user.model";
-import { clientMigrationStrategies, clientSchema } from "./models/client.model";
+import { clientSchema } from "./models/client.model";
 import type { Client } from "../types/Client";
-import { activeIngredientSchema } from "./models/activeIngredient.model";
-import { medicationCategorySchema } from "./models/medicationCategory.model";
-import { pharmaceuticalFormSchema } from "./models/pharmaceuticalForm.model";
-import {
-  manufacturerSchema,
-  manufacturerMigrationStrategies,
-} from "./models/manufacturer.model";
-import { medicationMigrationStrategies, medicationSchema } from "./models/medication.model";
-import { medicationBatchSchema } from "./models/medicationBatch.model";
-import type {
-  ActiveIngredient,
-  MedicationCategory,
-  PharmaceuticalFormDoc,
-  Manufacturer,
-  Medication,
-  MedicationBatch,
-  GenericNameDoc,
-} from "../types/Medication";
-import type { Sale, Medic } from "../types/Sales";
 import { config } from "../config/config";
-import {
-  genericNameSchema,
-  genericNameMigrationStrategies,
-} from "./models/genericName.model";
 import { dailyCashClosureSchema } from "./models/dailyCashClosure.model";
-import { medicMigrationStrategies, medicSchema } from "./models/medic.model";
 import type { DailyCashClosure } from "../types/DailyCashClosure";
-import { saleMigrationStrategies, saleSchema } from "./models/sale.model";
-import { createLocalPriorityConflictHandler } from "./replication/conflictHandler";
-import { nitMigrationStrategies, nitSchema } from "./models/nit.model";
+import { nitSchema } from "./models/nit.model";
 import type { NIT } from "../types/Nit";
-import { 
-  numberInvoiceRangeSchema, 
-  numberInvoiceRangeMigrationStrategies,
-  type NumberInvoiceRangeDocument 
+import {
+  numberInvoiceRangeSchema,
+  type NumberInvoiceRangeDocument
 } from "./models/numberInvoiceRange.model";
+import type { Purchase } from "../types/modelTypes/Purchase";
+import type { Product } from "../types/modelTypes/Product";
+import type { Sale } from "../types/modelTypes/Sale";
+import { salesSchema } from "./models/sales.model";
+import { productSchema } from "./models/product.model";
+import { purchaseSchema } from "./models/purchase.model";
 
-// Configurar plugins según entorno
+
 const setupRxDBPlugins = async () => {
-  // Plugins básicos siempre necesarios
+
   addRxPlugin(RxDBQueryBuilderPlugin);
   addRxPlugin(RxDBUpdatePlugin);
   addRxPlugin(RxDBMigrationSchemaPlugin);
-
-  if (import.meta.env.DEV) {
-    // Solo en desarrollo: cargar dev-mode para debugging
-    const { RxDBDevModePlugin, disableWarnings } = await import(
-      "rxdb/plugins/dev-mode"
-    );
-    addRxPlugin(RxDBDevModePlugin);
-
-    // Deshabilitar solo las advertencias molestas, mantener validaciones
-    disableWarnings();
-
-    console.log("🛠️ RxDB Dev-Mode activado para desarrollo");
-  } else {
-    console.log("🚀 RxDB en modo producción - máximo performance");
-  }
+  const { RxDBDevModePlugin, disableWarnings } = await import(
+    "rxdb/plugins/dev-mode"
+  );
+  addRxPlugin(RxDBDevModePlugin);
+  disableWarnings();
 };
 
 // Tipos para las colecciones
 export interface DatabaseCollections {
   users: RxCollection<UserDocument>;
   clients: RxCollection<Client>;
-  active_ingredients: RxCollection<ActiveIngredient>;
-  medication_categories: RxCollection<MedicationCategory>;
-  generic_names: RxCollection<GenericNameDoc>;
-  pharmaceutical_forms: RxCollection<PharmaceuticalFormDoc>;
-  manufacturers: RxCollection<Manufacturer>;
-  medications: RxCollection<Medication>;
-  medication_batches: RxCollection<MedicationBatch>;
   daily_cash_closures: RxCollection<DailyCashClosure>;
   sales: RxCollection<Sale>;
-  medics: RxCollection<Medic>;
   nits: RxCollection<NIT>;
   number_invoice_ranges: RxCollection<NumberInvoiceRangeDocument>;
+  purchases: RxCollection<Purchase>;
+  products: RxCollection<Product>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
 let dbPromise: Promise<RxDatabase<DatabaseCollections>> | null = null;
 
-// Inicializar la base de datos RxDB
+
 export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
   if (dbInstance) {
     return dbInstance;
   }
 
-  // Si ya hay una inicialización en progreso, esperar a que termine
   if (dbPromise) {
     return dbPromise;
   }
 
   dbPromise = (async () => {
     try {
-      console.log("🔄 Configurando RxDB...");
-
-      // Configurar plugins antes de crear la DB
+     
       await setupRxDBPlugins();
-
-      console.log("📱 Inicializando base de datos RxDB con IndexedDB...");
-
-      // Crear la base de datos
       const db = await createRxDatabase<DatabaseCollections>({
         name: config.DB.NAME,
         storage: getRxStorageDexie(),
@@ -117,78 +73,40 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
       });
 
       console.log("Base de datos creada, agregando colecciones...");
-
-      // Agregar todas las colecciones
+      
       await db.addCollections({
         users: {
           schema: userSchema,
-          migrationStrategies: userMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<UserDocument>(),
+          autoMigrate: true,
         },
         clients: {
           schema: clientSchema,
-          migrationStrategies: clientMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Client>(),
+          autoMigrate: true,
         },
-        active_ingredients: {
-          schema: activeIngredientSchema,
-          conflictHandler:
-            createLocalPriorityConflictHandler<ActiveIngredient>(),
-        },
-        generic_names: {
-          schema: genericNameSchema,
-          migrationStrategies: genericNameMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<GenericNameDoc>(),
-        },
-        medication_categories: {
-          schema: medicationCategorySchema,
-          conflictHandler:
-            createLocalPriorityConflictHandler<MedicationCategory>(),
-        },
-        pharmaceutical_forms: {
-          schema: pharmaceuticalFormSchema,
-          conflictHandler:
-            createLocalPriorityConflictHandler<PharmaceuticalFormDoc>(),
-        },
-        manufacturers: {
-          schema: manufacturerSchema,
-          migrationStrategies: manufacturerMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Manufacturer>(),
-        },
-        medications: {
-          schema: medicationSchema,
-          migrationStrategies: medicationMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Medication>(),
-        },
-        medication_batches: {
-          schema: medicationBatchSchema,
-          conflictHandler:
-            createLocalPriorityConflictHandler<MedicationBatch>(),
-        },
+        
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
-          conflictHandler:
-            createLocalPriorityConflictHandler<DailyCashClosure>(),
+          autoMigrate: true,
         },
         sales: {
-          schema: saleSchema,
-          migrationStrategies: saleMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Sale>(),
+          schema: salesSchema,
+          autoMigrate: true,
         },
-        medics: {
-          schema: medicSchema,
-          migrationStrategies: medicMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<Medic>(),
+        products: {
+          schema: productSchema,
+          autoMigrate: true,
         },
+        purchases: {
+          schema: purchaseSchema,
+          autoMigrate: true,
+        },   
         nits: {
           schema: nitSchema,
-          migrationStrategies: nitMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<NIT>(),
+          autoMigrate: true,
         },
         number_invoice_ranges: {
           schema: numberInvoiceRangeSchema,
-          migrationStrategies: numberInvoiceRangeMigrationStrategies,
-          conflictHandler: createLocalPriorityConflictHandler<NumberInvoiceRangeDocument>(),
+          autoMigrate: true,
         },
       });
 
