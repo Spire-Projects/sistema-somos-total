@@ -62,7 +62,8 @@ export class LocalProductRepository extends BaseRepository<Product> implements I
     size: number, 
     searchQuery?: string, 
     dateFrom?: string, 
-    dateTo?: string
+    dateTo?: string,
+    filter?: ProductFilter
   ): Promise<ItemsResponse<Product>> {
     const collection = await this.getCollection();
     
@@ -77,6 +78,11 @@ export class LocalProductRepository extends BaseRepository<Product> implements I
         { category: { $regex: normalizedText, $options: 'i' } },
         { description: { $regex: normalizedText, $options: 'i' } }
       ];
+    }
+
+    // Filtro por categoría
+    if (filter?.category) {
+      selector.category = filter.category;
     }
 
     // Filtro de fechas
@@ -135,7 +141,8 @@ export class LocalProductRepository extends BaseRepository<Product> implements I
     size: number, 
     searchQuery?: string, 
     dateFrom?: string, 
-    dateTo?: string
+    dateTo?: string,
+    filter?: ProductFilter
   ): Observable<Product[]> {
     return new Observable<Product[]>(subscriber => {
       let subscription: any;
@@ -155,6 +162,11 @@ export class LocalProductRepository extends BaseRepository<Product> implements I
               { category: { $regex: normalizedText, $options: 'i' } },
               { description: { $regex: normalizedText, $options: 'i' } }
             ];
+          }
+
+          // Filtro por categoría
+          if (filter?.category) {
+            selector.category = filter.category;
           }
 
           // Filtro de fechas
@@ -224,13 +236,13 @@ export class FirestoreProductRepository implements IProductRepository {
   softDelete(_id: string): Promise<boolean> {
     throw new Error('Firestore implementation not yet available');
   }
-  getAll(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string): Promise<ItemsResponse<Product>> {
+  getAll(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string, _filter?: ProductFilter): Promise<ItemsResponse<Product>> {
     throw new Error('Firestore implementation not yet available');
   }
   findById(_id: string): Promise<Product | null> {
     throw new Error('Firestore implementation not yet available');
   }
-  listen$(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string): Observable<Product[]> {
+  listen$(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string, _filter?: ProductFilter): Observable<Product[]> {
     throw new Error('Firestore implementation not yet available');
   }
   lisntenById$(_id: string): Observable<Product | null> {

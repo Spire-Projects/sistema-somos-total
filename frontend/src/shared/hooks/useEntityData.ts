@@ -177,6 +177,7 @@ export function useEntityData<TEntity, TView, TFilter extends Record<string, any
     service,
     pagination.currentPage,
     pagination.pageSize,
+    pagination.setTotalItems,
     debouncedSearch,
     dateFrom,
     dateTo,
@@ -200,6 +201,20 @@ export function useEntityData<TEntity, TView, TFilter extends Record<string, any
     try {
       setLoading(true);
       setError(null);
+
+      // Primero hacer un fetch para obtener totalItems
+      service.getAllView(
+        pagination.currentPage,
+        pagination.pageSize,
+        debouncedSearch || undefined,
+        dateFrom,
+        dateTo,
+        filters
+      ).then(response => {
+        pagination.setTotalItems(response.totalItems);
+      }).catch(err => {
+        console.error('Error fetching initial data for realtime:', err);
+      });
 
       const subscription = service.listen$(
         pagination.currentPage,
@@ -234,6 +249,7 @@ export function useEntityData<TEntity, TView, TFilter extends Record<string, any
     service,
     pagination.currentPage,
     pagination.pageSize,
+    pagination.setTotalItems,
     debouncedSearch,
     dateFrom,
     dateTo,

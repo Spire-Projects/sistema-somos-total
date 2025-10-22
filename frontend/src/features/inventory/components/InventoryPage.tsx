@@ -1,11 +1,28 @@
-import { memo, useState } from "react";
-import { Package, Download, Search, X, Plus } from "lucide-react";
+import { memo, useState, useEffect } from "react";
+import { Package, Download, Search, X, Plus, Pencil, Trash2 } from "lucide-react";
 import { DataPagination } from "@/shared/components/DataPagination";
 import { useEntityData } from "@/shared/hooks";
 import { productService } from "@/shared/services/ProductService";
+import { categoryService } from "@/shared/services/CategoryService";
 import type { ProductView, ProductFilter, Product } from "@/shared/types/modelTypes/Product";
+import type { Category } from "@/shared/types/modelTypes/Category";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -26,6 +43,23 @@ import { CreateProductModal } from "./CreateProductModal";
 
 const InventoryPageComponent = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<ProductView | null>(null);
+
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await categoryService.getAllView(1, 100); // Cargar todas las categorías
+        setCategories(response.items);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const {
     // Data
@@ -49,6 +83,7 @@ const InventoryPageComponent = () => {
 
     // Actions - Search & Filters
     setSearch,
+    setFilters,
     clearFilters,
 
     // Actions - General
@@ -61,6 +96,49 @@ const InventoryPageComponent = () => {
   const handleProductCreated = async () => {
     setIsCreateModalOpen(false);
     //await refresh();
+  };
+
+  // Handler para cambiar filtro de categoría
+  const handleCategoryFilterChange = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    if (categoryId === "all") {
+      setFilters({});
+    } else {
+      setFilters({ category: categoryId });
+    }
+  };
+
+  // Handler para limpiar filtros (sobrescribe clearFilters del hook)
+  const handleClearFilters = () => {
+    setSelectedCategoryId("all");
+    clearFilters();
+  };
+
+  // Handler para eliminar producto
+  const handleDeleteClick = (product: ProductView) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirmar eliminación
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    
+    try {
+      await productService.delete(productToDelete.id);
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
+      await refresh();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      // TODO: Mostrar toast de error
+    }
+  };
+
+  // Cancelar eliminación
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
 
   // Helper para determinar badge de stock
@@ -145,12 +223,30 @@ const InventoryPageComponent = () => {
           />
         </div>
 
-        {/* TODO: Agregar filtros por categoría cuando esté implementado */}
+        {/* Filtro por Categoría */}
+        <Select
+          value={selectedCategoryId}
+          onValueChange={handleCategoryFilterChange}
+          disabled={loading}
+        >
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Todas las categorías" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las categorías</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {Object.keys(filters).length > 0 && (
           <Button
             variant="outline"
             size="sm"
-            onClick={clearFilters}
+            onClick={handleClearFilters}
             disabled={loading}
           >
             <X className="h-4 w-4 mr-2" />
@@ -260,9 +356,25 @@ const InventoryPageComponent = () => {
                     </TableCell>
                     <TableCell>{getStockBadge(product.stock)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        Ver detalles
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => console.log('TODO: Editar producto', product.id)}
+                          disabled={loading}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteClick(product)}
+                          disabled={loading}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -321,9 +433,27 @@ const InventoryPageComponent = () => {
                     {product.description}
                   </div>
                 )}
-                <Button variant="outline" size="sm" className="w-full mt-2">
-                  Ver detalles
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => console.log('TODO: Editar producto', product.id)}
+                    disabled={loading}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDeleteClick(product)}
+                    disabled={loading}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))
@@ -357,6 +487,45 @@ const InventoryPageComponent = () => {
         onSuccess={handleProductCreated}
         createdBy="current-user" // TODO: Obtener del contexto de autenticación
       />
+
+      {/* Dialog de Confirmación de Eliminación */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar producto?</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar el producto "{productToDelete?.name}"?
+              Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancelDelete}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
