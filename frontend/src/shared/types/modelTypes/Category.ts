@@ -5,8 +5,6 @@ export interface Category extends IEntity {
     description?: string;   // Descripción de la categoría
 }
 
-// CRUD interfaces
-
 export interface CreateCategoryData {
     name: string;
     description?: string;

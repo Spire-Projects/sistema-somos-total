@@ -144,7 +144,7 @@ const InventoryPageComponent = () => {
             className="pl-10"
           />
         </div>
-        
+
         {/* TODO: Agregar filtros por categoría cuando esté implementado */}
         {Object.keys(filters).length > 0 && (
           <Button
