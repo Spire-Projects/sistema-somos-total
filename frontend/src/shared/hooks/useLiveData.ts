@@ -4,7 +4,7 @@ import { getProductRepository } from '../db/repositories/product.repository';
 import { getPurchaseRepository } from '../db/repositories/purchase.repository';
 import type { Sale } from '../types/modelTypes/Sale';
 import type { Product } from '../types/modelTypes/Product';
-import type { Purchase } from '../types/modelTypes/Purchase';
+import type { Purchase } from '../types/modelTypes/PurchaseBox';
 
 /**
  * Hook para obtener ventas en tiempo real (similar a snapshot de Firebase)

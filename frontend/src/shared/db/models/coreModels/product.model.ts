@@ -1,5 +1,6 @@
 import type { RxJsonSchema, RxCollection } from 'rxdb';
-import type { Product } from '../../types/modelTypes/Product';
+import type { Product } from '../../../types/modelTypes/Product';
+
 
 // Esquema RxDB para Product
 export const productSchema: RxJsonSchema<Product> = {
@@ -13,6 +14,10 @@ export const productSchema: RxJsonSchema<Product> = {
       type: 'string',
       maxLength: 100
     },
+    id: {
+      type: 'string',
+      maxLength: 100
+    },
     name: {
       type: 'string',
       maxLength: 200
@@ -21,17 +26,9 @@ export const productSchema: RxJsonSchema<Product> = {
       type: 'string',
       maxLength: 100
     },
-    stock: {
-      type: 'number',
-      minimum: 0
-    },
-    unitCost: {
-      type: 'number',
-      minimum: 0
-    },
-    unitPrice: {
-      type: 'number',
-      minimum: 0
+    description: {
+      type: 'string',
+      maxLength: 500
     },
     isDeleted: {
       type: 'boolean'
@@ -58,9 +55,10 @@ export const productSchema: RxJsonSchema<Product> = {
       maxLength: 50
     }
   },
-  required: ['code', 'name', 'createdAt', 'createdBy', 'isDeleted', 'sincronized'],
+  required: ['code', 'id', 'name', 'createdAt', 'createdBy', 'isDeleted', 'sincronized'],
   indexes: [
     // Índices simples (se excluye 'code' pues es primaryKey)
+    'id',
     'name',
     'category',
     'createdAt',
@@ -79,44 +77,6 @@ export const productSchema: RxJsonSchema<Product> = {
   ]
 };
 
-export const productMigrationStrategies = {
-  1: (oldDoc: any) => {
-    return {
-      ...oldDoc,
-      stock: oldDoc.stock || 0,
-      sincronized: oldDoc.sincronized !== undefined ? oldDoc.sincronized : false
-    };
-  }
-};
+export const productMigrationStrategies = {};
 
 export type ProductDocument = RxCollection<Product>;
-
-// Datos para crear un producto
-export interface CreateProductData {
-  code: string;
-  name: string;
-  category?: string;
-  stock?: number;
-  unitCost?: number;
-  unitPrice?: number;
-  createdBy: string;
-}
-
-// Datos para actualizar un producto
-export interface UpdateProductData {
-  name?: string;
-  category?: string;
-  stock?: number;
-  unitCost?: number;
-  unitPrice?: number;
-  updatedBy?: string;
-}
-
-// Estadísticas de productos
-export interface ProductStatistics {
-  totalProducts: number;
-  activeProducts: number;
-  deletedProducts: number;
-  totalStock: number;
-  lowStockProducts: number; // stock < 10
-}

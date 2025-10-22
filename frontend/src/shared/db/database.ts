@@ -17,12 +17,12 @@ import {
   numberInvoiceRangeSchema,
   type NumberInvoiceRangeDocument
 } from "./models/numberInvoiceRange.model";
-import type { Purchase } from "../types/modelTypes/Purchase";
+import type { PurchaseBox} from "../types/modelTypes/PurchaseBox";
 import type { Product } from "../types/modelTypes/Product";
 import type { Sale } from "../types/modelTypes/Sale";
 import { salesSchema } from "./models/sales.model";
-import { productSchema } from "./models/product.model";
-import { purchaseSchema } from "./models/purchase.model";
+import { productSchema } from "./models/coreModels/product.model";
+import { purchaseBoxSchema } from "./models/coreModels/purchase.model";
 
 
 const setupRxDBPlugins = async () => {
@@ -45,7 +45,7 @@ export interface DatabaseCollections {
   sales: RxCollection<Sale>;
   nits: RxCollection<NIT>;
   number_invoice_ranges: RxCollection<NumberInvoiceRangeDocument>;
-  purchases: RxCollection<Purchase>;
+  purchases: RxCollection<PurchaseBox>;
   products: RxCollection<Product>;
 }
 
@@ -73,7 +73,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
       });
 
       console.log("Base de datos creada, agregando colecciones...");
-      
+
       await db.addCollections({
         users: {
           schema: userSchema,
@@ -97,7 +97,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
           autoMigrate: true,
         },
         purchases: {
-          schema: purchaseSchema,
+          schema: purchaseBoxSchema,
           autoMigrate: true,
         },   
         nits: {

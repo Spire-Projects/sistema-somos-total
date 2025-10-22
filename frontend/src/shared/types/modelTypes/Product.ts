@@ -1,44 +1,47 @@
-export interface Product {
-  code: string;              // CÓDIGO
-  name: string;              // PRODUCTO
-  category?: string;         // CATEGORÍA
-  stock?: number;            // Cantidad actual
-  unitCost?: number;         // Costo unitario
-  unitPrice?: number;        // Precio de venta unitario
-  createdBy: string;         // Usuario que creó el registro
-  updatedBy?: string;        // Último usuario que lo modificó
-  isDeleted: boolean;        // Borrado lógico
-  sincronized: boolean;      // Estado de sincronización
-  createdAt: string;         // Fecha de creación (ISO)
-  updatedAt?: string;        // Fecha de actualización (ISO)
+import type { IEntity } from "../UtilTypes";
+
+/**
+ * Modelo principal de Producto
+ * Extends IEntity para incluir timestamps, auditoria, y estado de sincronización
+ */
+export interface Product extends IEntity {
+  code: string;              // Código único de producto (PK)
+  name: string;              // Nombre del producto
+  category?: string;         // Id de Categoría del producto
+  description?: string;      // Descripción detallada
 }
 
-// Datos para crear un producto
+/**
+ * CRUD interfaces
+ */
+
 export interface CreateProductData {
   code: string;
   name: string;
   category?: string;
-  stock?: number;
-  unitCost?: number;
-  unitPrice?: number;
+  description?: string;
   createdBy: string;
 }
 
-// Datos para actualizar un producto
 export interface UpdateProductData {
   name?: string;
   category?: string;
-  stock?: number;
-  unitCost?: number;
-  unitPrice?: number;
+  description?: string;
   updatedBy?: string;
 }
 
-// Estadísticas de productos
-export interface ProductStatistics {
-  totalProducts: number;
-  activeProducts: number;
-  deletedProducts: number;
-  totalStock: number;
-  lowStockProducts: number; // stock < 10
+/**
+ * View interfaces
+ */
+export interface ProductView extends Product {
+  categoryName?: string;     // Nombre de la categoría
+  stock?    : number;          // Stock disponible 
+}
+
+/**
+ * FFilter interfaces
+ */
+
+export interface ProductFilter {
+    category?: string;         // Filtrar por categoría
 }

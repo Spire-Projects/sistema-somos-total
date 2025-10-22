@@ -1,16 +1,8 @@
 // Configuración de la aplicación frontend
 export const config = {
   // Modo de la aplicación: 'local' usa RxDB/LevelDB, 'deploy' usa Firestore
-  APP_MODE: import.meta.env.VITE_APP_MODE || 'local',
+  APP_MODE: 'local',
   
-  // URL base del backend - puerto 3000 por defecto (solo para modo deploy o legacy)
-  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  
-  // URLs específicas de la API (legacy)
-  API: {
-    AUTH: '/api/users',
-    PRODUCTS: '/api/products',
-  },
   
   // Configuración de la aplicación
   APP: {
@@ -26,7 +18,7 @@ export const config = {
   
   // Configuración de base de datos local
   DB: {
-    NAME: 'somostotal_db_v1',
+    NAME: 'somostotal_db_v2',
     PATH: './data/rxdb',
     VERSION: 1,
   },
@@ -55,8 +47,4 @@ export const config = {
   }
 };
 
-// URLs completas de la API
-export const API_URLS = {
-  AUTH: `${config.API_BASE_URL}${config.API.AUTH}`,
-  PRODUCTS: `${config.API_BASE_URL}${config.API.PRODUCTS}`,
-};
+

@@ -1,127 +1,110 @@
 import type { RxCollection } from 'rxdb';
+import { Observable, map } from 'rxjs';
 import { initDatabase } from '../database';
-import type { Purchase, CreatePurchaseData, UpdatePurchaseData, PurchaseStatistics } from '../../types/modelTypes/Purchase';
+import type { CreatePurchaseData, PurchaseBox, PurchaseFilter, UpdatePurchaseData } from '../../types/modelTypes/PurchaseBox';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { BaseRepository } from './BaseRepository';
 import { config } from '../../config/config';
-import { Observable } from 'rxjs';
+import type { ICrudBaseRepository } from './interfaces/IRepository';
 
-export interface IPurchaseRepository {
-  create(purchaseData: CreatePurchaseData): Promise<Purchase>;
-  findById(id: string): Promise<Purchase | null>;
-  findAll(): Promise<Purchase[]>;
-  findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Purchase>>;
-  update(id: string, updateData: UpdatePurchaseData): Promise<Purchase | null>;
-  delete(id: string): Promise<boolean>;
-  getStatistics(): Promise<PurchaseStatistics>;
-  getPurchasesByProduct(productCode: string): Promise<Purchase[]>;
-  getPurchasesBySupplier(supplier: string): Promise<Purchase[]>;
-  getPurchasesByDateRange(startDate: string, endDate: string): Promise<Purchase[]>;
-  getActivePurchases(): Promise<Purchase[]>;
-  getDeletedPurchases(): Promise<Purchase[]>;
-  softDelete(id: string, deletedBy: string): Promise<boolean>;
-  restore(id: string): Promise<boolean>;
-  
-  // Métodos para snapshot/listener en tiempo real
-  findAllLive$(): Observable<Purchase[]>;
-  findAllPaginatedLive$(page: number, size: number, searchQuery?: string): Observable<Purchase[]>;
+export interface IPurchaseBoxRepository extends ICrudBaseRepository<PurchaseBox, CreatePurchaseData, UpdatePurchaseData, PurchaseFilter> {
+
 }
 
-export class LocalPurchaseRepository extends BaseRepository<Purchase> implements IPurchaseRepository {
-  
-  protected async getCollection(): Promise<RxCollection<Purchase>> {
+export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> implements IPurchaseBoxRepository {
+
+  protected async getCollection(): Promise<RxCollection<PurchaseBox>> {
     const db = await initDatabase();
     return db.purchases;
   }
 
-  async create(purchaseData: CreatePurchaseData): Promise<Purchase> {
+  async create(data: Omit<PurchaseBox, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'sincronized'>): Promise<PurchaseBox> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     
-    const fullPurchaseData = { 
-      id, 
-      ...purchaseData,
+    const fullData: PurchaseBox = {
+      id,
+      ...data,
       createdAt: now,
       updatedAt: now,
-      sincronized: false,
-      isDeleted: false
-    };
+      isDeleted: false,
+      sincronized: false
+    } as PurchaseBox;
     
-    console.log(`🔄 PurchaseRepository: Creando compra con prioridad`, { id });
-    return await this.createWithPriority(fullPurchaseData as Purchase);
+    return await this.createWithPriority(fullData);
   }
 
-  async update(id: string, updateData: UpdatePurchaseData): Promise<Purchase | null> {
-    console.log(`🔄 PurchaseRepository: Actualizando compra ${id} con prioridad`, updateData);
+  async update(id: string, updateData: Partial<PurchaseBox>): Promise<PurchaseBox | null> {
     try {
-      return await this.updateWithPriority(id, updateData as Partial<Purchase>);
+      return await this.updateWithPriority(id, updateData);
     } catch (error) {
-      console.error(`❌ Error actualizando compra ${id}:`, error);
+      console.error(`❌ Error al actualizar compra ${id}:`, error);
       return null;
     }
   }
 
-  async delete(id: string): Promise<boolean> {
-    console.log(`🗑️ PurchaseRepository: Eliminando compra ${id} con prioridad`);
+  async softDelete(id: string): Promise<boolean> {
     return await this.deleteWithPriority(id);
   }
 
-  async findById(id: string): Promise<Purchase | null> {
-    return await super.findById(id);
-  }
-
-  async findAll(): Promise<Purchase[]> {
-    return await super.findAll();
-  }
-
-  async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Purchase>> {
-    const db = await initDatabase();
+  async getAll(
+    page: number, 
+    size: number, 
+    searchQuery?: string, 
+    dateFrom?: string, 
+    dateTo?: string
+  ): Promise<ItemsResponse<PurchaseBox>> {
+    const collection = await this.getCollection();
     
     const selector: any = { isDeleted: false };
     
-    // Búsqueda por productCode, supplier o comprobante
+    // Filtro de búsqueda
     if (searchQuery && searchQuery.trim() !== "") {
-      const query = searchQuery.trim().toLowerCase();
+      const normalizedText = searchQuery.trim().toLowerCase();
       selector.$or = [
-        { productCode: { $regex: new RegExp(query, 'i') } },
-        { supplier: { $regex: new RegExp(query, 'i') } },
-        { comprobante: { $regex: new RegExp(query, 'i') } }
+        { productId: { $regex: normalizedText, $options: 'i' } },
+        { receiptNumber: { $regex: normalizedText, $options: 'i' } },
+        { supplierId: { $regex: normalizedText, $options: 'i' } },
+        { notes: { $regex: normalizedText, $options: 'i' } }
       ];
     }
 
-    // Estrategia optimizada: obtener solo los datos necesarios para paginación
+    // Filtro de fechas (usando purchaseDate en lugar de createdAt)
+    if (dateFrom || dateTo) {
+      selector.purchaseDate = {};
+      if (dateFrom) selector.purchaseDate.$gte = dateFrom;
+      if (dateTo) selector.purchaseDate.$lte = dateTo;
+    }
+
     const skip = (page - 1) * size;
-    const limit = size + 1; // +1 para saber si hay más páginas
+    const limit = size + 1;
     
-    const purchases = await db.purchases.find({
+    const docs = await collection.find({
       selector,
-      sort: [{ isDeleted: 'asc', date: 'desc' }],
+      sort: [{ isDeleted: 'asc', purchaseDate: 'desc' }],
       skip,
       limit
     }).exec();
 
-    const items = purchases.slice(0, size).map((purchase) => 
-      JSON.parse(JSON.stringify(purchase.toJSON())) as Purchase
+    const items = docs.slice(0, size).map(doc => 
+      JSON.parse(JSON.stringify(doc.toJSON())) as PurchaseBox
     );
     
-    const hasMore = purchases.length > size;
+    const hasMore = docs.length > size;
     
-    // Estimación inteligente del total sin usar count()
+    // Estimación del total
     let totalItems: number;
     let totalPages: number;
     
     if (page === 1 && !hasMore) {
-      // Primera página y no hay más = este es el total
       totalItems = items.length;
       totalPages = 1;
     } else if (page === 1 && hasMore) {
-      // Primera página con más páginas = estimamos conservadoramente
-      totalItems = size * 10; // Estimación conservadora
-      totalPages = 10;
+      totalItems = size * 2;
+      totalPages = 2;
     } else {
-      // Páginas subsecuentes = mantenemos estimación
-      totalItems = size * 10;
-      totalPages = 10;
+      totalItems = (page - 1) * size + items.length + (hasMore ? size : 0);
+      totalPages = Math.ceil(totalItems / size);
     }
 
     return {
@@ -133,260 +116,121 @@ export class LocalPurchaseRepository extends BaseRepository<Purchase> implements
     };
   }
 
-  async getPurchasesByProduct(productCode: string): Promise<Purchase[]> {
-    const db = await initDatabase();
-    const purchases = await db.purchases.find({ 
-      selector: { 
-        isDeleted: false,
-        productCode
-      },
-      sort: [{ isDeleted: 'asc', date: 'desc' }]
-    }).exec();
-    return purchases.map((purchase) => JSON.parse(JSON.stringify(purchase.toJSON())) as Purchase);
+  async findById(id: string): Promise<PurchaseBox | null> {
+    return await super.findById(id);
   }
 
-  async getPurchasesBySupplier(supplier: string): Promise<Purchase[]> {
-    const db = await initDatabase();
-    const purchases = await db.purchases.find({ 
-      selector: { 
-        isDeleted: false,
-        supplier
-      },
-      sort: [{ isDeleted: 'asc', date: 'desc' }]
-    }).exec();
-    return purchases.map((purchase) => JSON.parse(JSON.stringify(purchase.toJSON())) as Purchase);
-  }
-
-  async getPurchasesByDateRange(startDate: string, endDate: string): Promise<Purchase[]> {
-    const db = await initDatabase();
-    const purchases = await db.purchases.find({ 
-      selector: { 
-        isDeleted: false,
-        date: {
-          $gte: startDate,
-          $lte: endDate
-        }
-      },
-      sort: [{ isDeleted: 'asc', date: 'desc' }]
-    }).exec();
-    return purchases.map((purchase) => JSON.parse(JSON.stringify(purchase.toJSON())) as Purchase);
-  }
-
-  async getStatistics(): Promise<PurchaseStatistics> {
-    const db = await initDatabase();
-    
-    // Obtener todas las compras activas
-    const activePurchasesDocs = await db.purchases.find({ selector: { isDeleted: false } }).exec();
-    const activePurchases = activePurchasesDocs.map((p) => JSON.parse(JSON.stringify(p.toJSON())) as Purchase);
-    
-    // Obtener compras eliminadas
-    const deletedPurchasesDocs = await db.purchases.find({ selector: { isDeleted: true } }).exec();
-    
-    // Calcular costo total de compras
-    const totalCostPurchased = activePurchases.reduce((sum, purchase) => sum + (purchase.totalCost || 0), 0);
-    
-    // Calcular promedio de costo por compra
-    const averageCostPerPurchase = activePurchases.length > 0 
-      ? totalCostPurchased / activePurchases.length 
-      : 0;
-
-    return {
-      totalPurchases: activePurchases.length + deletedPurchasesDocs.length,
-      activePurchases: activePurchases.length,
-      deletedPurchases: deletedPurchasesDocs.length,
-      totalCostPurchased,
-      averageCostPerPurchase
-    };
-  }
-
-  async getActivePurchases(): Promise<Purchase[]> {
-    const db = await initDatabase();
-    const purchases = await db.purchases.find({ 
-      selector: { isDeleted: false },
-      sort: [{ isDeleted: 'asc', date: 'desc' }]
-    }).exec();
-    return purchases.map((p) => JSON.parse(JSON.stringify(p.toJSON())) as Purchase);
-  }
-
-  async getDeletedPurchases(): Promise<Purchase[]> {
-    const db = await initDatabase();
-    const purchases = await db.purchases.find({ 
-      selector: { isDeleted: true },
-      sort: [{ updatedAt: 'desc' }]
-    }).exec();
-    return purchases.map((p) => JSON.parse(JSON.stringify(p.toJSON())) as Purchase);
-  }
-
-  async softDelete(id: string, deletedBy: string): Promise<boolean> {
-    const db = await initDatabase();
-    const purchase = await db.purchases.findOne(id).exec();
-    if (!purchase) return false;
-    
-    await purchase.update({ 
-      $set: { 
-        isDeleted: true,
-        updatedBy: deletedBy,
-        updatedAt: new Date().toISOString() 
-      } 
-    });
-    
-    return true;
-  }
-
-  async restore(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const purchase = await db.purchases.findOne(id).exec();
-    if (!purchase) return false;
-    
-    await purchase.update({ 
-      $set: { 
-        isDeleted: false,
-        updatedAt: new Date().toISOString() 
-      } 
-    });
-    
-    return true;
-  }
-
-  /**
-   * Observable que emite cada vez que cambia la colección de compras (snapshot en tiempo real)
-   * Retorna todas las compras activas
-   */
-  findAllLive$(): Observable<Purchase[]> {
-    return new Observable<Purchase[]>((subscriber) => {
+  listen$(
+    page: number, 
+    size: number, 
+    searchQuery?: string, 
+    dateFrom?: string, 
+    dateTo?: string
+  ): Observable<PurchaseBox[]> {
+    return new Observable<PurchaseBox[]>(subscriber => {
       let subscription: any;
-
-      initDatabase()
-        .then((db) => {
-          // Query reactiva que emite cada vez que hay cambios
-          subscription = db.purchases
-            .find({
-              selector: { isDeleted: false },
-              sort: [{ isDeleted: 'asc', date: 'desc' }]
-            })
-            .$.subscribe((docs) => {
-              const purchases = docs.map((doc) => 
-                JSON.parse(JSON.stringify(doc.toJSON())) as Purchase
-              );
-              subscriber.next(purchases);
-            });
-        })
-        .catch((error) => {
-          subscriber.error(error);
-        });
-
-      // Cleanup al desuscribirse
-      return () => {
-        if (subscription) {
-          subscription.unsubscribe();
-        }
-      };
-    });
-  }
-
-  /**
-   * Observable paginado que emite cada vez que cambia la colección
-   */
-  findAllPaginatedLive$(page: number, size: number, searchQuery?: string): Observable<Purchase[]> {
-    return new Observable<Purchase[]>((subscriber) => {
-      let subscription: any;
-
-      initDatabase()
-        .then((db) => {
+      
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+          
           const selector: any = { isDeleted: false };
           
+          // Filtro de búsqueda
           if (searchQuery && searchQuery.trim() !== "") {
-            const query = searchQuery.trim().toLowerCase();
+            const normalizedText = searchQuery.trim().toLowerCase();
             selector.$or = [
-              { productCode: { $regex: new RegExp(query, 'i') } },
-              { supplier: { $regex: new RegExp(query, 'i') } },
-              { comprobante: { $regex: new RegExp(query, 'i') } }
+              { productId: { $regex: normalizedText, $options: 'i' } },
+              { receiptNumber: { $regex: normalizedText, $options: 'i' } },
+              { supplierId: { $regex: normalizedText, $options: 'i' } },
+              { notes: { $regex: normalizedText, $options: 'i' } }
             ];
           }
 
+          // Filtro de fechas
+          if (dateFrom || dateTo) {
+            selector.purchaseDate = {};
+            if (dateFrom) selector.purchaseDate.$gte = dateFrom;
+            if (dateTo) selector.purchaseDate.$lte = dateTo;
+          }
+
           const skip = (page - 1) * size;
-
-          subscription = db.purchases
-            .find({
-              selector,
-              sort: [{ isDeleted: 'asc', date: 'desc' }],
-              skip,
-              limit: size
-            })
-            .$.subscribe((docs) => {
-              const purchases = docs.map((doc) => 
-                JSON.parse(JSON.stringify(doc.toJSON())) as Purchase
-              );
-              subscriber.next(purchases);
-            });
-        })
-        .catch((error) => {
+          
+          subscription = collection.find({
+            selector,
+            sort: [{ isDeleted: 'asc', purchaseDate: 'desc' }],
+            skip,
+            limit: size
+          }).$.pipe(
+            map(docs => docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as PurchaseBox))
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err)
+          });
+        } catch (error) {
           subscriber.error(error);
-        });
-
-      return () => {
-        if (subscription) {
-          subscription.unsubscribe();
         }
+      })();
+      
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
+    });
+  }
+
+  lisntenById$(id: string): Observable<PurchaseBox | null> {
+    return new Observable<PurchaseBox | null>(subscriber => {
+      let subscription: any;
+      
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+          
+          subscription = collection.findOne(id).$.pipe(
+            map(doc => doc ? JSON.parse(JSON.stringify(doc.toJSON())) as PurchaseBox : null)
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err)
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+      
+      return () => {
+        if (subscription) subscription.unsubscribe();
       };
     });
   }
 }
 
-export class FirestorePurchaseRepository implements IPurchaseRepository {
-  async create(_purchaseData: CreatePurchaseData): Promise<Purchase> {
-    throw new Error('Firestore not implemented');
+export class FirestorePurchaseBoxRepository implements IPurchaseBoxRepository {
+  create(_data: Omit<PurchaseBox, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'sincronized'>): Promise<PurchaseBox> {
+    throw new Error('Firestore implementation not yet available');
   }
-  async findById(_id: string): Promise<Purchase | null> {
-    throw new Error('Firestore not implemented');
+  update(_id: string, _updateData: Partial<PurchaseBox>): Promise<PurchaseBox | null> {
+    throw new Error('Firestore implementation not yet available');
   }
-  async findAll(): Promise<Purchase[]> {
-    throw new Error('Firestore not implemented');
+  softDelete(_id: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
   }
-  async findAllPaginated(_page: number, _size: number, _searchQuery?: string): Promise<ItemsResponse<Purchase>> {
-    throw new Error('Firestore not implemented');
+  getAll(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string): Promise<ItemsResponse<PurchaseBox>> {
+    throw new Error('Firestore implementation not yet available');
   }
-  async update(_id: string, _updateData: UpdatePurchaseData): Promise<Purchase | null> {
-    throw new Error('Firestore not implemented');
+  findById(_id: string): Promise<PurchaseBox | null> {
+    throw new Error('Firestore implementation not yet available');
   }
-  async delete(_id: string): Promise<boolean> {
-    throw new Error('Firestore not implemented');
+  listen$(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string): Observable<PurchaseBox[]> {
+    throw new Error('Firestore implementation not yet available');
   }
-  async getStatistics(): Promise<PurchaseStatistics> {
-    throw new Error('Firestore not implemented');
-  }
-  async getPurchasesByProduct(_productCode: string): Promise<Purchase[]> {
-    throw new Error('Firestore not implemented');
-  }
-  async getPurchasesBySupplier(_supplier: string): Promise<Purchase[]> {
-    throw new Error('Firestore not implemented');
-  }
-  async getPurchasesByDateRange(_startDate: string, _endDate: string): Promise<Purchase[]> {
-    throw new Error('Firestore not implemented');
-  }
-  async getActivePurchases(): Promise<Purchase[]> {
-    throw new Error('Firestore not implemented');
-  }
-  async getDeletedPurchases(): Promise<Purchase[]> {
-    throw new Error('Firestore not implemented');
-  }
-  async softDelete(_id: string, _deletedBy: string): Promise<boolean> {
-    throw new Error('Firestore not implemented');
-  }
-  async restore(_id: string): Promise<boolean> {
-    throw new Error('Firestore not implemented');
-  }
-  findAllLive$(): Observable<Purchase[]> {
-    throw new Error('Firestore not implemented');
-  }
-  findAllPaginatedLive$(_page: number, _size: number, _searchQuery?: string): Observable<Purchase[]> {
-    throw new Error('Firestore not implemented');
+  lisntenById$(_id: string): Observable<PurchaseBox | null> {
+    throw new Error('Firestore implementation not yet available');
   }
 }
 
-export const localPurchaseRepository = new LocalPurchaseRepository();
-export const firestorePurchaseRepository = new FirestorePurchaseRepository();
+export const localPurchaseBoxRepository = new LocalPurchaseBoxRepository();
+export const firestorePurchaseBoxRepository = new FirestorePurchaseBoxRepository();
 
-export const getPurchaseRepository = (): IPurchaseRepository => {
-  return config.APP_MODE === 'local' ? localPurchaseRepository : firestorePurchaseRepository;
+export const getPurchaseBoxRepository = (): IPurchaseBoxRepository => {
+  return config.APP_MODE === 'local' ? localPurchaseBoxRepository : firestorePurchaseBoxRepository;
 };
