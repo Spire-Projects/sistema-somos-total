@@ -22,6 +22,16 @@ export class LocalProductRepository extends BaseRepository<Product> implements I
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     
+    // Verificar si ya existe un producto con el mismo código
+    const collection = await this.getCollection();
+    const existing = await collection.findOne({
+      selector: { code: data.code }
+    }).exec();
+    
+    if (existing) {
+      throw new Error(`Ya existe un producto con el código: ${data.code}`);
+    }
+    
     const fullData: Product = {
       id,
       ...data,

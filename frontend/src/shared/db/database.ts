@@ -19,10 +19,12 @@ import {
 } from "./models/numberInvoiceRange.model";
 import type { PurchaseBox} from "../types/modelTypes/PurchaseBox";
 import type { Product } from "../types/modelTypes/Product";
+import type { Category } from "../types/modelTypes/Category";
 import type { Sale } from "../types/modelTypes/Sale";
 import { salesSchema } from "./models/sales.model";
 import { productSchema } from "./models/coreModels/product.model";
 import { purchaseBoxSchema } from "./models/coreModels/purchase.model";
+import { categorySchema } from "./models/coreModels/category.model";
 
 
 const setupRxDBPlugins = async () => {
@@ -47,6 +49,7 @@ export interface DatabaseCollections {
   number_invoice_ranges: RxCollection<NumberInvoiceRangeDocument>;
   purchases: RxCollection<PurchaseBox>;
   products: RxCollection<Product>;
+  categories: RxCollection<Category>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -83,7 +86,10 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
           schema: clientSchema,
           autoMigrate: true,
         },
-        
+        categories: {
+          schema: categorySchema,
+          autoMigrate: true,
+        },
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
           autoMigrate: true,

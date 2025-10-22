@@ -43,11 +43,7 @@ function ResolvingTemporaryNumbersModal({ open, messages }: { open: boolean; mes
 import { Button } from "@/shared/components/ui/button.tsx";
 import { Input } from "@/shared/components/ui/input.tsx";
 import { BriefcaseMedical, Search } from "lucide-react";
-import NewSaleDialog from "./NewSaleDialog.tsx";
-import SalesFilters from "./SalesFilters";
-import SalesTable from "./SalesTable";
-import { DataPagination } from "@/shared/components/DataPagination";
-import { useSalesSearch } from "../hooks/useSalesSearch";
+
 import { InvoiceNumberService } from "@/shared/services/InvoiceNumberService.ts";
 import { toast } from "sonner";
 
@@ -64,34 +60,9 @@ export const SalesPage = () => {
     "¡No cierres la ventana!",
   ];
 
-  const {
-    sales,
-    isLoading,
-    error,
-    pagination,
-    filters,
-    setSearchQuery,
-    setDateRange,
-    clearFilters,
-    changePage,
-    changeItemsPerPage,
-    refetch,
-  } = useSalesSearch(300);
+ 
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-    },
-    [setSearchQuery]
-  );
-
-  const handleDateRangeChange = useCallback(
-    (dateFrom?: string, dateTo?: string) => {
-      setDateRange(dateFrom, dateTo);
-    },
-    [setDateRange]
-  );
-
+  
   useEffect(() => {
     const runResolve = async () => {
       if (!navigator.onLine) return;
@@ -107,7 +78,7 @@ export const SalesPage = () => {
         setResolvingModalOpen(false);
         if (response) {
           toast.success("✅ Números de venta temporales resueltos correctamente");
-          refetch();
+         // refetch();
         }
       } catch (err) {
         setResolvingModalOpen(false);
@@ -150,8 +121,8 @@ export const SalesPage = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar por método de pago o numero de venta"
-              value={filters.searchQuery}
-              onChange={handleSearchChange}
+             // value={filters.searchQuery}
+              //onChange={handleSearchChange}
               className="pl-10 border-gray-300"
             />
           </div>
@@ -161,45 +132,9 @@ export const SalesPage = () => {
             </Button>
           </div>
         </div>
+        </div>
+        {/* Filtros */}
 
-        {/* Filtros de fecha */}
-        <SalesFilters
-          dateFrom={filters.dateFrom}
-          dateTo={filters.dateTo}
-          onDateRangeChange={handleDateRangeChange}
-          onClearFilters={clearFilters}
-        />
-
-        {/* Tabla de ventas */}
-        <SalesTable sales={sales} isLoading={isLoading} error={error} />
-
-        {/* Paginación */}
-        {!isLoading && sales.length > 0 && (
-          <DataPagination
-            currentPage={pagination.currentPage}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.totalItems}
-            itemsPerPage={pagination.itemsPerPage}
-            onPageChange={changePage}
-            onItemsPerPageChange={changeItemsPerPage}
-            startIndex={
-              (pagination.currentPage - 1) * pagination.itemsPerPage + 1
-            }
-            endIndex={Math.min(
-              pagination.currentPage * pagination.itemsPerPage,
-              pagination.totalItems
-            )}
-            itemName="ventas"
-          />
-        )}
-      </div>
-
-      {/* Diálogo de nueva venta */}
-      <NewSaleDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSaleSuccess={refetch}
-      />
     </div>
     </>
   );

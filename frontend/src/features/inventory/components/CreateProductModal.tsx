@@ -4,7 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2, X } from 'lucide-react';
 import type { CreateProductData } from '@/shared/types/modelTypes/Product';
+import type { Category } from '@/shared/types/modelTypes/Category';
 import { productService } from '@/shared/services/ProductService';
+import { categoryService } from '@/shared/services/CategoryService';
+import CreatableSelect from '@/shared/components/CreatableSelect';
 import {
   Dialog,
   DialogContent,
@@ -81,6 +84,8 @@ const CreateProductModalComponent = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [initialCategories, setInitialCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   // Configurar form con validación
   const form = useForm<CreateProductFormDisplay>({
@@ -95,6 +100,59 @@ const CreateProductModalComponent = ({
   });
 
   /**
+   * Cargar categorías iniciales
+   */
+  useEffect(() => {
+    const loadInitialCategories = async () => {
+      try {
+        const response = await categoryService.getAllView(1, 20);
+        setInitialCategories(response.items);
+      } catch (error) {
+        console.error('Error loading initial categories:', error);
+      }
+    };
+    loadInitialCategories();
+  }, []);
+
+  /**
+   * Función de búsqueda para categorías
+   */
+  const searchCategories = useCallback(async (searchQuery: string) => {
+    try {
+      const response = await categoryService.getAllView(1, 20, searchQuery);
+      return response.items;
+    } catch (error) {
+      console.error('Error searching categories:', error);
+      return [];
+    }
+  }, []);
+
+  /**
+   * Función para crear nueva categoría
+   */
+  const handleCreateCategory = useCallback(async (name: string): Promise<Category> => {
+    try {
+      const newCategory = await categoryService.create({
+        name: name.trim(),
+        createdBy, // TODO: Get from auth context
+      });
+      setInitialCategories(prev => [newCategory, ...prev]);
+      return newCategory;
+    } catch (error) {
+      console.error('Error creating category:', error);
+      throw error;
+    }
+  }, [createdBy]);
+
+  /**
+   * Manejar selección de categoría
+   */
+  const handleCategoryChange = useCallback((category: Category) => {
+    setSelectedCategory(category);
+    form.setValue('category', category.id);
+  }, [form]);
+
+  /**
    * Limpiar estado cuando el modal se cierra
    */
   useEffect(() => {
@@ -104,6 +162,7 @@ const CreateProductModalComponent = ({
         form.reset();
         setSubmitError(null);
         setSuccessMessage(null);
+        setSelectedCategory(null);
       }, 200);
 
       return () => clearTimeout(timeoutId);
@@ -141,6 +200,7 @@ const CreateProductModalComponent = ({
         form.reset();
         setSubmitError(null);
         setSuccessMessage(null);
+        setSelectedCategory(null);
 
         // Llamar callback de éxito
         if (onSuccess) {
@@ -168,6 +228,7 @@ const CreateProductModalComponent = ({
       form.reset();
       setSubmitError(null);
       setSuccessMessage(null);
+      setSelectedCategory(null);
       onClose();
     }
   }, [isSubmitting, form, onClose]);
@@ -260,15 +321,27 @@ const CreateProductModalComponent = ({
               <FormField
                 control={form.control}
                 name="category"
-                render={({ field }) => (
+                render={({ field: _field }) => (
                   <FormItem>
                     <FormLabel>Categoría</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Electrónicos"
-                        disabled={isSubmitting}
-                        {...field}
-                      />
+                      <div>
+                        <CreatableSelect<Category>
+                          label=""
+                          values={initialCategories}
+                          selectedValue={selectedCategory}
+                          onChange={handleCategoryChange}
+                          searchFunction={searchCategories}
+                          onAddValue={handleCreateCategory}
+                          displayField="name"
+                          valueField="id"
+                          placeholder="Seleccionar o crear categoría..."
+                          hideLabel={true}
+                          disabled={isSubmitting}
+                          secondaryDisplayField="description"
+                          secondaryLabel="Descripción"
+                        />
+                      </div>
                     </FormControl>
                     <FormDescription>
                       Clasificación del producto (opcional)

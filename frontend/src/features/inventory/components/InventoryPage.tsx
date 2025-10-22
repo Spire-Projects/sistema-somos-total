@@ -331,6 +331,9 @@ const InventoryPageComponent = () => {
       </div>
 
       {/* Pagination */}
+      <div>
+        {totalItems} productos encontrados
+      </div>
       {!loading && totalItems > 0 && (
         <div className="w-full">
           <DataPagination
