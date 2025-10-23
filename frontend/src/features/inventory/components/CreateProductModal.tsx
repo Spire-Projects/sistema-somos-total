@@ -64,11 +64,14 @@ type CreateProductFormDisplay = {
   description?: string;
 };
 
+import type { ProductView, UpdateProductData } from '@/shared/types/modelTypes/Product';
+
 interface CreateProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void | Promise<void>;
   createdBy: string;
+  productToEdit?: ProductView | null;
 }
 
 /**
@@ -80,12 +83,14 @@ const CreateProductModalComponent = ({
   onClose,
   onSuccess,
   createdBy,
+  productToEdit = null,
 }: CreateProductModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [initialCategories, setInitialCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
 
   // Configurar form con validación
   const form = useForm<CreateProductFormDisplay>({
@@ -96,8 +101,32 @@ const CreateProductModalComponent = ({
       category: '',
       description: '',
     },
-    mode: 'onBlur', // Validar solo al perder el foco para mejor UX
+    mode: 'onBlur',
   });
+
+  // Efecto para setear valores iniciales si es edición
+  useEffect(() => {
+    if (isOpen && productToEdit) {
+      form.reset({
+        code: productToEdit.code,
+        name: productToEdit.name,
+        category: productToEdit.category || '',
+        description: productToEdit.description || '',
+      });
+      // Seleccionar categoría si existe
+      if (productToEdit.category) {
+        setSelectedCategory(
+          initialCategories.find((cat) => cat.id === productToEdit.category) || null
+        );
+      } else {
+        setSelectedCategory(null);
+      }
+    } else if (isOpen && !productToEdit) {
+      form.reset({ code: '', name: '', category: '', description: '' });
+      setSelectedCategory(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, productToEdit]);
 
   /**
    * Cargar categorías iniciales
@@ -179,19 +208,28 @@ const CreateProductModalComponent = ({
         setSuccessMessage(null);
         setIsSubmitting(true);
 
-        // Preparar datos para el servicio
-        const createData: CreateProductData = {
-          code: data.code,
-          name: data.name,
-          category: data.category,
-          createdBy,
-        };
-
-        // Crear producto usando el servicio
-        await productService.create(createData);
-
-        // Mostrar éxito
-        setSuccessMessage(`Producto "${data.name}" creado exitosamente`);
+        if (productToEdit) {
+          // Modo edición
+          const updateData: UpdateProductData = {
+            name: data.name,
+            category: data.category,
+            description: data.description,
+            updatedBy: createdBy,
+          };
+          await productService.update(productToEdit.id, updateData);
+          setSuccessMessage(`Producto "${data.name}" actualizado exitosamente`);
+        } else {
+          // Modo creación
+          const createData: CreateProductData = {
+            code: data.code,
+            name: data.name,
+            category: data.category,
+            description: data.description,
+            createdBy,
+          };
+          await productService.create(createData);
+          setSuccessMessage(`Producto "${data.name}" creado exitosamente`);
+        }
 
         // Esperar un poco para que el usuario vea el mensaje
         await new Promise((resolve) => setTimeout(resolve, 800));
@@ -212,12 +250,12 @@ const CreateProductModalComponent = ({
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
         setSubmitError(errorMessage);
-        console.error('Error creating product:', error);
+        console.error(productToEdit ? 'Error updating product:' : 'Error creating product:', error);
       } finally {
         setIsSubmitting(false);
       }
     },
-    [createdBy, form, onClose, onSuccess]
+    [createdBy, form, onClose, onSuccess, productToEdit]
   );
 
   /**
@@ -283,7 +321,7 @@ const CreateProductModalComponent = ({
                     <FormControl>
                       <Input
                         placeholder="PROD001"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !!productToEdit}
                         {...field}
                       />
                     </FormControl>
@@ -338,8 +376,6 @@ const CreateProductModalComponent = ({
                           placeholder="Seleccionar o crear categoría..."
                           hideLabel={true}
                           disabled={isSubmitting}
-                          secondaryDisplayField="description"
-                          secondaryLabel="Descripción"
                         />
                       </div>
                     </FormControl>
@@ -390,7 +426,9 @@ const CreateProductModalComponent = ({
                 className="gap-2"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Creando...' : 'Crear Producto'}
+                {isSubmitting
+                  ? (productToEdit ? 'Actualizando...' : 'Creando...')
+                  : (productToEdit ? 'Actualizar Producto' : 'Crear Producto')}
               </Button>
             </div>
           </form>

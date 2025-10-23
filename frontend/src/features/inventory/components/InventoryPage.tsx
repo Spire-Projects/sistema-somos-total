@@ -1,5 +1,6 @@
-import { memo, useState, useEffect } from "react";
-import { Package, Download, Search, X, Plus, Pencil, Trash2 } from "lucide-react";
+import { memo, useState, useEffect, useCallback } from "react";
+import { Package, Download, Search, X, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { useDebounce } from "@/shared/hooks";
 import { DataPagination } from "@/shared/components/DataPagination";
 import { useEntityData } from "@/shared/hooks";
 import { productService } from "@/shared/services/ProductService";
@@ -40,6 +41,42 @@ import {
 } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import { CreateProductModal } from "./CreateProductModal";
+import StartAppText from "@/shared/components/StartAppText";
+import PageHeader from "@/shared/components/PageHeader";
+
+// Componente SearchInput memoizado para evitar re-renders y pérdida de foco
+const SearchInput = memo(({
+  value,
+  onChange,
+  disabled = false,
+  isLoading = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  isLoading?: boolean;
+}) => {
+  return (
+    <div className="relative flex-1">
+      {isLoading ? (
+        <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+      ) : (
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      )}
+      <Input
+        type="text"
+        placeholder="Buscar por código, nombre o descripción..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        aria-busy={isLoading}
+        className="pl-10"
+      />
+    </div>
+  );
+});
+
+SearchInput.displayName = 'SearchInput';
 
 const InventoryPageComponent = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -47,6 +84,13 @@ const InventoryPageComponent = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductView | null>(null);
+  const [productToEdit, setProductToEdit] = useState<ProductView | null>(null);
+  
+  // Estado local para el input de búsqueda (evita perder foco)
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  
+  // Debounce del search local antes de enviarlo al hook
+  const debouncedLocalSearch = useDebounce(localSearchQuery, 300);
 
   // Cargar categorías al montar el componente
   useEffect(() => {
@@ -93,9 +137,21 @@ const InventoryPageComponent = () => {
     enableRealtime: true,
   });
 
+  // Sincronizar el debounced local search con el hook de búsqueda
+  useEffect(() => {
+    if (debouncedLocalSearch !== searchQuery) {
+      setSearch(debouncedLocalSearch);
+    }
+  }, [debouncedLocalSearch, setSearch]);
+
+  // Handler para cambiar búsqueda local (memoizado)
+  const handleSearchChange = useCallback((value: string) => {
+    setLocalSearchQuery(value);
+  }, []);
+
   const handleProductCreated = async () => {
     setIsCreateModalOpen(false);
-    //await refresh();
+    setProductToEdit(null);
   };
 
   // Handler para cambiar filtro de categoría
@@ -111,6 +167,7 @@ const InventoryPageComponent = () => {
   // Handler para limpiar filtros (sobrescribe clearFilters del hook)
   const handleClearFilters = () => {
     setSelectedCategoryId("all");
+    setLocalSearchQuery(""); // Limpiar búsqueda local también
     clearFilters();
   };
 
@@ -123,7 +180,7 @@ const InventoryPageComponent = () => {
   // Confirmar eliminación
   const handleConfirmDelete = async () => {
     if (!productToDelete) return;
-    
+
     try {
       await productService.delete(productToDelete.id);
       setDeleteDialogOpen(false);
@@ -146,28 +203,13 @@ const InventoryPageComponent = () => {
     if (!stock || stock === 0) {
       return <Badge variant="destructive">Sin stock</Badge>;
     }
-    if (stock < 10) {
-      return <Badge variant="outline" className="border-orange-500 text-orange-600">Stock bajo</Badge>;
-    }
     return <Badge variant="outline" className="border-green-500 text-green-600">Disponible</Badge>;
   };
 
   if (error) {
     // Si es error de inicialización, mostrar estado de carga
     if (error.includes("Inicializando base de datos")) {
-      return (
-        <div className="p-4 lg:p-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              <h3 className="text-blue-800 font-medium">
-                Inicializando aplicación
-              </h3>
-            </div>
-            <p className="text-blue-600 text-sm mt-1">{error}</p>
-          </div>
-        </div>
-      );
+      return <StartAppText error={error} />;
     }
 
     return (
@@ -192,36 +234,20 @@ const InventoryPageComponent = () => {
 
   return (
     <div className="p-0 xs:p-1 sm:p-2 md:p-4 lg:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg self-center mt-1">
-            <Package className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
-              Inventario
-            </h1>
-            <p className="text-gray-500 text-sm sm:text-base">
-              Gestión de productos y control de stock
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Inventario"
+        subtitle="Gestiona los productos de tu inventario"
+        icon={<Package />}
+        classNameIcon="text-blue-600"
+      />
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Buscar por código, nombre o descripción..."
-            value={searchQuery}
-            onChange={(e) => setSearch(e.target.value)}
-            disabled={loading}
-            className="pl-10"
-          />
-        </div>
+        <SearchInput
+          value={localSearchQuery}
+          onChange={handleSearchChange}
+          isLoading={loading}
+        />
 
         {/* Filtro por Categoría */}
         <Select
@@ -257,7 +283,10 @@ const InventoryPageComponent = () => {
         <Button
           variant="default"
           size="sm"
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={() => {
+            setProductToEdit(null);
+            setIsCreateModalOpen(true);
+          }}
           disabled={loading}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -283,7 +312,7 @@ const InventoryPageComponent = () => {
           ) : (
             <span>
               Mostrando {products.length} de {totalItems} productos
-              {searchQuery && ` para "${searchQuery}"`}
+              {localSearchQuery && ` para "${localSearchQuery}"`}
             </span>
           )}
         </div>
@@ -357,16 +386,19 @@ const InventoryPageComponent = () => {
                     <TableCell>{getStockBadge(product.stock)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
-                          onClick={() => console.log('TODO: Editar producto', product.id)}
+                          onClick={() => {
+                            setProductToEdit(product);
+                            setIsCreateModalOpen(true);
+                          }}
                           disabled={loading}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteClick(product)}
                           disabled={loading}
@@ -434,18 +466,21 @@ const InventoryPageComponent = () => {
                   </div>
                 )}
                 <div className="flex gap-2 mt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="flex-1"
-                    onClick={() => console.log('TODO: Editar producto', product.id)}
+                    onClick={() => {
+                      setProductToEdit(product);
+                      setIsCreateModalOpen(true);
+                    }}
                     disabled={loading}
                   >
                     <Pencil className="h-4 w-4 mr-2" />
                     Editar
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => handleDeleteClick(product)}
                     disabled={loading}
@@ -460,10 +495,7 @@ const InventoryPageComponent = () => {
         )}
       </div>
 
-      {/* Pagination */}
-      <div>
-        {totalItems} productos encontrados
-      </div>
+
       {!loading && totalItems > 0 && (
         <div className="w-full">
           <DataPagination
@@ -480,12 +512,16 @@ const InventoryPageComponent = () => {
         </div>
       )}
 
-      {/* Modal de Creación de Producto */}
+      {/* Modal de Creación/Edición de Producto */}
       <CreateProductModal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setProductToEdit(null);
+        }}
         onSuccess={handleProductCreated}
         createdBy="current-user" // TODO: Obtener del contexto de autenticación
+        productToEdit={productToEdit}
       />
 
       {/* Dialog de Confirmación de Eliminación */}
