@@ -1,49 +1,113 @@
-import type { MedicationCatalogView } from '@/shared/types/MedicationViewTypes';
+import type { PurchaseBox } from '@/shared/types/modelTypes/PurchaseBox';
 
+/**
+ * Item de venta individual con toda la información necesaria
+ */
 export interface SaleItem {
-  id: string; // ID único del item en la venta
-  medication: MedicationCatalogView;
-  batchId: string; // ID del lote específico seleccionado (ahora obligatorio)
-  medicationId: string; // ID del medicamento para compatibilidad con la interfaz principal
-  quantity: number;
-  unitPrice: number; // Precio final con descuento aplicado (precio de venta)
-  listPrice?: number; // Precio original del producto
-  discount?: number; // Descuento aplicado en dinero
-  total: number; // quantity * unitPrice (subtotal del item)
-  batchInfo: {
-    batchId: string; // Código del lote (user-defined)
-    expirationDate: string;
-    availableStock: number; // Stock disponible en este lote específico
-    daysToExpiration: number;
-  };
+  id: string; // ID único temporal para el item en el carrito
+  purchaseBoxId: string; // ID del purchaseBox del cual se está vendiendo
+  productId: string; // ID del producto
+  productName: string; // Nombre del producto para mostrar
+  productCode: string; // Código del producto
+  batchCode: string; // Código del lote (purchaseBox)
+  availableStock: number; // Stock disponible en este purchaseBox
+  quantity: number; // Cantidad a vender
+  unitPrice: number; // Precio unitario de venta
+  discountPercentage: number; // Descuento porcentual (0-100)
+  discountAmount: number; // Monto del descuento calculado
+  subtotal: number; // Subtotal sin descuento (unitPrice * quantity)
+  total: number; // Total con descuento aplicado
   addedAt: string; // Timestamp de cuando se agregó
 }
 
-export interface SaleState {
-  items: SaleItem[];
-  subtotal: number; // Suma total con precio final (con descuento por producto)
-  amountWithDiscount: number; // Suma de productos que tienen descuento
-  amountWithoutDiscount: number; // Suma de productos sin descuento
-  clientDiscount?: {
-    type: 'percentage' | 'fixed';
-    value: number;
-    amount: number;
-  };
-  totalSaved: number; // Total ahorrado
-  total: number; // Total final a cobrar
-  clientId?: string;
-  clientName?: string;
-  medicId?: string;
-  medicName?: string;
-  nitClient?: string; // NIT del cliente para facturación
-  socialReasonClient?: string; // Razón social del cliente para facturación
-  saleNotes?: string; // Notas de la venta
-  paymentMethod: 'efectivo' | 'qr' ;
+/**
+ * Información del purchaseBox para el selector de productos
+ */
+export interface PurchaseBoxForSale extends PurchaseBox {
+  productName?: string;
+  productCode?: string;
+  availableStock?: number; // Cantidad disponible para vender (quantity sin vender)
 }
 
-export interface NewSaleFormData {
+/**
+ * Estado completo del modal de venta
+ */
+export interface SaleState {
+  // Items en el carrito
+  items: SaleItem[];
+  
+  // Cliente
   clientId?: string;
   clientName?: string;
-  items: SaleItem[];
-  notes?: string;
+  
+  // NIT (opcional)
+  nitClient?: string;
+  socialReasonClient?: string;
+  
+  // Médico (opcional) - para recetas
+  medicId?: string;
+  medicName?: string;
+  
+  // Notas de la venta
+  saleNotes?: string;
+  
+  // Método de pago
+  paymentMethod: 'efectivo' | 'qr';
+  paymentCurrency: 'Bs' | 'ARS';
+  
+  // Descuento global al cliente
+  clientDiscountType: 'percentage' | 'fixed';
+  clientDiscountValue: number;
+  
+  // Totales calculados
+  subtotalBeforeDiscount: number; // Suma de todos los subtotales
+  itemsDiscountTotal: number; // Suma de descuentos de items individuales
+  clientDiscountAmount: number; // Descuento global calculado
+  totalSaved: number; // Total ahorrado (itemsDiscountTotal + clientDiscountAmount)
+  total: number; // Total final a pagar
+  
+  // Facturación
+  factured: boolean;
 }
+
+/**
+ * Datos para crear una venta
+ */
+export interface CreateSalePayload {
+  items: Array<{
+    productId: string;
+    purchaseBoxId: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    total: number;
+  }>;
+  total: number;
+  paymentMethod: string;
+  paymentCurrency: 'Bs' | 'ARS';
+  factured: boolean;
+  client?: string;
+  nitClient?: string;
+  socialReasonClient?: string;
+  medicId?: string;
+  saleNotes?: string;
+}
+
+/**
+ * Información de venta completada para mostrar en el modal de éxito
+ */
+export interface CompletedSaleInfo {
+  numberInvoice: string;
+  date: string;
+  clientName?: string;
+  nitClient?: string;
+  socialReasonClient?: string;
+  items: SaleItem[];
+  paymentMethod: string;
+  paymentCurrency: 'Bs' | 'ARS';
+  subtotal: number;
+  discounts: number;
+  total: number;
+  factured: boolean;
+}
+

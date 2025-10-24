@@ -5,7 +5,7 @@ import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDate } from '@/shared/utils/date.utils';
 import { UserService } from '@/shared/services/UserService';
 import SaleDetails from './SaleDetails';
-import type { Sale } from '@/shared/types/Sales';
+import type { Sale } from '@/shared/types/modelTypes/Sale';
 import type { AuthUser } from '@/shared/types/User';
 import type { Client } from '@/shared/types/Client';
 import { getClientById } from '@/shared/services';

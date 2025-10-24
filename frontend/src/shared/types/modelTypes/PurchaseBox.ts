@@ -54,15 +54,7 @@ export interface PurchaseView extends PurchaseBox {
   supplierName?: string;
   productCode?: string;
   productName?: string;
-}
-
-export interface PurchaseStatistics {
-  totalPurchases: number;
-  activePurchases: number;
-  deletedPurchases: number;
-  totalCostPurchased: number;
-  averageCostPerPurchase: number;
-  totalQuantityPurchased: number;
+  productCategory?: string;
 }
 
 /**
@@ -70,8 +62,6 @@ export interface PurchaseStatistics {
  */
 export interface PurchaseFilter {
   hasNotes?: boolean;
-  marginMin?: number;
-  marginMax?: number;
-  unitCostMin?: number;
-  unitCostMax?: number;
+  productId?: string;
+  supplierId?: string;
 }

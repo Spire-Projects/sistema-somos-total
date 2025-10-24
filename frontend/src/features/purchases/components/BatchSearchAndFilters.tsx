@@ -5,7 +5,7 @@ import { Button } from '../../../shared/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components/ui/select';
 import { Card, CardContent } from '../../../shared/components/ui/card';
 import type { Medication } from '../../../shared/types/Medication';
-import type { BatchFilter } from '../../../shared/types/Sales';
+import type { BatchFilter } from '../../../shared/types/modelTypes/Sale';
 
 interface BatchSearchAndFiltersProps {
   searchQuery: string;

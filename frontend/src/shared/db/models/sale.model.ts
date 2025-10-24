@@ -1,102 +1,79 @@
-import type { RxJsonSchema, RxCollection } from "rxdb";
-import type { Sale } from "../../types/Sales";
+import type { Sale } from '@/shared/types/modelTypes/Sale';
+import type { RxJsonSchema, RxCollection } from 'rxdb';
 
-export const saleSchema: RxJsonSchema<Sale> = {
-  version: 4,
-  primaryKey: "id",
-  type: "object",
+
+// Esquema RxDB para Sale (Ventas simples)
+export const salesSchema: RxJsonSchema<Sale> = {
+  title: 'sales schema',
+  description: 'describes a sale',
+  version: 0,
+  primaryKey: 'id',
+  type: 'object',
   properties: {
-    id: { type: "string", maxLength: 100 },
+    id: { type: 'string', maxLength: 100 },
     items: {
-      type: "array",
+      type: 'array',
       items: {
-        type: "object",
+        type: 'object',
         properties: {
-          batchId: { type: "string", maxLength: 100 },
-          medicationId: { type: "string", maxLength: 100 },
-          quantity: { type: "number", minimum: 1 },
-          unitPrice: { type: "number", minimum: 0 },
-          listPrice: { type: "number", minimum: 0 },
-          discount: { type: "number", minimum: 0 },
-          total: { type: "number", minimum: 0 }
+          purchaseBoxId: { type: 'string', maxLength: 100 },
+          product: { type: 'string', maxLength: 100 },
+          quantity: { type: 'number', minimum: 1 },
+          unitPrice: { type: 'number', minimum: 0 },
+          discount: { type: 'number', minimum: 0 },
+          total: { type: 'number', minimum: 0 }
         },
-        required: ["batchId", "medicationId", "quantity", "unitPrice", "total"]
+        required: ['purchaseBoxId', 'product', 'quantity', 'unitPrice', 'discount', 'total']
       }
     },
-    total: { type: "number", minimum: 0 },
-    totalWithoutDiscount: { type: "number", minimum: 0 },
-    totalDiscount: { type: "number", minimum: 0 },
-    client: { type: "string", maxLength: 100 },
-    paymentMethod: {
-      type: "string",
-      enum: ["efectivo", "qr"],
-      maxLength: 30,
-    },
-    createdAt: { type: "string", maxLength: 50 },
-    createdBy: { type: "string", maxLength: 100 },
-    isDeleted: { type: "boolean" },
-    sincronized: { type: "boolean" },
-    idMedic: { type: "string", maxLength: 100 },
-    factured: { type: "boolean" },
-    nitClient: { type: "string", maxLength: 100 },
-    socialReasonClient: { type: "string", maxLength: 200 },
-    saleNotes: { type: "string", maxLength: 1000 },
-    numberInvoice: { type: "string", maxLength: 100 , default: "0000000"},
+    total: { type: 'number', minimum: 0 },
+    totalWithoutDiscount: { type: 'number', minimum: 0 },
+    totalDiscount: { type: 'number', minimum: 0 },
+    client: { type: 'string', maxLength: 200 },
+  paymentMethod: { type: 'string', enum: ['efectivo', 'qr'], maxLength: 20 },
+  paymentCurrency: { type: 'string', enum: ['bs', 'arg'], maxLength: 10 },
+    exchangeRateArg: { type: 'number', minimum: 0 },
+    factured: { type: 'boolean' },
+    nitClient: { type: 'string', maxLength: 50 },
+    socialReasonClient: { type: 'string', maxLength: 200 },
+    saleNotes: { type: 'string', maxLength: 500 },
+    numberInvoice: { type: 'string', maxLength: 50 },
+    isDeleted: { type: 'boolean' },
+    sincronized: { type: 'boolean' },
+    createdBy: { type: 'string', maxLength: 100 },
+    updatedBy: { type: 'string', maxLength: 100 },
+    createdAt: { type: 'string', format: 'date-time', maxLength: 50 },
+    updatedAt: { type: 'string', format: 'date-time', maxLength: 50 }
   },
-  required: ["id", "items", "total", "paymentMethod", "createdAt", "createdBy", "factured"],
-  indexes: [
-    "client", 
-    "createdAt", 
-    "createdBy", 
-    "paymentMethod",
-    "factured",
-    "idMedic",
-    ["createdAt", "client"],
-    ["createdAt", "paymentMethod"],
-    ["createdAt", "factured"],
-    ["factured", "client"]
+  required: [
+    'id',
+    'items',
+    'total',
+    'paymentMethod',
+    'paymentCurrency',
+    'createdAt',
+    'createdBy',
+    'isDeleted',
+    'sincronized',
+    'factured'
   ],
+  indexes: [
+    'client',
+    'createdAt',
+    'updatedAt',
+    'isDeleted',
+    'sincronized',
+    ['isDeleted', 'createdAt'],
+    ['isDeleted', 'client'],
+    ['isDeleted', 'updatedAt'],
+    ['isDeleted', 'paymentMethod'],
+    ['isDeleted', 'paymentCurrency'],
+    ['isDeleted', 'factured'],
+    ['isDeleted', 'createdBy'],
+    ['isDeleted', 'client', 'createdAt']
+  ]
 };
 
 
-export const saleMigrationStrategies = {
-  
-  1: (oldDoc: any) => {
-    let paymentMethod = oldDoc.paymentMethod;
-    if (paymentMethod === 'tarjeta') {
-      paymentMethod = 'qr';
-    }
-    return {
-      ...oldDoc,
-      paymentMethod,
-    };
-  },
-  
-  2: (oldDoc: any) => {
-    let paymentMethod = oldDoc.paymentMethod;
-    if (paymentMethod === 'transferencia') {
-      paymentMethod = 'qr';
-    }
-    return {
-      ...oldDoc,
-      paymentMethod,
-    };
-  },
 
-  3: (oldDoc: any) => {
-    return {
-      ...oldDoc,
-      nitClient: oldDoc.nitClient || "",
-      socialReasonClient: oldDoc.socialReasonClient || "",
-      saleNotes: oldDoc.saleNotes || ""
-    };
-  },
-
-  4: (oldDoc: any) => {
-    return {
-      ...oldDoc,
-      numberInvoice: "0000000"
-    };
-  }
-};
-export type SaleCollection = RxCollection<Sale>;
+export type SalesDocument = RxCollection<Sale>;

@@ -342,7 +342,7 @@ const CreateProductModalComponent = ({
                     <FormLabel>Nombre del Producto *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Laptop Dell XPS 13"
+                        placeholder="Amoladora"
                         disabled={isSubmitting}
                         {...field}
                       />

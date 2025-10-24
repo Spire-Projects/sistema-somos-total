@@ -7,7 +7,7 @@ declare global {
     };
   }
 }
-import type { Sale } from '../types/Sales';
+import type { Sale } from '../types/modelTypes/Sale';
 import { findSaleById } from './SalesService';
 import { findMedicationById } from './MedicationService';
 import { findMedicationBatchById } from './MedicationBatchService';

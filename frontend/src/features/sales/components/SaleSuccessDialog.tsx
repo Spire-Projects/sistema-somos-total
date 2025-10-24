@@ -10,7 +10,7 @@ import {
 } from '@/shared/components/ui/dialog';
 import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDateTime } from '@/shared/utils/date.utils';
-import type { Sale } from '@/shared/types/Sales';
+import type { Sale } from '@/shared/types/modelTypes/Sale';
 import type { Client } from '@/shared/types/Client';
 import { getClientById } from '@/shared/services';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { findSalesByDateRange } from "@/shared/services/SalesService";
-import type { Sale } from "@/shared/types/Sales";
+import type { Sale } from "@/shared/types/modelTypes/Sale";
 
 export function useSalesData(dateFrom: string, dateTo: string) {
   const [sales, setSales] = useState<Sale[]>([]);

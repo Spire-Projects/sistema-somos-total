@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Loader2, Receipt } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import SaleRow from './SaleRow';
-import type { Sale } from '@/shared/types/Sales';
+import type { Sale } from '@/shared/types/modelTypes/Sale';
 
 interface SalesTableProps {
   sales: Sale[];

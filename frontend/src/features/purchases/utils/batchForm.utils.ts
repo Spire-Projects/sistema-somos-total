@@ -2,7 +2,7 @@ import * as z from 'zod';
 import type {
   BatchWithMedication,
   CreateBatchData,
-} from "../../../shared/types/Sales";
+} from "../../../shared/types/modelTypes/Sale";
 import type { Manufacturer } from "../../../shared/types/Medication";
 
 // Esquema de validación con Zod

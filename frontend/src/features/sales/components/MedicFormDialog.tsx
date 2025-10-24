@@ -13,7 +13,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Stethoscope, Loader2 } from "lucide-react";
 import { createMedic } from "@/shared/services/MedicService";
-import type { Medic } from "@/shared/types/Sales";
+import type { Medic } from "@/shared/types/modelTypes/Sale";
 
 const medicSchema = z.object({
   fullName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),

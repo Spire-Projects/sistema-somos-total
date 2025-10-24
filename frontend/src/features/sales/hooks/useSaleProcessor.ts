@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { saleProcessorService } from '../services/SaleProcessorService';
 import type { SaleState } from '../types/sale.types';
-import type { Sale } from '@/shared/types/Sales';
+import type { Sale } from '@/shared/types/modelTypes/Sale';
 
 interface UseSaleProcessorState {
   isProcessing: boolean;

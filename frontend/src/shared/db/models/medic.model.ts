@@ -1,5 +1,5 @@
 import type { RxJsonSchema, RxCollection } from 'rxdb';
-import type { Medic } from '../../types/Sales';
+import type { Medic } from '../../types/modelTypes/Sale';
 
 // Esquema RxDB para Medic
 export const medicSchema: RxJsonSchema<Medic> = {

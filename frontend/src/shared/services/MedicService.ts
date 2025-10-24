@@ -1,4 +1,4 @@
-import type { Medic } from '../types/Sales';
+import type { Medic } from '../types/modelTypes/Sale';
 import type { ItemsResponse } from '../types/UtilTypes';
 import { getMedicRepository } from '../db/repositories/medic.repository';
 import type { CreateMedicData, UpdateMedicData } from '../db/repositories/medic.repository';

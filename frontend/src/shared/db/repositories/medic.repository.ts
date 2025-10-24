@@ -1,5 +1,5 @@
 import type { RxCollection } from 'rxdb';
-import type { Medic } from '@/shared/types/Sales';
+import type { Medic } from '@/shared/types/modelTypes/Sale';
 import type { ItemsResponse } from '@/shared/types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';

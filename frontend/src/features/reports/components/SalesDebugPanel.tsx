@@ -1,6 +1,6 @@
 import React from "react";
 import { useSalesDateAnalysis, formatDateToLocal } from "./useSalesDateAnalysis";
-import type { Sale } from "@/shared/types/Sales";
+import type { Sale } from "@/shared/types/modelTypes/Sale";
 
 interface SalesDebugPanelProps {
   sales: Sale[];

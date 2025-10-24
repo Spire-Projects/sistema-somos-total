@@ -18,7 +18,7 @@ const PageHeader = ({ title, subtitle, icon, classNameIcon }: PageHeaderProps) =
             )}
           </div>
           <div>
-            <p className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900">
+            <p className="text-2xl sm:text-4xl lg:text-4xl font-bold text-gray-900">
                 {title}
             </p>
             {subtitle && (

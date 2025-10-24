@@ -8,7 +8,7 @@ import type {
   BatchStatistics,
   MedicationWithBatches
 } from '../types/Medication';
-import type { BatchWithMedication } from '../types/Sales';
+import type { BatchWithMedication } from '../types/modelTypes/Sale';
 import type { 
   CreateMedicationBatchData, 
   UpdateMedicationBatchData 

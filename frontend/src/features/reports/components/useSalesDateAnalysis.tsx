@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Sale } from "@/shared/types/Sales";
+import type { Sale } from "@/shared/types/modelTypes/Sale";
 
 interface DateAnalysis {
   totalSales: number;

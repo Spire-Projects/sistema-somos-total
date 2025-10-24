@@ -1,4 +1,4 @@
-import type { Sale } from '@/shared/types/Sales';
+import type { Sale } from '@/shared/types/modelTypes/Sale';
 import type { ItemsResponse } from '@/shared/types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { findSalesPaginated, findSalesByDateRangePaginated } from '@/shared/services/SalesService';
-import type { Sale } from '@/shared/types/Sales';
+import type { Sale } from '@/shared/types/modelTypes/Sale';
 import type { ItemsResponse } from '@/shared/types/UtilTypes';
 
 interface SalesSearchState {

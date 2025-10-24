@@ -1,19 +1,14 @@
-import type { Manufacturer } from '../../types/Medication';
-import type { ItemsResponse } from '../../types/UtilTypes';
-import { initDatabase } from '../database';
-import { config } from '@/shared/config/config';
-import { BaseRepository } from './BaseRepository';
 import type { RxCollection } from 'rxdb';
+import { Observable, map } from 'rxjs';
+import { initDatabase } from '../database';
+import type { Manufacturer, CreateManufacturerData, UpdateManufacturerData, ManufacturerFilter } from '../../types/modelTypes/Manufacturer';
+import type { ItemsResponse } from '../../types/UtilTypes';
+import { BaseRepository } from './BaseRepository';
+import type { ICrudBaseRepository } from './interfaces/IRepository';
+import { config } from '../../config/config';
 
-export interface IManufacturerRepository {
-  create(manufacturerData: Omit<Manufacturer, 'id'>): Promise<Manufacturer>;
-  findByName(name: string): Promise<Manufacturer | null>;
-  findById(id: string): Promise<Manufacturer | null>;
-  findAll(): Promise<Manufacturer[]>;
-  findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Manufacturer>>;
-  update(id: string, updateData: Partial<Manufacturer>): Promise<Manufacturer | null>;
-  delete(id: string): Promise<boolean>;
-  search(searchText: string): Promise<Manufacturer[]>;
+export interface IManufacturerRepository extends ICrudBaseRepository<Manufacturer, CreateManufacturerData, UpdateManufacturerData, ManufacturerFilter> {
+  
 }
 
 export class LocalManufacturerRepository extends BaseRepository<Manufacturer> implements IManufacturerRepository {
@@ -23,15 +18,23 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
     return db.manufacturers;
   }
 
-  async create(manufacturerData: Omit<Manufacturer, 'id'>): Promise<Manufacturer> {
+  async create(data: Omit<Manufacturer, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'sincronized'>): Promise<Manufacturer> {
     const id = crypto.randomUUID();
-    const fullData = { id, ...manufacturerData } as Manufacturer;
-    console.log(`🔄 ManufacturerRepository: Creando fabricante con prioridad`, { id });
+    const now = new Date().toISOString();
+    
+    const fullData: Manufacturer = {
+      id,
+      ...data,
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+      sincronized: false
+    } as Manufacturer;
+    
     return await this.createWithPriority(fullData);
   }
 
   async update(id: string, updateData: Partial<Manufacturer>): Promise<Manufacturer | null> {
-    console.log(`🔄 ManufacturerRepository: Actualizando fabricante ${id} con prioridad`, updateData);
     try {
       return await this.updateWithPriority(id, updateData);
     } catch (error) {
@@ -40,69 +43,71 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
     }
   }
 
-  async delete(id: string): Promise<boolean> {
-    console.log(`🗑️ ManufacturerRepository: Eliminando fabricante ${id} con prioridad`);
+  async softDelete(id: string): Promise<boolean> {
     return await this.deleteWithPriority(id);
   }
 
-  async findById(id: string): Promise<Manufacturer | null> {
-    return await super.findById(id);
-  }
-
-  async findAll(): Promise<Manufacturer[]> {
-    return await super.findAll();
-  }
-
-  async findByName(name: string): Promise<Manufacturer | null> {
-    const db = await initDatabase();
-    const manufacturer = await db.manufacturers.findOne({ 
-      selector: { 
-        name,
-        _deleted: { $eq: false }
-      } as any
-    }).exec();
-    return manufacturer ? JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer : null;
-  }
-
-  async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Manufacturer>> {
-    const db = await initDatabase();
+  async getAll(
+    page: number, 
+    size: number, 
+    searchQuery?: string, 
+    dateFrom?: string, 
+    dateTo?: string
+  ): Promise<ItemsResponse<Manufacturer>> {
+    const collection = await this.getCollection();
     
-    let query;
+    const selector: any = { isDeleted: false };
+    
+    // Filtro de búsqueda
     if (searchQuery && searchQuery.trim() !== "") {
       const normalizedText = searchQuery.trim().toLowerCase();
-      query = db.manufacturers.find({
-        selector: {
-          $and: [
-            { _deleted: { $eq: false } },
-            {
-              $or: [
-                { name: { $regex: normalizedText, $options: 'i' } },
-                { country: { $regex: normalizedText, $options: 'i' } },
-                { contactEmail: { $regex: normalizedText, $options: 'i' } }
-              ]
-            }
-          ]
-        } as any
-      });
-    } else {
-      query = db.manufacturers.find({
-        selector: { _deleted: { $eq: false } } as any
-      });
+      selector.$or = [
+        { name: { $regex: normalizedText, $options: 'i' } },
+        { country: { $regex: normalizedText, $options: 'i' } },
+        { contactEmail: { $regex: normalizedText, $options: 'i' } }
+      ];
     }
 
-    // Obtener todos los resultados para calcular el total
-    const allManufacturers = await query.exec();
-    const totalItems = allManufacturers.length;
-    const totalPages = Math.ceil(totalItems / size);
+    // Filtro de fechas
+    if (dateFrom || dateTo) {
+      selector.createdAt = {};
+      if (dateFrom) selector.createdAt.$gte = dateFrom;
+      if (dateTo) selector.createdAt.$lte = dateTo;
+    }
 
-    // Aplicar paginación
     const skip = (page - 1) * size;
-    const paginatedManufacturers = allManufacturers
-      .slice(skip, skip + size)
-      .map((manufacturer) => JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer);
+    const limit = size + 1;
+    
+    const docs = await collection.find({
+      selector,
+      sort: [{ isDeleted: 'asc', name: 'asc' }],
+      skip,
+      limit
+    }).exec();
+
+    const items = docs.slice(0, size).map(doc => 
+      JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer
+    );
+    
+    const hasMore = docs.length > size;
+    
+    // Estimación del total
+    let totalItems: number;
+    let totalPages: number;
+    
+    if (page === 1 && !hasMore) {
+      totalItems = items.length;
+      totalPages = 1;
+    } else if (page === 1 && hasMore) {
+      totalItems = size * 2;
+      totalPages = 2;
+    } else {
+      totalItems = (page - 1) * size + items.length + (hasMore ? size : 0);
+      totalPages = Math.ceil(totalItems / size);
+    }
 
     return {
-      items: paginatedManufacturers,
+      items,
       page,
       size,
       totalItems,
@@ -110,51 +115,113 @@ export class LocalManufacturerRepository extends BaseRepository<Manufacturer> im
     };
   }
 
-  async search(searchText: string): Promise<Manufacturer[]> {
-    if (!searchText || searchText.trim() === "") {
-      return this.findAll();
-    }
-    const db = await initDatabase();
-    const normalizedText = searchText.trim().toLowerCase();
-    const allManufacturers = await db.manufacturers.find({
-      selector: { _deleted: { $eq: false } } as any
-    }).exec();
-    
-    const filteredManufacturers = allManufacturers.filter((manufacturer) => {
-      const manufacturerJson = manufacturer.toJSON();
-      return (
-        manufacturerJson.name.toLowerCase().includes(normalizedText) ||
-        (manufacturerJson.country && manufacturerJson.country.toLowerCase().includes(normalizedText)) ||
-        (manufacturerJson.contactEmail && manufacturerJson.contactEmail.toLowerCase().includes(normalizedText))
-      );
+  async findById(id: string): Promise<Manufacturer | null> {
+    return await super.findById(id);
+  }
+
+  listen$(
+    page: number, 
+    size: number, 
+    searchQuery?: string, 
+    dateFrom?: string, 
+    dateTo?: string
+  ): Observable<Manufacturer[]> {
+    return new Observable<Manufacturer[]>(subscriber => {
+      let subscription: any;
+      
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+          
+          const selector: any = { isDeleted: false };
+          
+          // Filtro de búsqueda
+          if (searchQuery && searchQuery.trim() !== "") {
+            const normalizedText = searchQuery.trim().toLowerCase();
+            selector.$or = [
+              { name: { $regex: normalizedText, $options: 'i' } },
+              { country: { $regex: normalizedText, $options: 'i' } },
+              { contactEmail: { $regex: normalizedText, $options: 'i' } }
+            ];
+          }
+
+          // Filtro de fechas
+          if (dateFrom || dateTo) {
+            selector.createdAt = {};
+            if (dateFrom) selector.createdAt.$gte = dateFrom;
+            if (dateTo) selector.createdAt.$lte = dateTo;
+          }
+
+          const skip = (page - 1) * size;
+          
+          subscription = collection.find({
+            selector,
+            sort: [{ isDeleted: 'asc', name: 'asc' }],
+            skip,
+            limit: size
+          }).$.pipe(
+            map(docs => docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer))
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err)
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+      
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
     });
-    return filteredManufacturers.map((manufacturer) => JSON.parse(JSON.stringify(manufacturer.toJSON())) as Manufacturer);
+  }
+
+  lisntenById$(id: string): Observable<Manufacturer | null> {
+    return new Observable<Manufacturer | null>(subscriber => {
+      let subscription: any;
+      
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+          
+          subscription = collection.findOne(id).$.pipe(
+            map(doc => doc ? JSON.parse(JSON.stringify(doc.toJSON())) as Manufacturer : null)
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err)
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+      
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
+    });
   }
 }
 
 export class FirestoreManufacturerRepository implements IManufacturerRepository {
-  async create(_manufacturerData: Omit<Manufacturer, 'id'>): Promise<Manufacturer> {
+  create(_data: Omit<Manufacturer, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'sincronized'>): Promise<Manufacturer> {
     throw new Error('Firestore implementation not yet available');
   }
-  async findByName(_name: string): Promise<Manufacturer | null> {
+  update(_id: string, _updateData: Partial<Manufacturer>): Promise<Manufacturer | null> {
     throw new Error('Firestore implementation not yet available');
   }
-  async findById(_id: string): Promise<Manufacturer | null> {
+  softDelete(_id: string): Promise<boolean> {
     throw new Error('Firestore implementation not yet available');
   }
-  async findAll(): Promise<Manufacturer[]> {
+  getAll(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string): Promise<ItemsResponse<Manufacturer>> {
     throw new Error('Firestore implementation not yet available');
   }
-  async findAllPaginated(_page: number, _size: number, _searchQuery?: string): Promise<ItemsResponse<Manufacturer>> {
+  findById(_id: string): Promise<Manufacturer | null> {
     throw new Error('Firestore implementation not yet available');
   }
-  async update(_id: string, _updateData: Partial<Manufacturer>): Promise<Manufacturer | null> {
+  listen$(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string): Observable<Manufacturer[]> {
     throw new Error('Firestore implementation not yet available');
   }
-  async delete(_id: string): Promise<boolean> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async search(_searchText: string): Promise<Manufacturer[]> {
+  lisntenById$(_id: string): Observable<Manufacturer | null> {
     throw new Error('Firestore implementation not yet available');
   }
 }

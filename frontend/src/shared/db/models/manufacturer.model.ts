@@ -1,9 +1,10 @@
+import type { Manufacturer } from '@/shared/types/modelTypes/Manufacturer';
 import type { RxJsonSchema,  RxCollection } from 'rxdb';
-import type { Manufacturer } from '../../types/Medication';
+
 
 // Esquema RxDB para Manufacturer
 export const manufacturerSchema: RxJsonSchema<Manufacturer> = {
-  version: 1,
+  version: 0,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -52,19 +53,6 @@ export const manufacturerSchema: RxJsonSchema<Manufacturer> = {
   },
   required: ['id', 'name'],
   indexes: ['name', 'createdAt']
-};
-
-// Estrategias de migración para Manufacturer
-export const manufacturerMigrationStrategies = {
-  // Migración de versión 0 a 1: añadir campos de actualización
-  1: (oldDoc: any) => {
-    const currentTime = new Date().toISOString();
-    return {
-      ...oldDoc,
-      updatedAt: oldDoc.updatedAt || oldDoc.createdAt || currentTime,
-      updatedBy: oldDoc.updatedBy || oldDoc.createdBy || 'system'
-    };
-  }
 };
 
 export type ManufacturerCollection = RxCollection<Manufacturer>;

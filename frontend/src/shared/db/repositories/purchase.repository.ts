@@ -18,7 +18,7 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
     return db.purchases;
   }
 
-  async create(data: Omit<PurchaseBox, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'sincronized'>): Promise<PurchaseBox> {
+  async create(data: CreatePurchaseData): Promise<PurchaseBox> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     
@@ -52,7 +52,8 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
     size: number, 
     searchQuery?: string, 
     dateFrom?: string, 
-    dateTo?: string
+    dateTo?: string,
+    filter?: PurchaseFilter
   ): Promise<ItemsResponse<PurchaseBox>> {
     const collection = await this.getCollection();
     
@@ -67,6 +68,16 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
         { supplierId: { $regex: normalizedText, $options: 'i' } },
         { notes: { $regex: normalizedText, $options: 'i' } }
       ];
+    }
+
+    // Filtro por proveedor
+    if (filter?.supplierId) {
+      selector.supplierId = filter.supplierId;
+    }
+
+    // Filtro por producto
+    if (filter?.productId) {
+      selector.productId = filter.productId;
     }
 
     // Filtro de fechas (usando purchaseDate en lugar de createdAt)
@@ -125,7 +136,8 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
     size: number, 
     searchQuery?: string, 
     dateFrom?: string, 
-    dateTo?: string
+    dateTo?: string,
+    filter?: PurchaseFilter
   ): Observable<PurchaseBox[]> {
     return new Observable<PurchaseBox[]>(subscriber => {
       let subscription: any;
@@ -145,6 +157,16 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
               { supplierId: { $regex: normalizedText, $options: 'i' } },
               { notes: { $regex: normalizedText, $options: 'i' } }
             ];
+          }
+
+          // Filtro por proveedor
+          if (filter?.supplierId) {
+            selector.supplierId = filter.supplierId;
+          }
+
+          // Filtro por producto
+          if (filter?.productId) {
+            selector.productId = filter.productId;
           }
 
           // Filtro de fechas

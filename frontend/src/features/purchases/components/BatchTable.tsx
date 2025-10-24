@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../../../shared/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/components/ui/card';
 import { Skeleton } from '../../../shared/components/ui/skeleton';
-import type { BatchWithMedication } from '../../../shared/types/Sales';
+import type { BatchWithMedication } from '../../../shared/types/modelTypes/Sale';
 import { config } from '@/shared/config/config';
 
 interface BatchTableProps {

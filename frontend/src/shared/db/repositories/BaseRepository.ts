@@ -78,9 +78,9 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
     // Usar timestamp actual en lugar de tiempo futuro
     const now = new Date().toISOString();
     
-    // Usar _deleted que es el campo estándar de RxDB para soft deletes
+    // Usar isDeleted que es el campo custom para soft deletes
     const deleteData = {
-      _deleted: true,
+      isDeleted: true,
       deletedAt: now,
       updatedAt: now,
       _lastModifiedAt: now,
@@ -113,8 +113,8 @@ export abstract class BaseRepository<T extends { [key: string]: any }> {
   protected async findAll(): Promise<T[]> {
     const collection = await this.getCollection();
     
-    // Usar _deleted que es el campo estándar de RxDB para soft deletes
-    const selector = { _deleted: { $eq: false } };
+    // Usar isDeleted que es el campo custom para soft deletes
+    const selector = { isDeleted: { $eq: false } };
     
     const docs = await collection.find({
       selector: selector as any

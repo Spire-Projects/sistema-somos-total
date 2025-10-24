@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Sale } from "@/shared/types/Sales";
+import type { Sale } from "@/shared/types/modelTypes/Sale";
 import type { DailySales } from "./types/Types";
 
 export function useDailySales(sales: Sale[]) {

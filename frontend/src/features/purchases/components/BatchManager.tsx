@@ -8,7 +8,7 @@ import { BatchStatsCards } from "./BatchStatsCards";
 import { MedicationBatchSearch } from "./MedicationBatchSearch";
 import CustomDialog from "@/shared/components/CustomDialog";
 import type { MedicationWithBatches } from "@/shared/types/Medication";
-import type { BatchWithMedication } from "@/shared/types/Sales";
+import type { BatchWithMedication } from "@/shared/types/modelTypes/Sale";
 import {
   getMedicationsWithBatchesPaginated,
   deleteMedicationBatch,

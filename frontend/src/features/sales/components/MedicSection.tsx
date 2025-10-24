@@ -10,7 +10,7 @@ import { Stethoscope, Plus, Loader2, X } from "lucide-react";
 import CreatableSelect from "@/shared/components/CreatableSelect";
 import { toast } from "sonner";
 import { findMedicsPaginated, createMedic } from "@/shared/services/MedicService";
-import type { Medic } from "@/shared/types/Sales";
+import type { Medic } from "@/shared/types/modelTypes/Sale";
 
 const medicSchema = z.object({
   fullName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),

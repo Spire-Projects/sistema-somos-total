@@ -44,7 +44,7 @@ export class LocalProductRepository extends BaseRepository<Product> implements I
     return await this.createWithPriority(fullData);
   }
 
-  async update(id: string, updateData: Partial<Product>): Promise<Product | null> {
+  async update(id: string, updateData: UpdateProductData): Promise<Product | null> {
     try {
       return await this.updateWithPriority(id, updateData);
     } catch (error) {

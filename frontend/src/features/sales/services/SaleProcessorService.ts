@@ -1,6 +1,6 @@
 import { getMedicationBatchRepository } from '@/shared/db/repositories/medicationBatch.repository';
 import { createSale, cleanSaleData } from '@/shared/services/SalesService';
-import type { Sale, SaleItem as SaleSaleItem } from '@/shared/types/Sales';
+import type { Sale, SaleItem as SaleSaleItem } from '@/shared/types/modelTypes/Sale';
 import type { SaleState } from '../types/sale.types';
 
 interface SaleProcessResult {

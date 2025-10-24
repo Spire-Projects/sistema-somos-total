@@ -10,7 +10,7 @@ import {
 import { Button } from "../../../../shared/components/ui/button";
 import { Package, Plus } from "lucide-react";
 import type { Medication, Manufacturer } from "../../../../shared/types/Medication";
-import type { BatchWithMedication } from "../../../../shared/types/Sales";
+import type { BatchWithMedication } from "../../../../shared/types/modelTypes/Sale";
 import { useSelector } from "react-redux";
 import AddMedicationDialog from "../../../inventory/components/AddMedicationDialog/AddMedicationDialog";
 import {

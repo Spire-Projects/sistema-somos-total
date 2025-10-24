@@ -7,7 +7,7 @@ export const productSchema: RxJsonSchema<Product> = {
   title: 'product schema',
   description: 'describes a product',
   version: 0,
-  primaryKey: 'code',
+  primaryKey: 'id',
   type: 'object',
   properties: {
     code: {
@@ -57,8 +57,8 @@ export const productSchema: RxJsonSchema<Product> = {
   },
   required: ['code', 'id', 'name', 'createdAt', 'createdBy', 'isDeleted', 'sincronized'],
   indexes: [
-    // Índices simples (se excluye 'code' pues es primaryKey)
-    'id',
+    // Índices simples (ahora incluimos 'code' como índice ya que 'id' es primaryKey)
+    'code',
     'name',
     'category',
     'createdAt',
@@ -76,7 +76,5 @@ export const productSchema: RxJsonSchema<Product> = {
     ['isDeleted', 'updatedAt']            // Productos eliminados ordenados
   ]
 };
-
-export const productMigrationStrategies = {};
 
 export type ProductDocument = RxCollection<Product>;

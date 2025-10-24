@@ -1,11 +1,7 @@
 import { getNumberInvoiceRangeRepository } from "../db/repositories/numberInvoiceRange.repository";
 import type { NumberInvoiceRangeDocument } from "../db/models/numberInvoiceRange.model";
 import { NumberInvoiceStatus } from "../types/NumberInvoice";
-import {
-  findSaleById,
-  findSalesByDateRangePaginated,
-  updateSaleNumberInvoice,
-} from "./SalesService";
+
 
 export class InvoiceNumberService {
 

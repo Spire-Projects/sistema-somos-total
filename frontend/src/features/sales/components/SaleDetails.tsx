@@ -17,10 +17,10 @@ import {
 } from "@/shared/components/ui/dialog";
 import { CheckCircle, XCircle, Loader2, FileText } from "lucide-react";
 import { Info } from "lucide-react";
-import type { Sale } from "@/shared/types/Sales";
+import type { Sale } from "@/shared/types/modelTypes/Sale";
 import type { AuthUser } from "@/shared/types/User";
 import type { Client } from "@/shared/types/Client";
-import type { Medic } from "@/shared/types/Sales";
+import type { Medic } from "@/shared/types/modelTypes/Sale";
 import {
   findMedicationBatchById,
   getMedicationViewById,
