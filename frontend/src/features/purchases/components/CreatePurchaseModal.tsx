@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2, X } from 'lucide-react';
-import type { CreatePurchaseData, PurchaseView } from '@/shared/types/modelTypes/PurchaseBox';
+import type { CreatePurchaseData, PurchaseView, UpdatePurchaseData } from '@/shared/types/modelTypes/PurchaseBox';
 import type { Product } from '@/shared/types/modelTypes/Product';
 import type { Manufacturer } from '@/shared/types/modelTypes/Manufacturer';
 import { purchaseService } from '@/shared/services/PurchaseService';
@@ -139,7 +139,7 @@ const CreatePurchaseModalComponent = ({
                 productId: purchaseToEdit.productId,
                 purchaseDate: purchaseToEdit.purchaseDate.split('T')[0],
                 receiptNumber: purchaseToEdit.receiptNumber || '',
-                quantity: purchaseToEdit.quantity,
+                quantity: purchaseToEdit.quantityPurchased,
                 unitCost: purchaseToEdit.unitCost,
                 totalCost: purchaseToEdit.totalCost,
                 supplierId: purchaseToEdit.supplierId || '',
@@ -314,11 +314,11 @@ const CreatePurchaseModalComponent = ({
 
                 if (purchaseToEdit) {
                     // Modo edición
-                    const updateData = {
+                    const updateData: UpdatePurchaseData = {
                         productId: data.productId,
                         purchaseDate: new Date(data.purchaseDate).toISOString(),
                         receiptNumber: data.receiptNumber,
-                        quantity: data.quantity,
+                        quantityPurchased: data.quantity,
                         unitCost: data.unitCost,
                         totalCost: data.totalCost,
                         supplierId: data.supplierId,
@@ -334,7 +334,7 @@ const CreatePurchaseModalComponent = ({
                         productId: data.productId,
                         purchaseDate: new Date(data.purchaseDate).toISOString(),
                         receiptNumber: data.receiptNumber,
-                        quantity: data.quantity,
+                        quantityPurchased: data.quantity,
                         unitCost: data.unitCost,
                         totalCost: data.totalCost,
                         supplierId: data.supplierId,
@@ -398,14 +398,7 @@ const CreatePurchaseModalComponent = ({
                 <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                         <span>{purchaseToEdit ? 'Editar Compra' : 'Registrar Nueva Compra'}</span>
-                        {!isSubmitting && (
-                            <button
-                                onClick={handleClose}
-                                className="p-1 hover:bg-accent rounded-md transition-colors"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        )}
+                        
                     </DialogTitle>
                     <DialogDescription>
                         {purchaseToEdit
@@ -689,9 +682,9 @@ const CreatePurchaseModalComponent = ({
                                     if (!unitCost || unitCost <= 0) return null;
 
                                     return (
-                                        <div className="rounded-lg border-2 border-blue-200 p-4 bg-linear-to-br from-blue-50 to-purple-50">
+                                        <div className="rounded-lg border-2 border-gray-200 p-4 bg-linear-to-br ">
                                             <div className="flex items-center justify-between mb-3">
-                                                <div className="font-semibold text-blue-900">💰 Precio de Venta Sugerido</div>
+                                                <div className="font-semibold text-blue-900"> Precio de Venta </div>
                                                 {priceMode === 'auto' && (
                                                     <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">
                                                         Automático

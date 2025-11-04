@@ -10,33 +10,38 @@ import {
 } from '@/shared/components/ui/dialog';
 import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDateTime } from '@/shared/utils/date.utils';
-import type { Sale } from '@/shared/types/modelTypes/Sale';
+import type { SaleView } from '@/shared/types/modelTypes/Sale';
 import type { Client } from '@/shared/types/Client';
 import { getClientById } from '@/shared/services';
 
+
 interface SaleSuccessDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  sale: Sale;
+  sale: SaleView | null;
   onPrintReceipt?: () => void;
 }
 
+
 const SaleSuccessDialog = memo(({
-  isOpen,
+  open,
   onClose,
   sale,
   onPrintReceipt
 }: SaleSuccessDialogProps) => {
   const [client, setClient] = useState<Client | null>(null);
   useEffect(() => {
-    if (sale.client) {
+    if (sale && sale.client) {
       getClientById(sale.client).then(setClient).catch(() => setClient(null));
     } else {
       setClient(null);
     }
-  }, [sale.client]);
+  }, [sale?.client]);
+
+  if (!sale) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-green-600">

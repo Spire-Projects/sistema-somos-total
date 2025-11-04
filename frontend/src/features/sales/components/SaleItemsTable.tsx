@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import {
   Table,
   TableBody,
@@ -11,13 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import CustomDialog from "@/shared/components/CustomDialog";
+import { ShoppingCart, Trash2, Plus, Minus, Info } from "lucide-react";
 import type { CartSaleItem } from "@/shared/types/modelTypes/Sale";
 
 interface SaleItemsTableProps {
   items: CartSaleItem[];
   onUpdateQuantity: (purchaseBoxId: string, quantity: number) => void;
-  onUpdateDiscount: (purchaseBoxId: string, discount: number) => void;
   onRemoveItem: (purchaseBoxId: string) => void;
   disabled?: boolean;
 }
@@ -25,10 +25,10 @@ interface SaleItemsTableProps {
 const SaleItemsTable = memo(({
   items,
   onUpdateQuantity,
-  onUpdateDiscount,
   onRemoveItem,
   disabled = false
 }: SaleItemsTableProps) => {
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   const handleIncrement = useCallback((item: CartSaleItem) => {
     if (item.quantity < item.availableStock) {
@@ -48,24 +48,14 @@ const SaleItemsTable = memo(({
     onUpdateQuantity(item.purchaseBoxId, validQuantity);
   }, [onUpdateQuantity]);
 
-  const handleDiscountChange = useCallback((purchaseBoxId: string, value: string) => {
-    const discount = parseFloat(value) || 0;
-    const validDiscount = Math.min(Math.max(discount, 0), 100);
-    onUpdateDiscount(purchaseBoxId, validDiscount);
-  }, [onUpdateDiscount]);
-
-  const formatDate = (date?: string) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('es-BO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
+  const handleClearAll = useCallback(() => {
+    items.forEach(item => onRemoveItem(item.purchaseBoxId));
+    setShowClearDialog(false);
+  }, [items, onRemoveItem]);
 
   if (items.length === 0) {
     return (
-      <Card>
+      <Card className="min-h-[610px]">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
@@ -99,17 +89,7 @@ const SaleItemsTable = memo(({
                 <TableHead className="w-10">No.</TableHead>
                 <TableHead className="min-w-[200px]">Nombre Item</TableHead>
                 <TableHead className="min-w-[120px]">Cantidad</TableHead>
-                <TableHead className="w-[120px]">Precio Lista</TableHead>
-                <TableHead className="w-[100px]">
-                  Descuento
-                  <br />
-                  <span className="text-xs font-normal text-gray-500">Unidad</span>
-                </TableHead>
-                <TableHead className="w-[120px]">
-                  Precio Venta
-                  <br />
-                  <span className="text-xs font-normal text-gray-500">Unidad</span>
-                </TableHead>
+                <TableHead className="w-[120px]">Precio Unitario</TableHead>
                 <TableHead className="w-[120px]">Subtotal</TableHead>
                 <TableHead className="w-20">Detalle</TableHead>
                 <TableHead className="w-20 text-center">Eliminar</TableHead>
@@ -169,34 +149,14 @@ const SaleItemsTable = memo(({
                   </TableCell>
 
                   <TableCell className="text-right">
-                    <div className="font-medium">Bs {item.originalPrice.toFixed(2)}</div>
+                    <div className="font-medium text-green-600">
+                      Bs {item.unitPrice.toFixed(2)}
+                    </div>
                     {item.profitMarginPercentage && (
                       <div className="text-xs text-gray-500">
                         +{item.profitMarginPercentage}% ganancia
                       </div>
                     )}
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={item.discount}
-                        onChange={(e) => handleDiscountChange(item.purchaseBoxId, e.target.value)}
-                        disabled={disabled}
-                        min={0}
-                        max={100}
-                        step={0.1}
-                        className="h-7 w-16 text-sm"
-                      />
-                      <span className="text-sm text-gray-600">%</span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <div className="font-medium text-green-600">
-                      Bs {item.unitPrice.toFixed(2)}
-                    </div>
                   </TableCell>
 
                   <TableCell className="text-right">
@@ -206,18 +166,8 @@ const SaleItemsTable = memo(({
                   </TableCell>
 
                   <TableCell>
-                    <div className="space-y-1 text-xs text-gray-600">
-                      <div>
-                        <span className="font-medium">Compra:</span> {formatDate(item.purchaseDate)}
-                      </div>
-                      {item.receiptNumber && (
-                        <div>
-                          <span className="font-medium">Recibo:</span> {item.receiptNumber}
-                        </div>
-                      )}
-                      <div>
-                        <span className="font-medium">Costo:</span> Bs {item.unitCost.toFixed(2)}
-                      </div>
+                    <div className="flex justify-center">
+                      <Info className="text-secondary h-5" />
                     </div>
                   </TableCell>
 
@@ -242,11 +192,7 @@ const SaleItemsTable = memo(({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              if (confirm('¿Estás seguro de limpiar todos los items del carrito?')) {
-                items.forEach(item => onRemoveItem(item.purchaseBoxId));
-              }
-            }}
+            onClick={() => setShowClearDialog(true)}
             disabled={disabled}
             className="text-red-600 hover:text-red-700"
           >
@@ -255,6 +201,17 @@ const SaleItemsTable = memo(({
           </Button>
         </div>
       </CardContent>
+
+      {/* Dialog de confirmación para limpiar todo */}
+      <CustomDialog
+        isOpen={showClearDialog}
+        onConfirm={handleClearAll}
+        onCancel={() => setShowClearDialog(false)}
+        title="¿Limpiar carrito?"
+        description="¿Estás seguro de limpiar todos los items del carrito? Esta acción no se puede deshacer."
+        textConfirm="Sí, limpiar"
+        textCancel="Cancelar"
+      />
     </Card>
   );
 });

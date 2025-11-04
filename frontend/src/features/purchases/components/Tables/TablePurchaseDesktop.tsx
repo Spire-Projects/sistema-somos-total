@@ -73,7 +73,8 @@ const TablePurchaseDesktopComponent = ({
                                 <TableHead>Fecha</TableHead>
                                 <TableHead>Producto</TableHead>
                                 <TableHead>Código</TableHead>
-                                <TableHead className="text-right">Cantidad</TableHead>
+                                <TableHead className="text-right">Cantidad <br />comprada</TableHead>
+                                <TableHead className="text-right">Cantidad <br />en stock</TableHead>
                                 <TableHead className="text-right">Costo Unit.</TableHead>
                                 <TableHead className="text-right">Total</TableHead>
 
@@ -111,7 +112,10 @@ const TablePurchaseDesktopComponent = ({
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right font-semibold">
-                                        {purchase.quantity}
+                                        {purchase.quantityPurchased}
+                                    </TableCell>
+                                     <TableCell className="text-right font-semibold">
+                                        {purchase.quantityAvailable ?? 0}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {formatCurrency(purchase.unitCost)}

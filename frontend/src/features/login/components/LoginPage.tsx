@@ -142,7 +142,7 @@ export const LoginPage = () => {
 
             <Button
               type="submit"
-              className="w-full bg-white text-gray-900 hover:bg-gray-100 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-green-100 text-gray-900 hover:bg-gray-100 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

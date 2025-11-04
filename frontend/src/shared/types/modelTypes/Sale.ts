@@ -23,6 +23,7 @@ export interface  Sale extends IEntity {
   socialReasonClient?: string; // Optional social reason of the client for invoicing purposes
   saleNotes?: string; // Optional notes about the sale
   numberInvoice?: string; // Optional invoice number associated with the sale
+  isDraft?: boolean; // Indicates if the sale is a draft
 }
 
 // CRUD interfaces
@@ -41,6 +42,7 @@ export interface CreateSaleData {
   saleNotes?: string;
   numberInvoice?: string;
   createdBy: string;
+  isDraft?: boolean;
 }
 
 export interface UpdateSaleData {
@@ -58,6 +60,7 @@ export interface UpdateSaleData {
   saleNotes?: string;
   numberInvoice?: string;
   updatedBy?: string;
+  isDraft?: boolean;
 }
 
 // View interfaces

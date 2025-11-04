@@ -9,7 +9,8 @@ export interface PurchaseBox extends IEntity {
   productId: string;         // Código/ID del producto
   purchaseDate: string;      // Fecha de compra (ISO)
   receiptNumber?: string;    // Número de comprobante/factura
-  quantity: number;          // Cantidad comprada
+  quantityPurchased: number;          // Cantidad comprada
+  quantityAvailable: number;      // Cantidad disponible de esta compra
   unitCost: number;          // Costo unitario
   totalCost: number;         // Costo total (quantity * unitCost)
   supplierId?: string;       // ID del Proveedor
@@ -24,7 +25,7 @@ export interface CreatePurchaseData {
   productId: string;
   purchaseDate: string;
   receiptNumber?: string;
-  quantity: number;
+  quantityPurchased: number;
   unitCost: number;
   totalCost: number;
   supplierId?: string;
@@ -37,7 +38,8 @@ export interface UpdatePurchaseData {
   productId?: string;
   purchaseDate?: string;
   receiptNumber?: string;
-  quantity?: number;
+  quantityPurchased?: number;
+  quantityAvailable?: number;
   unitCost?: number;
   totalCost?: number;
   supplierId?: string;

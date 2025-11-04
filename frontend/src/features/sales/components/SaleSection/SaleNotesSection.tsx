@@ -55,7 +55,7 @@ const SaleNotes = memo(
           </CollapsibleTrigger>
 
           <CollapsibleContent>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 pr-2 pl-2">
               <div className="space-y-2">
                 <Label htmlFor="sale-notes" className="sr-only">
                   Notas de la venta

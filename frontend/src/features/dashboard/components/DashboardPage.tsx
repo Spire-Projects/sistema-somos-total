@@ -24,7 +24,7 @@ export const DashboardPage = () => {
             Bienvenido, {user?.fullName}
           </p>
           <p className="text-gray-700">
-            Gestiona tu farmacia de manera eficiente y moderna
+            Gestiona tus productos de manera eficiente y moderna
           </p>
         </div>
         <div className="space-y-6">

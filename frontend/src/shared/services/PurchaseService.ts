@@ -49,7 +49,7 @@ class PurchaseService extends BaseService<PurchaseBox, PurchaseView, CreatePurch
       productCode,
       productName,
       productCategory,
-      supplierName
+      supplierName,
     };
   }
 }

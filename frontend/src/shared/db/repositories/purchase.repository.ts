@@ -28,7 +28,8 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
       createdAt: now,
       updatedAt: now,
       isDeleted: false,
-      sincronized: false
+      sincronized: false,
+      quantityAvailable: data.quantityPurchased,
     } as PurchaseBox;
     
     return await this.createWithPriority(fullData);

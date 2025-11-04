@@ -28,7 +28,7 @@ class ProductService extends BaseService<Product, ProductView, CreateProductData
       const { purchaseService } = await import('./PurchaseService');
       // Traer todas las compras de este producto (sin paginación)
       const result = await purchaseService.getAllView(1, 1000, undefined, undefined, undefined, { productId: entity.id });
-      stock = result.items.reduce((acc: number, purchase: any) => acc + (purchase.quantity || 0), 0);
+      stock = result.items.reduce((acc: number, purchase: any) => acc + (purchase.quantityAvailable || 0), 0);
     } catch (error) {
       console.error('Error calculating stock from purchases:', error);
     }

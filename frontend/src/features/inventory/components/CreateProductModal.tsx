@@ -277,14 +277,7 @@ const CreateProductModalComponent = ({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Crear Nuevo Producto</span>
-            {!isSubmitting && (
-              <button
-                onClick={handleClose}
-                className="p-1 hover:bg-accent rounded-md transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            
           </DialogTitle>
           <DialogDescription>
             Completa el formulario para agregar un nuevo producto al inventario

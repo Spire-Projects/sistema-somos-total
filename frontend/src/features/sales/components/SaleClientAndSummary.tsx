@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
-import ClientSection from "./ClientSection";
-import NitSection from "./NitSection";
-import SaleNotes from "./SaleNotes";
+import ClientSection from "./SaleSection/ClientSection";
+import NitSection from "./SaleSection/NitSection";
+import SaleNotes from "./SaleSection/SaleNotesSection";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import SaleSummary from "./SaleSummary";
 import type { SaleState } from '@/shared/types/modelTypes/Sale';

@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -9,6 +9,7 @@ import {
   CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { ChevronDown, ChevronRight, Edit, Trash2, FileText, Package } from "lucide-react";
+import { productService } from "@/shared/services/ProductService";
 import type { SaleView } from "@/shared/types/modelTypes/Sale";
 
 interface TableSalesMobileProps {
@@ -27,6 +28,7 @@ const TableSalesMobileComponent = ({
   onDelete,
 }: TableSalesMobileProps) => {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [productNames, setProductNames] = useState<Record<string, string>>({});
 
   const toggleCard = (saleId: string) => {
     setExpandedCards((prev) => {
@@ -71,6 +73,23 @@ const TableSalesMobileComponent = ({
       </Badge>
     );
   };
+
+  useEffect(() => {
+    const ids = Array.from(
+      new Set(
+        sales.flatMap(sale => sale.items.map(item => item.product))
+      )
+    );
+    if (ids.length === 0) return;
+    Promise.all(ids.map(id => productService.findById(id)))
+      .then(products => {
+        const mapping: Record<string, string> = {};
+        products.forEach((prod, idx) => {
+          if (prod) mapping[ids[idx]] = prod.name;
+        });
+        setProductNames(mapping);
+      });
+  }, [sales]);
 
   if (loading) {
     return (
@@ -192,7 +211,7 @@ const TableSalesMobileComponent = ({
                           key={idx}
                           className="bg-gray-50 rounded-lg p-3 text-sm space-y-1"
                         >
-                          <div className="font-medium">{item.product}</div>
+                          <div className="font-medium">{productNames[item.product] || item.product}</div>
                           <div className="text-xs text-gray-500 font-mono">
                             Lote: {item.purchaseBoxId}
                           </div>

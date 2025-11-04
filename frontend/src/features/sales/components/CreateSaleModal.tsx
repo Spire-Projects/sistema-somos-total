@@ -5,15 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import CustomDialog from "@/shared/components/CustomDialog";
 import { toast } from "sonner";
-import ProductSearchSection from "./ProductSearchSection";
+import ProductSearchSection from "./SaleSection/ProductSearchSection";
 import SaleItemsTable from "./SaleItemsTable";
-import ClientSection from "./ClientSection";
-import NitSection from "./NitSection";
-import SaleNotes from "./SaleNotes";
+import ClientSection from "./SaleSection/ClientSection";
+import NitSection from "./SaleSection/NitSection";
+import SaleNotes from "./SaleSection/SaleNotesSection";
 import PaymentMethodSelector from "./PaymentMethodSelector";
+import CurrencySelector from "./CurrencySelector";
 import SaleSummarySection from "./SaleSummarySection";
-import SaleSuccessModal from "./SaleSuccessModal";
 import type { SaleState, CartSaleItem, CreateSaleData, SaleView } from "@/shared/types/modelTypes/Sale";
 import type { Client } from "@/shared/types/Client";
 import type { NIT } from "@/shared/types/Nit";
@@ -22,6 +23,10 @@ import type { Product } from "@/shared/types/modelTypes/Product";
 import { salesService } from "@/shared/services/SalesService";
 import { InvoiceNumberService } from "@/shared/services/InvoiceNumberService";
 import { getPurchaseBoxRepository } from "@/shared/db/repositories/purchase.repository";
+import SaleSuccessDialog from "./SaleSuccessDialog";
+import { purchaseService } from "@/shared/services/PurchaseService";
+import { Button } from "@/shared/components/ui/button";
+import { Dock } from "lucide-react";
 
 interface CreateSaleModalProps {
   open: boolean;
@@ -45,10 +50,11 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [completedSale, setCompletedSale] = useState<SaleView | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Calcular totales
+
   const calculateTotals = useCallback((items: CartSaleItem[], clientDiscountType: 'percentage' | 'fixed', clientDiscountValue: number) => {
-    // Calcular subtotal y descuentos de items
+   
     const subtotal = items.reduce((acc, item) => acc + item.originalPrice * item.quantity, 0);
     const itemsDiscount = items.reduce((acc, item) => {
       const discountAmount = item.originalPrice * item.quantity * (item.discount / 100);
@@ -56,8 +62,6 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
     }, 0);
 
     const subtotalAfterItemsDiscount = subtotal - itemsDiscount;
-
-    // Calcular descuento del cliente
     const clientDiscountAmount = clientDiscountType === 'percentage'
       ? subtotalAfterItemsDiscount * (clientDiscountValue / 100)
       : clientDiscountValue;
@@ -73,21 +77,19 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
     };
   }, []);
 
-  // Agregar producto al carrito
+
   const handleAddProduct = useCallback((purchaseBox: PurchaseBox & { productName?: string; productCode?: string }, product: Product) => {
-    // Verificar si el producto ya está en el carrito
     const existingItemIndex = saleState.items.findIndex(
       item => item.purchaseBoxId === purchaseBox.id
     );
 
-    // Calcular precio de venta basado en unitCost y profitMarginPercentage
     const profitMargin = purchaseBox.profitMarginPercentage || 0;
     const sellingPrice = purchaseBox.unitCost * (1 + profitMargin / 100);
 
     let newItems: CartSaleItem[];
 
     if (existingItemIndex >= 0) {
-      // Si ya existe, incrementar cantidad
+
       const existingItem = saleState.items[existingItemIndex];
       if (existingItem.quantity >= existingItem.availableStock) {
         toast.warning('No hay más stock disponible para este producto');
@@ -99,7 +101,7 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
         ...existingItem,
         quantity: existingItem.quantity + 1,
       };
-      // Recalcular total del item
+     
       const discountAmount = updatedItem.originalPrice * (updatedItem.discount / 100);
       const unitPriceAfterDiscount = updatedItem.originalPrice - discountAmount;
       updatedItem.unitPrice = unitPriceAfterDiscount;
@@ -108,7 +110,7 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
       newItems[existingItemIndex] = updatedItem;
       toast.success(`Cantidad actualizada: ${updatedItem.productName}`);
     } else {
-      // Si no existe, agregar nuevo item
+      
       const newItem: CartSaleItem = {
         purchaseBoxId: purchaseBox.id,
         product: product.id,
@@ -120,7 +122,7 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
         unitPrice: sellingPrice,
         discount: 0,
         total: sellingPrice,
-        availableStock: purchaseBox.quantity,
+        availableStock: purchaseBox.quantityAvailable,
         unitCost: purchaseBox.unitCost,
         profitMarginPercentage: purchaseBox.profitMarginPercentage,
         originalPrice: sellingPrice,
@@ -139,7 +141,7 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
     }));
   }, [saleState, calculateTotals]);
 
-  // Actualizar cantidad de un item
+ 
   const handleUpdateQuantity = useCallback((purchaseBoxId: string, quantity: number) => {
     const newItems = saleState.items.map(item => {
       if (item.purchaseBoxId === purchaseBoxId) {
@@ -151,31 +153,6 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
           quantity,
           unitPrice: unitPriceAfterDiscount,
           total: unitPriceAfterDiscount * quantity,
-        };
-      }
-      return item;
-    });
-
-    const totals = calculateTotals(newItems, saleState.clientDiscountType, saleState.clientDiscountValue);
-    setSaleState(prev => ({
-      ...prev,
-      items: newItems,
-      ...totals,
-    }));
-  }, [saleState, calculateTotals]);
-
-  // Actualizar descuento de un item
-  const handleUpdateDiscount = useCallback((purchaseBoxId: string, discount: number) => {
-    const newItems = saleState.items.map(item => {
-      if (item.purchaseBoxId === purchaseBoxId) {
-        const discountAmount = item.originalPrice * (discount / 100);
-        const unitPriceAfterDiscount = item.originalPrice - discountAmount;
-        
-        return {
-          ...item,
-          discount,
-          unitPrice: unitPriceAfterDiscount,
-          total: unitPriceAfterDiscount * item.quantity,
         };
       }
       return item;
@@ -237,6 +214,14 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
     }));
   }, []);
 
+  // Manejar cambio de moneda
+  const handleCurrencyChange = useCallback((currency: 'bs' | 'arg') => {
+    setSaleState(prev => ({
+      ...prev,
+      paymentCurrency: currency,
+    }));
+  }, []);
+
   // Manejar cambio de descuento del cliente
   const handleClientDiscountChange = useCallback((type: 'percentage' | 'fixed', value: number) => {
     const totals = calculateTotals(saleState.items, type, value);
@@ -290,13 +275,13 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
       const createdSale = await salesService.create(saleData);
 
       // Actualizar el stock de cada purchaseBox
-      const purchaseRepo = getPurchaseBoxRepository();
+ 
       for (const item of saleState.items) {
-        const purchaseBox = await purchaseRepo.findById(item.purchaseBoxId);
+        const purchaseBox = await purchaseService.findById(item.purchaseBoxId);
         if (purchaseBox) {
-          const newQuantity = purchaseBox.quantity - item.quantity;
-          await purchaseRepo.update(purchaseBox.id, {
-            quantity: Math.max(0, newQuantity),
+          const newQuantity = purchaseBox.quantityAvailable - item.quantity;
+          await purchaseService.update(purchaseBox.id, {
+            quantityAvailable: Math.max(0, newQuantity),
             updatedBy: 'current-user', // TODO: Get from auth context
           });
         }
@@ -342,23 +327,27 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
   // Cancelar venta
   const handleCancel = useCallback(() => {
     if (saleState.items.length > 0) {
-      if (confirm('¿Estás seguro de cancelar la venta? Se perderán todos los items agregados.')) {
-        setSaleState({
-          items: [],
-          paymentMethod: 'efectivo',
-          paymentCurrency: 'bs',
-          clientDiscountType: 'percentage',
-          clientDiscountValue: 0,
-          subtotal: 0,
-          totalDiscount: 0,
-          total: 0,
-        });
-        onClose();
-      }
+      setShowCancelDialog(true);
     } else {
       onClose();
     }
   }, [saleState.items, onClose]);
+
+  // Confirmar cancelación de venta
+  const handleConfirmCancel = useCallback(() => {
+    setSaleState({
+      items: [],
+      paymentMethod: 'efectivo',
+      paymentCurrency: 'bs',
+      clientDiscountType: 'percentage',
+      clientDiscountValue: 0,
+      subtotal: 0,
+      totalDiscount: 0,
+      total: 0,
+    });
+    setShowCancelDialog(false);
+    onClose();
+  }, [onClose]);
 
   // Cerrar modal de éxito
   const handleCloseSuccessModal = useCallback(() => {
@@ -370,9 +359,18 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
   return (
     <>
       <Dialog open={open} onOpenChange={handleCancel}>
-        <DialogContent className="max-w-[95vw] h-[95vh] p-0 !min-w-[1200px]">
+        <DialogContent className="max-w-[95vw] h-[95vh] p-0 min-w-[1200px]!">
           <DialogHeader className="p-6 pb-4">
             <DialogTitle className="text-2xl">Nueva Venta</DialogTitle>
+            <Button
+              variant="secondary"
+              onClick={handleCancel}
+              className="absolute top-4 right-12 rounded-xl p-2 hover:bg-gray-200"
+              disabled={isProcessing}
+            >
+              <Dock className="h-5 w-5 mr-2" />
+              Imprimir Cotización
+            </Button>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden px-6 pb-6">
@@ -389,7 +387,6 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
                 <SaleItemsTable
                   items={saleState.items}
                   onUpdateQuantity={handleUpdateQuantity}
-                  onUpdateDiscount={handleUpdateDiscount}
                   onRemoveItem={handleRemoveItem}
                   disabled={isProcessing}
                 />
@@ -426,6 +423,13 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
                   disabled={isProcessing}
                 />
 
+                {/* Selector de moneda */}
+                <CurrencySelector
+                  selectedCurrency={saleState.paymentCurrency}
+                  onCurrencyChange={handleCurrencyChange}
+                  disabled={isProcessing}
+                />
+
                 {/* Resumen */}
                 <SaleSummarySection
                   saleState={saleState}
@@ -440,8 +444,19 @@ const CreateSaleModal = memo(({ open, onClose, onSaleCreated }: CreateSaleModalP
         </DialogContent>
       </Dialog>
 
+      {/* Modal de confirmación de cancelación */}
+      <CustomDialog
+        isOpen={showCancelDialog}
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setShowCancelDialog(false)}
+        title="¿Cancelar venta?"
+        description="¿Estás seguro de cancelar la venta? Se perderán todos los items agregados."
+        textConfirm="Sí, cancelar"
+        textCancel="No, continuar"
+      />
+
       {/* Modal de venta exitosa */}
-      <SaleSuccessModal
+      <SaleSuccessDialog
         open={showSuccessModal}
         onClose={handleCloseSuccessModal}
         sale={completedSale}

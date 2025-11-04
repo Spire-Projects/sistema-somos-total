@@ -115,7 +115,7 @@ const NitSection = memo(({
           </CollapsibleTrigger>
           
           <CollapsibleContent>
-            <CardContent className="!space-y-0 pt-0">
+            <CardContent className="pt-0 pr-2 pl-2">
               {hasSelection ? (
                 // Mostrar NIT seleccionado
                 <div className="space-y-2">

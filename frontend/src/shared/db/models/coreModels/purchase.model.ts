@@ -26,9 +26,14 @@ export const purchaseBoxSchema: RxJsonSchema<PurchaseBox> = {
       type: 'string',
       maxLength: 100
     },
-    quantity: {
+
+    quantityPurchased: {
       type: 'number',
       minimum: 1
+    },
+    quantityAvailable: {
+      type: 'number',
+      minimum: 0
     },
     unitCost: {
       type: 'number',
@@ -75,7 +80,7 @@ export const purchaseBoxSchema: RxJsonSchema<PurchaseBox> = {
       maxLength: 50
     }
   },
-  required: ['id', 'productId', 'purchaseDate', 'quantity', 'unitCost', 'totalCost', 'createdAt', 'createdBy', 'isDeleted', 'sincronized'],
+  required: ['id', 'productId', 'purchaseDate', 'quantityPurchased','quantityAvailable',  'unitCost', 'totalCost', 'createdAt', 'createdBy', 'isDeleted', 'sincronized'],
   indexes: [
     // Índices simples
     'productId',
@@ -97,6 +102,8 @@ export const purchaseBoxSchema: RxJsonSchema<PurchaseBox> = {
     ['isDeleted', 'supplierId', 'purchaseDate'],    // Historial de compras por proveedor
     ['isDeleted', 'updatedAt']            // Compras eliminadas ordenadas
   ]
+  ,
+
 };
 
 export const purchaseMigrationStrategies = {};

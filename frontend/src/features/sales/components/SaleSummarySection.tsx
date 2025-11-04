@@ -50,8 +50,9 @@ const SaleSummarySection = memo(({
   };
 
   // Formatear moneda
-  const formatCurrency = (value: number) => {
-    return `Bs ${value.toFixed(2)}`;
+  const formatCurrency = (value: number, currency: 'bs' | 'arg') => {
+    const symbol = currency === 'bs' ? 'Bs' : 'ARS';
+    return `${symbol} ${value.toFixed(2)}`;
   };
 
   // Validar si se puede confirmar la venta
@@ -70,16 +71,11 @@ const SaleSummarySection = memo(({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Subtotal:</span>
-            <span className="font-medium">{formatCurrency(saleState.subtotal)}</span>
+
+            <span className="font-medium">{formatCurrency(saleState.paymentCurrency === 'arg' ? saleState.subtotal * 200 : saleState.subtotal, saleState.paymentCurrency)}</span>
           </div>
 
-          {/* Descuento en items */}
-          {saleState.totalDiscount > 0 && (
-            <div className="flex justify-between text-sm text-orange-600">
-              <span>Descuento en productos:</span>
-              <span>-{formatCurrency(saleState.totalDiscount)}</span>
-            </div>
-          )}
+        
         </div>
 
         <Separator />
@@ -105,13 +101,14 @@ const SaleSummarySection = memo(({
               <span>
                 {saleState.clientDiscountType === 'percentage'
                   ? `${saleState.clientDiscountValue}%`
-                  : formatCurrency(saleState.clientDiscountValue)}
+                  : formatCurrency(saleState.clientDiscountValue, saleState.paymentCurrency)}
               </span>
               <span>
                 -{formatCurrency(
                   saleState.clientDiscountType === 'percentage'
                     ? (saleState.subtotal - saleState.totalDiscount) * (saleState.clientDiscountValue / 100)
-                    : saleState.clientDiscountValue
+                    : saleState.clientDiscountValue,
+                  saleState.paymentCurrency
                 )}
               </span>
             </div>
@@ -131,7 +128,7 @@ const SaleSummarySection = memo(({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percentage">%</SelectItem>
-                    <SelectItem value="fixed">Bs</SelectItem>
+                    <SelectItem value="fixed">{saleState.paymentCurrency === 'arg' ? 'ARS' : 'Bs'}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input
@@ -174,9 +171,9 @@ const SaleSummarySection = memo(({
         {/* Total final */}
         <div className="space-y-2 pt-2">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold">TOTAL A PAGAR:</span>
+            <span className="text-xs font-bold">TOTAL A PAGAR:</span>
             <span className="text-2xl font-bold text-green-600">
-              {formatCurrency(saleState.total)}
+              {formatCurrency(saleState.paymentCurrency === 'arg' ? saleState.total * 200 : saleState.total, saleState.paymentCurrency)}
             </span>
           </div>
 
@@ -212,6 +209,16 @@ const SaleSummarySection = memo(({
                 Confirmar Venta
               </>
             )}
+          </Button>
+
+           <Button
+            onClick={onCancel}
+            disabled={isProcessing}
+            variant="outline"
+            className="w-full"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Guardar Cotización
           </Button>
 
           <Button
