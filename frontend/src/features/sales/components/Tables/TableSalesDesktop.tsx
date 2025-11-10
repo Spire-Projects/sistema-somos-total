@@ -38,6 +38,11 @@ const TableSalesDesktopComponent = ({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [productNames, setProductNames] = useState<Record<string, string>>({});
   const [purchaseBoxReceipts, setPurchaseBoxReceipts] = useState<Record<string, string>>({});
+  const [isDraft, setIsDraft] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsDraft(!sales.some(sale => sale.isDraft));
+  }, [sales]);
 
   const toggleRow = (saleId: string) => {
     setExpandedRows((prev) => {
@@ -121,8 +126,8 @@ const TableSalesDesktopComponent = ({
   return (
     <Card className="hidden md:block">
       <CardHeader>
-        <CardTitle>Lista de Ventas</CardTitle>
-        <CardDescription>Administra las ventas realizadas</CardDescription>
+        <CardTitle>{isDraft? "Lista de Ventas" : "Lista de cotizaciones"} </CardTitle>
+        <CardDescription>{isDraft? "Administra las ventas realizadas" : "Administra las cotizaciones realizadas"}</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -145,13 +150,13 @@ const TableSalesDesktopComponent = ({
                 <TableRow>
                   <TableHead className="w-[50px]"></TableHead>
                   <TableHead>Fecha</TableHead>
-                  <TableHead>N° Venta</TableHead>
+                  {isDraft && <TableHead>N° Venta</TableHead>}
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Método Pago</TableHead>
+                  {isDraft && <TableHead>Método Pago</TableHead>}
                   <TableHead>Moneda</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Facturado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  {isDraft && <TableHead>Facturado</TableHead>}
+                  {!isDraft && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,15 +180,19 @@ const TableSalesDesktopComponent = ({
                           <TableCell className="font-medium text-sm">
                             {formatDate(sale.createdAt)}
                           </TableCell>
+                          {isDraft && (
                           <TableCell>
                             <span className="font-mono text-sm">{sale.numberInvoice || "N/A"}</span>
                           </TableCell>
+                          )}
                           <TableCell>
-                            <span className="text-sm">{sale.clientName || sale.client || "Sin cliente"}</span>
+                            <span className="text-sm">{sale.clientName  || "Sin cliente"}</span>
                           </TableCell>
+                          {isDraft && (
                           <TableCell>
                             {getPaymentMethodBadge(sale.paymentMethod)}
                           </TableCell>
+                          )}
                           <TableCell>
                             <Badge variant="outline" className="uppercase">
                               {sale.paymentCurrency}
@@ -192,6 +201,7 @@ const TableSalesDesktopComponent = ({
                           <TableCell className="text-right font-semibold">
                             {formatCurrency(sale.paymentCurrency === 'arg' ? sale.total * 200 : sale.total, sale.paymentCurrency)}
                           </TableCell>
+                          {isDraft && (
                           <TableCell>
                             {sale.factured ? (
                               <Badge variant="default" className="bg-green-600">Sí</Badge>
@@ -199,6 +209,8 @@ const TableSalesDesktopComponent = ({
                               <Badge variant="secondary">No</Badge>
                             )}
                           </TableCell>
+                          )}
+                          {!isDraft && (
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               {onEdit && (
@@ -207,12 +219,13 @@ const TableSalesDesktopComponent = ({
                                   size="sm"
                                   onClick={() => onEdit(sale)}
                                   className="h-8 w-8 p-0"
-                                  title="Editar venta"
+                                  title="Revisar/Editar cotización"
                                 >
                                   <Edit className="h-4 w-4" />
+                                  <span className="sr-only">Revisar/Editar cotización</span>
                                 </Button>
                               )}
-                              {onDelete && (
+                              {(onDelete && !isDraft) && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -225,6 +238,7 @@ const TableSalesDesktopComponent = ({
                               )}
                             </div>
                           </TableCell>
+                          )}
                         </TableRow>
                         {/* Fila expandible con detalles de items */}
                         <CollapsibleContent asChild>
@@ -243,7 +257,7 @@ const TableSalesDesktopComponent = ({
                                         <th className="text-left py-2 px-3 font-medium text-gray-600">Lote</th>
                                         <th className="text-right py-2 px-3 font-medium text-gray-600">Cantidad</th>
                                         <th className="text-right py-2 px-3 font-medium text-gray-600">Precio Unit.</th>
-                                        <th className="text-right py-2 px-3 font-medium text-gray-600">Descuento</th>
+                                        {isDraft && <th className="text-right py-2 px-3 font-medium text-gray-600">Descuento</th>}
                                         <th className="text-right py-2 px-3 font-medium text-gray-600">Total</th>
                                       </tr>
                                     </thead>
@@ -256,9 +270,11 @@ const TableSalesDesktopComponent = ({
                                           <td className="py-2 px-3 text-right">
                                             {formatCurrency(sale.paymentCurrency === "arg" ? item.unitPrice * 200 : item.unitPrice, sale.paymentCurrency)}
                                           </td>
+                                          {isDraft && (
                                           <td className="py-2 px-3 text-right text-red-600">
                                             {item.discount > 0 ? `-${formatCurrency(sale.paymentCurrency === "arg" ? item.discount * 200 : item.discount, sale.paymentCurrency)}` : "-"}
                                           </td>
+                                          )}
                                           <td className="py-2 px-3 text-right font-semibold">
                                             {formatCurrency(sale.paymentCurrency === "arg" ? item.total * 200 : item.total, sale.paymentCurrency)}
                                           </td>

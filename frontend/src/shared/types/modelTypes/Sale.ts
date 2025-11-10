@@ -64,8 +64,18 @@ export interface UpdateSaleData {
 }
 
 // View interfaces
+
+export interface SaleItemView extends SaleItem {
+  productCode: string; // Code of the product, if applicable
+  productName: string; // Name of the product, if applicable
+  purchaseDate: string; // Purchase date from purchaseBox, if applicable
+  receiptNumber: string; // Receipt number from purchaseBox, if applicable
+}
+
 export interface SaleView extends Sale {
   clientName?: string; // Name of the client, if applicable
+  items: SaleItemView[]; // Array of items with extended view information
+
 }
 
 // Filter interfaces
@@ -74,6 +84,7 @@ export interface SaleFilter {
   dateTo?: string;   // End date for filtering sales
   clientId?: string; // Filter by client ID
   factured?: boolean; // Filter by factured status
+  isDraft?: boolean; // Filter by draft status
 }
 
 // Types for sale creation modal

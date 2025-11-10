@@ -1,2 +1,2 @@
 
-export { SalesPage } from './SalesPage';
+export { SalesPage } from '../views/SalesPage';

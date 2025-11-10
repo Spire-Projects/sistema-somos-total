@@ -1,4 +1,4 @@
-import type { RxCollection } from 'rxdb';
+import type { MangoQuery, MangoQuerySelector, RxCollection } from 'rxdb';
 import { Observable, map } from 'rxjs';
 import { initDatabase } from '../database';
 import type { CreateSaleData, Sale, SaleFilter, UpdateSaleData } from '../../types/modelTypes/Sale';
@@ -26,6 +26,7 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
       id,
       ...data,
       factured: data.factured ?? false,
+      isDraft: data.isDraft ?? false,
       createdAt: now,
       updatedAt: now,
       isDeleted: false,
@@ -57,9 +58,9 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
     filter?: SaleFilter
   ): Promise<ItemsResponse<Sale>> {
     const collection = await this.getCollection();
-    
-    const selector: any = { isDeleted: false };
-    
+
+    const selector: MangoQuerySelector<Sale> = { isDeleted: false };
+
     // Filtro de búsqueda
     if (searchQuery && searchQuery.trim() !== "") {
       const normalizedText = searchQuery.trim().toLowerCase();
@@ -82,6 +83,14 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
       selector.factured = filter.factured;
     }
 
+    // Filtro por borrador (isDraft) - siempre excluir borradores
+    if (filter?.isDraft !== undefined) {
+      selector.isDraft = filter.isDraft;
+    } else {
+      // Por defecto, no mostrar borradores
+      selector.isDraft = false;
+    }
+
     // Filtro de fechas
     if (dateFrom || dateTo) {
       selector.createdAt = {};
@@ -91,6 +100,7 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
 
     const skip = (page - 1) * size;
     const limit = size + 1;
+    console.log("Selector:", selector);
     
     const docs = await collection.find({
       selector,
@@ -170,6 +180,14 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
           // Filtro por facturado
           if (filter?.factured !== undefined) {
             selector.factured = filter.factured;
+          }
+
+          // Filtro por borrador (isDraft) - siempre excluir borradores
+          if (filter?.isDraft !== undefined) {
+            selector.isDraft = filter.isDraft;
+          } else {
+            // Por defecto, no mostrar borradores
+            selector.isDraft = false;
           }
 
           // Filtro de fechas

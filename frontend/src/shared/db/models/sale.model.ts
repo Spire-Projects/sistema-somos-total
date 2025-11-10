@@ -6,7 +6,7 @@ import type { RxJsonSchema, RxCollection } from 'rxdb';
 export const salesSchema: RxJsonSchema<Sale> = {
   title: 'sales schema',
   description: 'describes a sale',
-  version: 0,
+  version: 1,
   primaryKey: 'id',
   type: 'object',
   properties: {
@@ -56,13 +56,15 @@ export const salesSchema: RxJsonSchema<Sale> = {
     'createdBy',
     'isDeleted',
     'sincronized',
-    'factured'
+    'factured',
+    'isDraft'
   ],
   indexes: [
     'client',
     'createdAt',
     'updatedAt',
     'isDeleted',
+    'isDraft',
     'sincronized',
     ['isDeleted', 'createdAt'],
     ['isDeleted', 'client'],
@@ -70,11 +72,20 @@ export const salesSchema: RxJsonSchema<Sale> = {
     ['isDeleted', 'paymentMethod'],
     ['isDeleted', 'paymentCurrency'],
     ['isDeleted', 'factured'],
+    ['isDeleted', 'isDraft'],
     ['isDeleted', 'createdBy'],
     ['isDeleted', 'client', 'createdAt']
   ]
 };
 
+
+export const salesMigrationStrategies = {
+  // Migración de v0 a v1: eliminar campos reservados y obsoletos
+  1: function (oldDoc: any) {
+    const doc = { ...oldDoc, isDraft: false };
+    return doc;
+  }
+};
 
 
 export type SalesDocument = RxCollection<Sale>;

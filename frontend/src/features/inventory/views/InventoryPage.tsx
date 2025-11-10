@@ -24,15 +24,16 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import CustomDialog from "@/shared/components/CustomDialog";
-import TableProductDesktop from "./Tables/TableProductDesktop";
-import TableProductMobile from "./Tables/TableProductMobile";
-import { CreateProductModal } from "./CreateProductModal";
+
 import StartAppText from "@/shared/components/StartAppText";
 import PageHeader from "@/shared/components/PageHeader";
 import SearchInput from "@/shared/components/SearchInput";
 import { toast } from "sonner"
 import type { Subscription } from "rxjs";
 import { Button } from "@/shared/components/ui/button";
+import TableProductDesktop from "../components/Tables/TableProductDesktop";
+import TableProductMobile from "../components/Tables/TableProductMobile";
+import { CreateProductModal } from "../components/CreateProductModal";
 
 
 const InventoryPageComponent = () => {

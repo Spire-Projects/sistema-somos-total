@@ -3,11 +3,11 @@ import { Suspense, lazy } from 'react';
 import { MainLayout } from '../shared/components/MainLayout';
 import { LoginPage } from '../features/login/components/LoginPage';
 import { DashboardPage } from '../features/dashboard/components/DashboardPage';
-import { InventoryPage } from '../features/inventory/components/InventoryPage';
-import { SalesPage } from '../features/sales/components/SalesPage';
+import { SalesPage } from '../features/sales/views/SalesPage';
 import { ClientsPage } from '../features/clients/components/ClientsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { useAppSelector } from '../shared/store/hooks';
+import { InventoryPage } from '@/features/inventory/views/InventoryPage';
 
 // Lazy loading solo para páginas menos críticas
 const UserManager = lazy(() => import('../features/users/components/UserManager').then(module => ({ default: module.UserManager })));

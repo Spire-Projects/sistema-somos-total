@@ -21,7 +21,7 @@ import type { PurchaseBox} from "../types/modelTypes/PurchaseBox";
 import type { Product } from "../types/modelTypes/Product";
 import type { Category } from "../types/modelTypes/Category";
 
-import { salesSchema } from "./models/sale.model";
+import { salesMigrationStrategies, salesSchema } from "./models/sale.model";
 import { productSchema } from "./models/coreModels/product.model";
 import { purchaseBoxSchema } from "./models/coreModels/purchase.model";
 import { categorySchema } from "./models/coreModels/category.model";
@@ -100,7 +100,7 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         sales: {
           schema: salesSchema,
-          autoMigrate: true,
+          migrationStrategies: salesMigrationStrategies,
         },
         products: {
           schema: productSchema,

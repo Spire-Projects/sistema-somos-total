@@ -1,1 +1,1 @@
-export * from './components/SalesPage';
+export * from './views/SalesPage';

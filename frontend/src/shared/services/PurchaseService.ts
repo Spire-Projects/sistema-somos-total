@@ -1,9 +1,22 @@
-import { BaseService } from './BaseService';
-import type { PurchaseBox, PurchaseView, CreatePurchaseData, UpdatePurchaseData, PurchaseFilter } from '../types/modelTypes/PurchaseBox';
-import { getPurchaseBoxRepository } from '../db/repositories/purchase.repository';
-import { getProductRepository } from '../db/repositories/product.repository';
+import { BaseService } from "./BaseService";
+import type {
+  PurchaseBox,
+  PurchaseView,
+  CreatePurchaseData,
+  UpdatePurchaseData,
+  PurchaseFilter,
+} from "../types/modelTypes/PurchaseBox";
+import { getPurchaseBoxRepository } from "../db/repositories/purchase.repository";
+import type { ProductView } from "../types/modelTypes/Product";
+import { manufacturerService } from "./ManufacturerService";
 
-class PurchaseService extends BaseService<PurchaseBox, PurchaseView, CreatePurchaseData, UpdatePurchaseData, PurchaseFilter> {
+class PurchaseService extends BaseService<
+  PurchaseBox,
+  PurchaseView,
+  CreatePurchaseData,
+  UpdatePurchaseData,
+  PurchaseFilter
+> {
   constructor() {
     super(getPurchaseBoxRepository());
   }
@@ -13,39 +26,62 @@ class PurchaseService extends BaseService<PurchaseBox, PurchaseView, CreatePurch
     let productName: string | undefined = undefined;
     let productCategory: string | undefined = undefined;
     let supplierName: string | undefined = undefined;
-    
+    let product: ProductView | undefined = undefined;
+
     // Resolver información del producto si existe el ID
+    // Usar el repositorio directamente para evitar ciclo infinito
     if (entity.productId) {
       try {
+        const { getProductRepository } = await import(
+          "../db/repositories/product.repository"
+        );
         const productRepo = getProductRepository();
-        const product = await productRepo.findById(entity.productId);
-        
-        if (product) {
-          productCode = product.code;
-          productName = product.name;
-          productCategory = product.category;
+        const productEntity = await productRepo.findById(entity.productId);
+
+        if (productEntity) {
+          productCode = productEntity.code;
+          productName = productEntity.name;
+          productCategory = productEntity.category;
+
+          // Crear ProductView básico sin el stock (para evitar ciclo)
+          let categoryName: string | undefined = undefined;
+          if (productEntity.category) {
+            try {
+              const { categoryService } = await import("./CategoryService");
+              const category = await categoryService.findById(
+                productEntity.category
+              );
+              categoryName = category?.name;
+            } catch (error) {
+              console.error("Error resolving category:", error);
+            }
+          }
+
+          product = {
+            ...productEntity,
+            categoryName,
+            stock: 0, // No calcular stock aquí para evitar ciclo infinito
+          };
         }
       } catch (error) {
-        console.error('Error resolving product info:', error);
+        console.error("Error resolving product info:", error);
       }
     }
 
     if (entity.supplierId) {
-        try {
-            // Importación dinámica para evitar dependencias circulares
-            const manufacturerService = await import('./ManufacturerService');
-            const supplier = await manufacturerService.manufacturerService.findById(entity.supplierId);
-            if (supplier) {
-                supplierName = supplier.name;
-            }
-        } catch (error) {
-            console.error('Error resolving supplier info:', error);
+      try {
+        const supplier = await manufacturerService.findById(entity.supplierId);
+        if (supplier) {
+          supplierName = supplier.name;
         }
+      } catch (error) {
+        console.error("Error resolving supplier info:", error);
+      }
     }
-    
+
     return {
       ...entity,
-      product: {} as any, // TODO: Resolver el producto completo si es necesario
+      product: product || ({} as ProductView),
       productCode,
       productName,
       productCategory,

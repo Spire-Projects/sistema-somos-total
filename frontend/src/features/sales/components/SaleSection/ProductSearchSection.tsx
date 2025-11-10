@@ -1,31 +1,25 @@
 import { memo, useState, useCallback, useEffect } from "react";
-import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
-import { Search, AlertCircle } from "lucide-react";
-import { getPurchaseBoxRepository } from "@/shared/db/repositories/purchase.repository";
-import { getProductRepository } from "@/shared/db/repositories/product.repository";
-import type { PurchaseBox } from "@/shared/types/modelTypes/PurchaseBox";
-import type { Product } from "@/shared/types/modelTypes/Product";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import SearchInput from "@/shared/components/SearchInput";
-
-interface PurchaseBoxWithProduct extends PurchaseBox {
-  productName?: string;
-  productCode?: string;
-}
+import { purchaseService } from "@/shared/services/PurchaseService";
+import { productService } from "@/shared/services/ProductService";
+import type { PurchaseView } from "@/shared/types/modelTypes/PurchaseBox";
+import type { ProductView } from "@/shared/types/modelTypes/Product";
 
 interface ProductSearchSectionProps {
-  onAddProduct: (purchaseBox: PurchaseBoxWithProduct, product: Product) => void;
+  onAddProduct: (purchaseBox: PurchaseView, product: ProductView) => void;
   disabled?: boolean;
 }
 
 const ProductSearchSection = memo(({ onAddProduct, disabled = false }: ProductSearchSectionProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<PurchaseBoxWithProduct[]>([]);
+  const [searchResults, setSearchResults] = useState<PurchaseView[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  // Buscar productos y lotes mejorado
+  // Buscar productos y lotes usando servicios
   const performSearch = useCallback(async (query: string) => {
     if (!query || query.trim().length < 2) {
       setSearchResults([]);
@@ -35,18 +29,14 @@ const ProductSearchSection = memo(({ onAddProduct, disabled = false }: ProductSe
 
     setIsSearching(true);
     try {
-      const purchaseRepo = getPurchaseBoxRepository();
-      const productRepo = getProductRepository();
       const trimmedQuery = query.trim();
 
-      // 1. Buscar productos por nombre
-      const productsResponse = await productRepo.getAll(1, 100, trimmedQuery);
-      const productIds = productsResponse.items.map((p) => p.id);
+      const productsResponse = await productService.getAllView(1, 100, trimmedQuery);
+      const productIds = productsResponse.items.map((p: ProductView) => p.id);
       
-      // 2. Buscar compras relacionadas con esos productos (usando el filtro correcto)
-      const purchasesByProducts: PurchaseBox[] = [];
+      const purchasesByProducts: PurchaseView[] = [];
       for (const productId of productIds) {
-        const purchasesForProduct = await purchaseRepo.getAll(
+        const purchasesForProduct = await purchaseService.getAllView(
           1,
           100,
           '',
@@ -54,37 +44,33 @@ const ProductSearchSection = memo(({ onAddProduct, disabled = false }: ProductSe
           undefined,
           { productId }
         );
-        purchasesByProducts.push(...purchasesForProduct.items.filter((p: PurchaseBox) => p.quantityAvailable > 0));
+        purchasesByProducts.push(
+          ...purchasesForProduct.items.filter((p: PurchaseView) => p.quantityAvailable > 0)
+        );
       }
       
       // 3. Buscar también por código/recibo directamente en compras
-      const directPurchases = await purchaseRepo.getAll(1, 100, trimmedQuery);
+      const directPurchases = await purchaseService.getAllView(1, 100, trimmedQuery);
       
-      // 4. Combinar resultados, eliminar duplicados y ordenar
-      const allPurchases = [...purchasesByProducts, ...directPurchases.items.filter((p: PurchaseBox) => p.quantityAvailable > 0)];
-      const uniquePurchases = allPurchases.reduce((acc: PurchaseBox[], current: PurchaseBox) => {
-        const exists = acc.find((p: PurchaseBox) => p.id === current.id);
+      // 4. Combinar resultados, eliminar duplicados y filtrar solo con stock
+      const allPurchases = [
+        ...purchasesByProducts, 
+        ...directPurchases.items.filter((p: PurchaseView) => p.quantityAvailable > 0)
+      ];
+      
+      const uniquePurchases = allPurchases.reduce((acc: PurchaseView[], current: PurchaseView) => {
+        const exists = acc.find((p: PurchaseView) => p.id === current.id);
         if (!exists) acc.push(current);
         return acc;
-      }, [] as PurchaseBox[]);
+      }, [] as PurchaseView[]);
       
       // Ordenar por cantidad (menor a mayor para priorizar productos con poco stock)
-      uniquePurchases.sort((a: PurchaseBox, b: PurchaseBox) => a.quantityAvailable - b.quantityAvailable);
-
-      // 5. Enriquecer con información del producto
-      const enrichedResults: PurchaseBoxWithProduct[] = await Promise.all(
-        uniquePurchases.map(async (purchase) => {
-          const product = await productRepo.findById(purchase.productId);
-          return {
-            ...purchase,
-            productName: product?.name,
-            productCode: product?.code
-          };
-        })
+      uniquePurchases.sort((a: PurchaseView, b: PurchaseView) => 
+        a.quantityAvailable - b.quantityAvailable
       );
 
-      setSearchResults(enrichedResults);
-      setShowResults(enrichedResults.length > 0);
+      setSearchResults(uniquePurchases);
+      setShowResults(uniquePurchases.length > 0);
     } catch (error) {
       console.error('Error searching products:', error);
       toast.error('Error al buscar productos');
@@ -104,17 +90,17 @@ const ProductSearchSection = memo(({ onAddProduct, disabled = false }: ProductSe
   }, [searchQuery, performSearch]);
 
   // Manejar agregar producto
-  const handleAddProduct = useCallback(async (purchaseBox: PurchaseBoxWithProduct) => {
+  const handleAddProduct = useCallback(async (purchaseView: PurchaseView) => {
     try {
-      const productRepo = getProductRepository();
-      const product = await productRepo.findById(purchaseBox.productId);
+      // El producto ya viene en el PurchaseView
+      const product = purchaseView.product;
       
       if (!product) {
         toast.error('No se pudo cargar la información del producto');
         return;
       }
 
-      onAddProduct(purchaseBox, product);
+      onAddProduct(purchaseView, product);
       
       // Limpiar búsqueda después de agregar
       setSearchQuery("");
@@ -168,11 +154,11 @@ const ProductSearchSection = memo(({ onAddProduct, disabled = false }: ProductSe
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-2 mb-1">
                       <h4 className="font-medium text-sm truncate">
-                        {purchase.productName || 'Producto sin nombre'}
+                        {purchase.product?.name || purchase.productName || 'Producto sin nombre'}
                       </h4>
-                      {purchase.productCode && (
+                      {(purchase.product?.code || purchase.productCode) && (
                         <Badge variant="outline" className="text-xs shrink-0">
-                          {purchase.productCode}
+                          {purchase.product?.code || purchase.productCode}
                         </Badge>
                       )}
                     </div>
