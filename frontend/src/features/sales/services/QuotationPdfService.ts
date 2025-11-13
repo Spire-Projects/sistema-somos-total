@@ -1,16 +1,18 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { SaleState } from '@/shared/types/modelTypes/Sale';
+import { logoBase64 } from '@/assets/logoBase64';
 
 interface QuotationPdfOptions {
   saleState: SaleState;
   quotationNumber?: string;
+  sellerName?: string;
 }
 
 export class QuotationPdfService {
   private static readonly COMPANY_NAME = 'Sistema SOMOS Total';
   private static readonly COLORS = {
-    primary: '#2563eb',
+    primary: '#016c72',
     secondary: '#64748b',
     text: '#1e293b',
     lightGray: '#f1f5f9',
@@ -20,21 +22,15 @@ export class QuotationPdfService {
    * Genera un PDF de cotización
    */
   static generateQuotationPdf(options: QuotationPdfOptions): jsPDF {
-    const { saleState, quotationNumber = 'COTIZ-001' } = options;
+    const { saleState, quotationNumber = 'COTIZ-001', sellerName = 'Vendedor' } = options;
     const doc = new jsPDF();
 
     // Configuración del documento
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 15;
 
-    // Header - Información de la empresa
-    this.addHeader(doc, pageWidth, margin);
-
-    // Información de la cotización
-    this.addQuotationInfo(doc, quotationNumber, saleState, margin);
-
-    // Información del cliente
-    this.addClientInfo(doc, saleState, pageWidth, margin);
+    // Header - Información de la empresa y cotización
+    this.addHeaderWithQuotationInfo(doc, pageWidth, margin, quotationNumber, saleState, sellerName);
 
     // Tabla de productos
     this.addProductsTable(doc, saleState);
@@ -54,84 +50,50 @@ export class QuotationPdfService {
   }
 
   /**
-   * Agrega el encabezado del documento
+   * Agrega el encabezado y la información principal de la cotización
    */
-  private static addHeader(doc: jsPDF, pageWidth: number, margin: number): void {
-    // Logo/Nombre de la empresa
-    doc.setFontSize(20);
-    doc.setTextColor(this.COLORS.primary);
-    doc.setFont('helvetica', 'bold');
-    doc.text(this.COMPANY_NAME, margin, 20);
-
-    // Título del documento
-    doc.setFontSize(16);
-    doc.setTextColor(this.COLORS.text);
-    doc.text('COTIZACIÓN', pageWidth - margin, 20, { align: 'right' });
-
-    // Línea separadora
-    doc.setDrawColor(this.COLORS.primary);
-    doc.setLineWidth(0.5);
-    doc.line(margin, 25, pageWidth - margin, 25);
-  }
-
-  /**
-   * Agrega información de la cotización
-   */
-  private static addQuotationInfo(
+  private static addHeaderWithQuotationInfo(
     doc: jsPDF,
+    pageWidth: number,
+    margin: number,
     quotationNumber: string,
     saleState: SaleState,
-    margin: number
+    sellerName: string
   ): void {
+    // Título "COTIZACIÓN" en la parte superior izquierda
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(this.COLORS.text);
+    doc.text('COTIZACIÓN', margin, 20);
+
+    // Número de cotización en la esquina superior derecha
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(this.COLORS.text);
+    doc.text(`${quotationNumber}`, pageWidth - margin, 12, { align: 'right' });
+
+    // Logo debajo del número de cotización en la parte superior derecha
+    doc.addImage(logoBase64, 'PNG', pageWidth - margin - 42, 16, 40, 20);
+
+    // Información principal: Fecha, Vendedor, Cliente
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(this.COLORS.secondary);
+
     const currentDate = new Date().toLocaleDateString('es-BO', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     });
+    const vendedor = sellerName || 'Vendedor';
+    const cliente = saleState.clientName || 'Cliente General';
 
-    doc.setFontSize(10);
-    doc.setTextColor(this.COLORS.secondary);
-    doc.setFont('helvetica', 'normal');
-
-    let yPosition = 32;
-
-    doc.text(`N° Cotización: ${quotationNumber}`, margin, yPosition);
-    yPosition += 5;
-    doc.text(`Fecha: ${currentDate}`, margin, yPosition);
-    yPosition += 5;
-    doc.text(
-      `Moneda: ${saleState.paymentCurrency === 'bs' ? 'Bolivianos (Bs)' : 'Pesos Argentinos (ARS)'}`,
-      margin,
-      yPosition
-    );
-  }
-
-  /**
-   * Agrega información del cliente
-   */
-  private static addClientInfo(
-    doc: jsPDF,
-    saleState: SaleState,
-    _pageWidth: number,
-    margin: number
-  ): void {
-    const clientName = saleState.clientName || 'Cliente General';
-    
-    doc.setFontSize(11);
-    doc.setTextColor(this.COLORS.text);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CLIENTE:', margin, 52);
-
-    doc.setFont('helvetica', 'normal');
-    doc.text(clientName, margin + 20, 52);
-
-    if (saleState.nitClient) {
-      doc.text(`NIT: ${saleState.nitClient}`, margin, 58);
-    }
-
-    if (saleState.socialReasonClient) {
-      doc.text(`Razón Social: ${saleState.socialReasonClient}`, margin, 64);
-    }
+    let infoY = 34;
+    doc.text(`FECHA:      ${currentDate}`, margin, infoY);
+    infoY += 6;
+    doc.text(`VENDEDOR:   ${vendedor}`, margin, infoY);
+    infoY += 6;
+    doc.text(`CLIENTE:    ${cliente}`, margin, infoY);
   }
 
   /**

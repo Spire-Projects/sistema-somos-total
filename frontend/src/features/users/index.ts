@@ -1,1 +1,1 @@
-export { UserManager } from './components/UserManager';
+export { UserManager } from './views/UserManager';

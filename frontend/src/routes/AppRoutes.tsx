@@ -10,7 +10,7 @@ import { useAppSelector } from '../shared/store/hooks';
 import { InventoryPage } from '@/features/inventory/views/InventoryPage';
 
 // Lazy loading solo para páginas menos críticas
-const UserManager = lazy(() => import('../features/users/components/UserManager').then(module => ({ default: module.UserManager })));
+const UserManager = lazy(() => import('../features/users/views/UserManager').then(module => ({ default: module.UserManager })));
 const PurchasesPage = lazy(() => import('../features/purchases/components/PurchasesPage').then(module => ({ default: module.PurchasesPage })));
 const ReportsPage = lazy(() => import('../features/reports/components/ReportsPage').then(module => ({ default: module.ReportsPage })));
 const SettingsPage = lazy(() => import('../features/settings/components/SettingsPage').then(module => ({ default: module.SettingsPage })));

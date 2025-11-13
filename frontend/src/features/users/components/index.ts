@@ -1,4 +1,4 @@
-export { UserManager } from './UserManager';
+export { UserManager } from '../views/UserManager';
 export { UserSearchAndFilters } from './UserSearchAndFilters';
 export { UserTable } from './UserTable';
 export { UserPagination } from './UserPagination';

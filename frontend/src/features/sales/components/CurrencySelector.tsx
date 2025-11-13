@@ -3,6 +3,7 @@ import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Badge } from '@/shared/components/ui/badge';
 import { Banknote, Info } from 'lucide-react';
+import useGlobalStates from '@/shared/hooks/useGlobalStates';
 
 interface CurrencySelectorProps {
   selectedCurrency: 'bs' | 'arg';
@@ -15,8 +16,8 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   onCurrencyChange,
   disabled = false
 }) => {
-  // Tipo de cambio: 1 Bs = X ARS (puedes ajustar este valor según necesites)
-  const EXCHANGE_RATE = 200; // 1 Boliviano = 200 Pesos Argentinos
+ 
+  const { currency} = useGlobalStates();
 
   const currencies = [
     { 
@@ -78,7 +79,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
             </p>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="bg-white text-xs">
-                1 Bs = {EXCHANGE_RATE} ARS
+                1 ARG = {currency?.equivalenceToBs} Bs
               </Badge>
             </div>
             <p className="text-xs text-blue-700">

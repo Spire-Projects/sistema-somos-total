@@ -152,11 +152,7 @@ const SaleItemsTable = memo(({
                     <div className="font-medium text-green-600">
                       Bs {item.unitPrice.toFixed(2)}
                     </div>
-                    {item.profitMarginPercentage && (
-                      <div className="text-xs text-gray-500">
-                        +{item.profitMarginPercentage}% ganancia
-                      </div>
-                    )}
+                    
                   </TableCell>
 
                   <TableCell className="text-right">

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { UserSearchAndFilters, type UserFilter } from './UserSearchAndFilters';
-import { UserTable } from './UserTable';
+import { UserSearchAndFilters, type UserFilter } from '../components/UserSearchAndFilters';
+import { UserTable } from '../components/UserTable';
 import { DataPagination } from '../../../shared/components/DataPagination';
 import type { UserDocument } from '@/shared/db/models/user.model';
-import { UserDialog } from './UserDialog';
+import { UserDialog } from '../components/UserDialog';
 import CustomDialog from '../../../shared/components/CustomDialog';
 import { useUserActions } from '../hooks/useUserActions';
+import PageHeader from '@/shared/components/PageHeader';
+import { User2Icon } from 'lucide-react';
 
 export const UserManager: React.FC = () => {
   // Estados para búsqueda y filtros
@@ -78,7 +80,8 @@ export const UserManager: React.FC = () => {
   const endIndex = Math.min(startIndex + usersPerPage, filteredUsers.length);
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
+    <div className="p-0 xs:p-1 sm:p-2 md:p-4 lg:p-6 space-y-6">
+      <PageHeader title='Usuarios' subtitle='Gestion de usuarios' icon={<User2Icon/>}></PageHeader>
       <div className="mb-6">
         <UserSearchAndFilters
           searchQuery={searchQuery}

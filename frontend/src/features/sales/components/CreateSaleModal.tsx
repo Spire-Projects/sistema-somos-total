@@ -33,6 +33,7 @@ import { Printer } from "lucide-react";
 import { generateSaleData } from "../utils/SaleUtils";
 import { useQuotationPdf } from "../hooks/useQuotationPdf";
 import { QuotationPreviewModal } from "./QuotationPreviewModal";
+import useGlobalStates from "@/shared/hooks/useGlobalStates";
 
 interface CreateSaleModalProps {
   open: boolean;
@@ -60,7 +61,7 @@ const CreateSaleModal = memo(
     const [completedSale, setCompletedSale] = useState<SaleView | null>(null);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [showQuotationPreview, setShowQuotationPreview] = useState(false);
-
+    const { currency } = useGlobalStates();
     // Hook para manejar la generación de PDF
     const {
       generatePdf,
@@ -70,7 +71,7 @@ const CreateSaleModal = memo(
       isGenerating,
     } = useQuotationPdf({
       saleState,
-      quotationNumber: initialSaleId || 'NUEVA',
+      saleId: initialSaleId || 'NUEVA',
     });
 
     useEffect(() => {
@@ -351,7 +352,9 @@ const CreateSaleModal = memo(
 
     const handleSaveQuotation = useCallback(async () => {
       console.log("Guardando cotización con id:", initialSaleId);
-      const saleData = generateSaleData(saleState, "current-user", "S/N", true);
+      // Generar un id único corto para la cotización si no hay initialSaleId
+      const uniqueQuotationId = initialSaleId || `Q${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+      const saleData = generateSaleData(saleState, "current-user", uniqueQuotationId, true);
       if (initialSaleId) {
         await salesService.update(initialSaleId, saleData);
         toast.success("¡Cotización actualizada exitosamente!");
@@ -359,7 +362,7 @@ const CreateSaleModal = memo(
         await salesService.create(saleData);
       }
       onClose();
-    }, [saleState]);
+    }, [saleState, initialSaleId]);
 
     const handleConfirmSale = useCallback(async () => {
       if (saleState.items.length === 0) {
@@ -374,7 +377,9 @@ const CreateSaleModal = memo(
         const saleData = generateSaleData(
           saleState,
           "Current-user",
-          invoiceNumber
+          invoiceNumber,
+          false,
+          currency?.equivalenceToBs ?? 1
         );
         const createdSale = await salesService.create(saleData);
 
@@ -383,11 +388,17 @@ const CreateSaleModal = memo(
             item.purchaseBoxId
           );
           if (purchaseBox) {
+            console.log('Updating purchase box:', purchaseBox.id);
             const newQuantity = purchaseBox.quantityAvailable - item.quantity;
-            await purchaseService.update(purchaseBox.id, {
+           const pw = await purchaseService.update(purchaseBox.id, {
               quantityAvailable: Math.max(0, newQuantity),
               updatedBy: "current-user", // TODO: Get from auth context
             });
+            console.log('Purchase box updated new quantity:',newQuantity);
+            console.log('Update result:', pw);
+          }else
+          {
+            console.warn(`No se encontró el PurchaseBox con id: ${item.purchaseBoxId}`);
           }
         }
 

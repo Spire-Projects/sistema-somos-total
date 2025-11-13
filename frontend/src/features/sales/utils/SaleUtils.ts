@@ -5,8 +5,22 @@ export const generateSaleData = (
   saleState: SaleState,
   userId: string,
   invoiceNumber: string,
-  isDraft = false
+  isDraft = false,
+  exchangeRateArg?: number
 ): CreateSaleData => {
+
+  const totalInBs = saleState.paymentCurrency === 'arg' && exchangeRateArg
+    ? saleState.total / exchangeRateArg
+    : saleState.total;
+
+  const totalWithoutDiscountInBs = saleState.paymentCurrency === 'arg' && exchangeRateArg && saleState.subtotal
+    ? saleState.subtotal / exchangeRateArg
+    : saleState.subtotal;
+
+  const totalDiscountInBs = saleState.paymentCurrency === 'arg' && exchangeRateArg && saleState.totalDiscount
+    ? saleState.totalDiscount / exchangeRateArg
+    : saleState.totalDiscount;
+
   const saleData: CreateSaleData = {
     items: saleState.items.map((item) => ({
       purchaseBoxId: item.purchaseBoxId,
@@ -16,9 +30,9 @@ export const generateSaleData = (
       discount: item.discount,
       total: item.total,
     })),
-    total: saleState.total,
-    totalWithoutDiscount: saleState.subtotal,
-    totalDiscount: saleState.totalDiscount,
+    total: totalInBs,
+    totalWithoutDiscount: totalWithoutDiscountInBs,
+    totalDiscount: totalDiscountInBs,
     client: saleState.clientId,
     paymentMethod: saleState.paymentMethod,
     paymentCurrency: saleState.paymentCurrency,

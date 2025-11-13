@@ -2,13 +2,14 @@ import { useCallback, useState } from 'react';
 import type { SaleState } from '@/shared/types/modelTypes/Sale';
 import { QuotationPdfService } from '../services/QuotationPdfService';
 import { toast } from 'sonner';
+import { salesService } from '@/shared/services/SalesService';
 
 interface UseQuotationPdfOptions {
   saleState: SaleState;
-  quotationNumber?: string;
+  saleId: string;
 }
 
-export const useQuotationPdf = ({ saleState, quotationNumber }: UseQuotationPdfOptions) => {
+export const useQuotationPdf = ({ saleState, saleId }: UseQuotationPdfOptions) => {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -18,9 +19,10 @@ export const useQuotationPdf = ({ saleState, quotationNumber }: UseQuotationPdfO
   const generatePdf = useCallback(async (): Promise<Blob | null> => {
     setIsGenerating(true);
     try {
+      const saleDoc = await salesService.findById(saleId);
       const doc = QuotationPdfService.generateQuotationPdf({
         saleState,
-        quotationNumber,
+        quotationNumber: saleDoc?.numberInvoice || 'COTIZ-001',
       });
 
       const blob = doc.output('blob');
@@ -33,16 +35,17 @@ export const useQuotationPdf = ({ saleState, quotationNumber }: UseQuotationPdfO
     } finally {
       setIsGenerating(false);
     }
-  }, [saleState, quotationNumber]);
+  }, [saleState, saleId]);
 
   /**
    * Descarga el PDF
    */
   const downloadPdf = useCallback(async () => {
     try {
+      const saleDoc = await salesService.findById(saleId);
       const doc = QuotationPdfService.generateQuotationPdf({
         saleState,
-        quotationNumber,
+        quotationNumber: saleDoc?.numberInvoice || 'COTIZ-001',
       });
 
       const fileName = QuotationPdfService.generateFileName(saleState.clientName);
@@ -52,7 +55,7 @@ export const useQuotationPdf = ({ saleState, quotationNumber }: UseQuotationPdfO
       console.error('Error descargando PDF:', error);
       toast.error('Error al descargar la cotización');
     }
-  }, [saleState, quotationNumber]);
+  }, [saleState, saleId]);
 
   /**
    * Imprime el PDF

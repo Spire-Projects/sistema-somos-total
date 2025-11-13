@@ -28,6 +28,8 @@ import { categorySchema } from "./models/coreModels/category.model";
 import { manufacturerSchema } from "./models/manufacturer.model";
 import type { Manufacturer } from "../types/modelTypes/Manufacturer";
 import type { Sale } from "../types/modelTypes/Sale";
+import { currencySchema } from "./models/currency.model";
+import type { Currency } from "../types/modelTypes/Currency";
 
 
 const setupRxDBPlugins = async () => {
@@ -54,6 +56,7 @@ export interface DatabaseCollections {
   products: RxCollection<Product>;
   categories: RxCollection<Category>;
   manufacturers: RxCollection<Manufacturer>;
+  currency: RxCollection<Currency>;
 }
 
 let dbInstance: RxDatabase<DatabaseCollections> | null = null;
@@ -120,6 +123,10 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         },
         manufacturers: {
           schema: manufacturerSchema,
+          autoMigrate: true,
+        },
+        currency: {
+          schema: currencySchema,
           autoMigrate: true,
         },
       });

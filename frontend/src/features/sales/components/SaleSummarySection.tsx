@@ -1,4 +1,5 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
+import Decimal from "decimal.js";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import {
@@ -17,6 +18,7 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { DollarSign, CheckCircle2, X, Boxes } from "lucide-react";
 import type { SaleState } from "@/shared/types/modelTypes/Sale";
+import useGlobalStates from "@/shared/hooks/useGlobalStates";
 
 interface SaleSummarySectionProps {
   saleState: SaleState;
@@ -43,6 +45,7 @@ const SaleSummarySection = memo(
     const [tempDiscountValue, setTempDiscountValue] = useState(
       saleState.clientDiscountValue
     );
+    const {currency} = useGlobalStates();
 
     // Aplicar descuento personalizado
     const handleApplyDiscount = () => {
@@ -57,15 +60,20 @@ const SaleSummarySection = memo(
       setDiscountEditMode(false);
     };
 
-    // Formatear moneda
-    const formatCurrency = (value: number, currency: "bs" | "arg") => {
+    // Formatear moneda con precisión decimal
+    const formatCurrency = (value: number | string, currency: "bs" | "arg") => {
       const symbol = currency === "bs" ? "Bs" : "ARS";
-      return `${symbol} ${value.toFixed(2)}`;
+      return `${symbol} ${new Decimal(value).toFixed(2)}`;
     };
 
     // Validar si se puede confirmar la venta
     const canConfirmSale = saleState.items.length > 0 && !isProcessing;
 
+
+    useEffect(() => {
+      console.log("SaleState total changed:", saleState.total);
+      console.log("Currency equivalence:", currency?.equivalenceToBs);
+    }, [saleState.total]);
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -83,7 +91,7 @@ const SaleSummarySection = memo(
               <span className="font-medium">
                 {formatCurrency(
                   saleState.paymentCurrency === "arg"
-                    ? saleState.subtotal * 200
+                    ? new Decimal(saleState.subtotal).div(currency?.equivalenceToBs || 1).toNumber()
                     : saleState.subtotal,
                   saleState.paymentCurrency
                 )}
@@ -205,9 +213,11 @@ const SaleSummarySection = memo(
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold">TOTAL A PAGAR:</span>
               <span className="text-2xl font-bold text-green-600">
-                {formatCurrency(
+                {
+                
+                formatCurrency(
                   saleState.paymentCurrency === "arg"
-                    ? saleState.total * 200
+                    ? new Decimal(saleState.total).div(currency?.equivalenceToBs || 1).toNumber()
                     : saleState.total,
                   saleState.paymentCurrency
                 )}

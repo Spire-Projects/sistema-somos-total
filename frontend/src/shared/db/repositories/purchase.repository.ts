@@ -38,9 +38,9 @@ export class LocalPurchaseBoxRepository extends BaseRepository<PurchaseBox> impl
   async update(id: string, updateData: Partial<PurchaseBox>): Promise<PurchaseBox | null> {
     try {
       const existing = await this.findById(id);
-      if (existing) {
-        const newStockAvailable = existing.quantityAvailable! + (updateData.quantityPurchased ? (updateData.quantityPurchased - existing.quantityPurchased) : 0);
-        updateData = { ...updateData, quantityAvailable: newStockAvailable };
+      if (!existing) {
+        console.warn(`❌ Compra con id ${id} no encontrada para actualizar.`);
+        return null;
       }
 
       return await this.updateWithPriority(id, updateData);
