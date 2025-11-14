@@ -49,9 +49,23 @@ const SaleSummarySection = memo(
 
     // Aplicar descuento personalizado
     const handleApplyDiscount = () => {
-      onClientDiscountChange(tempDiscountType, tempDiscountValue);
+      if (tempDiscountType === "fixed" && saleState.paymentCurrency === 'arg' && currency?.equivalenceToBs) {
+        // Ajustar el valor fijo a moneda base (Bs) antes de enviarlo
+        const adjustedValue = tempDiscountValue * currency.equivalenceToBs;
+        onClientDiscountChange(tempDiscountType, adjustedValue);
+      } else {
+        onClientDiscountChange(tempDiscountType, tempDiscountValue);
+      }
+      //
       setDiscountEditMode(false);
     };
+
+    useEffect(() => {
+      handleApplyDiscount();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [saleState.paymentCurrency]);
+
+    
 
     // Cancelar edición
     const handleCancelDiscount = () => {
@@ -127,7 +141,7 @@ const SaleSummarySection = memo(
                   {saleState.clientDiscountType === "percentage"
                     ? `${saleState.clientDiscountValue}%`
                     : formatCurrency(
-                        saleState.clientDiscountValue,
+                        saleState.paymentCurrency === "arg" ? saleState.clientDiscountValue/currency?.equivalenceToBs! :saleState.clientDiscountValue,
                         saleState.paymentCurrency
                       )}
                 </span>
@@ -137,7 +151,7 @@ const SaleSummarySection = memo(
                     saleState.clientDiscountType === "percentage"
                       ? (saleState.subtotal - saleState.totalDiscount) *
                           (saleState.clientDiscountValue / 100)
-                      : saleState.clientDiscountValue,
+                      : saleState.paymentCurrency === "arg" ? saleState.clientDiscountValue / currency?.equivalenceToBs! : saleState.clientDiscountValue,
                     saleState.paymentCurrency
                   )}
                 </span>
@@ -212,7 +226,7 @@ const SaleSummarySection = memo(
           <div className="space-y-2 pt-2">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold">TOTAL A PAGAR:</span>
-              <span className="text-2xl font-bold text-green-600">
+              <span className="text-lg font-bold text-green-600">
                 {
                 
                 formatCurrency(

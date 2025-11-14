@@ -198,10 +198,23 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
           }
 
           const skip = (page - 1) * size;
-          
+
+          // Ordenamiento dinámico
+          let sort: any[] = [];
+          if (filter?.orderBy) {
+            const direction = filter.orderDirection === 'asc' ? 'asc' : 'desc';
+            sort.push({ [filter.orderBy]: direction });
+          }
+          // Siempre priorizar no eliminados
+          sort.unshift({ isDeleted: 'asc' });
+          // Si no hay orderBy, usar createdAt por defecto
+          if (sort.length === 1) {
+            sort.push({ createdAt: 'desc' });
+          }
+
           subscription = collection.find({
             selector,
-            sort: [{ isDeleted: 'asc', createdAt: 'desc' }],
+            sort,
             skip,
             limit: size
           }).$.pipe(

@@ -85,6 +85,8 @@ export interface SaleFilter {
   clientId?: string; // Filter by client ID
   factured?: boolean; // Filter by factured status
   isDraft?: boolean; // Filter by draft status
+  orderBy?: 'createdAt' | 'numberInvoice'; // Field to order by
+  orderDirection?: 'asc' | 'desc'; // Direction of ordering
 }
 
 // Types for sale creation modal

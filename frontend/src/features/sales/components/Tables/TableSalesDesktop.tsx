@@ -577,9 +577,7 @@ const TableSalesDesktopComponent = ({
                                             </td>
                                             <td className="py-2 px-3 text-right">
                                               {formatCurrency(
-                                                sale.paymentCurrency === "arg"
-                                                  ? item.unitPrice * 200
-                                                  : item.unitPrice,
+                                                item.unitPrice,
                                                 sale.paymentCurrency
                                               )}
                                             </td>
@@ -587,10 +585,7 @@ const TableSalesDesktopComponent = ({
                                               <td className="py-2 px-3 text-right text-red-600">
                                                 {item.discount > 0
                                                   ? `-${formatCurrency(
-                                                      sale.paymentCurrency ===
-                                                        "arg"
-                                                        ? item.discount * 200
-                                                        : item.discount,
+                                                    item.discount,
                                                       sale.paymentCurrency
                                                     )}`
                                                   : "-"}
@@ -598,9 +593,7 @@ const TableSalesDesktopComponent = ({
                                             )}
                                             <td className="py-2 px-3 text-right font-semibold">
                                               {formatCurrency(
-                                                sale.paymentCurrency === "arg"
-                                                  ? item.total * 200
-                                                  : item.total,
+                                                sale.total,
                                                 sale.paymentCurrency
                                               )}
                                             </td>

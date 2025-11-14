@@ -338,7 +338,8 @@ const CreateSaleModal = memo(
     // Manejar cambio de descuento del cliente
     const handleClientDiscountChange = useCallback(
       (type: "percentage" | "fixed", value: number) => {
-        const totals = calculateTotals(saleState.items, type, value);
+        let discountValue = value;
+        const totals = calculateTotals(saleState.items, type, discountValue);
 
         setSaleState((prev) => ({
           ...prev,
@@ -347,7 +348,7 @@ const CreateSaleModal = memo(
           ...totals,
         }));
       },
-      [saleState.items, calculateTotals]
+      [saleState.items, calculateTotals, saleState.paymentCurrency]
     );
 
     const handleSaveQuotation = useCallback(async () => {
@@ -486,7 +487,7 @@ const CreateSaleModal = memo(
     return (
       <>
         <Dialog open={open} onOpenChange={handleCancel}>
-          <DialogContent className="max-w-[95vw] h-[95vh] p-0 min-w-[80vw]!">
+          <DialogContent className="max-w-[95vw] h-[95vh] p-0 min-w-[85vw]!">
             <DialogHeader className="p-6 pb-4">
               <DialogTitle className="text-2xl">Nueva Venta</DialogTitle>
               <Button
@@ -516,6 +517,7 @@ const CreateSaleModal = memo(
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemoveItem={handleRemoveItem}
                     disabled={isProcessing}
+                    saleState={saleState}
                   />
                 </div>
 

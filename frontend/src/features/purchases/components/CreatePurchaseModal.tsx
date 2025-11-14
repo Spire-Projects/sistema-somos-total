@@ -319,6 +319,7 @@ const CreatePurchaseModalComponent = ({
                         purchaseDate: new Date(data.purchaseDate).toISOString(),
                         receiptNumber: data.receiptNumber,
                         quantityPurchased: data.quantity,
+                        quantityAvailable: purchaseToEdit.quantityAvailable + (data.quantity - purchaseToEdit.quantityPurchased),
                         unitCost: data.unitCost,
                         totalCost: data.totalCost,
                         supplierId: data.supplierId,

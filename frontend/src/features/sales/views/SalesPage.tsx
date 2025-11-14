@@ -19,6 +19,13 @@ import { TableSalesMobile } from "../components/Tables/TableSalesMobile";
 import { FilterTabs } from "@/shared/components/FilterTabs";
 import CreateSaleModal from "../components/CreateSaleModal";
 import { ResolvingTemporaryNumbersModal } from "../components/SolverNumberModal";
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectItem,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
 export const SalesPage = () => {
   const [activeSection, setActiveSection] = useState<string>("ventas");
@@ -58,6 +65,7 @@ export const SalesPage = () => {
     setSearch,
     setFilters,
     clearFilters,
+    filters,
 
     // Actions - General
     refresh,
@@ -173,6 +181,36 @@ export const SalesPage = () => {
             onChange={setSearch}
             isLoading={loading}
           />
+          {/* Select de ordenamiento y filtros con shadcn/ui */}
+          <div className="flex gap-2 items-center">
+            <span className="text-xs text-muted-foreground">Ordenar por:</span>
+            <Select
+              value={filters?.orderBy || "createdAt"}
+              onValueChange={value => setFilters({ ...filters, orderBy: value as 'createdAt' | 'numberInvoice' })}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-36 h-9">
+                <SelectValue placeholder="Selecciona orden" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt">Fecha de creación</SelectItem>
+                <SelectItem value="numberInvoice">Número de factura</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters?.orderDirection || "desc"}
+              onValueChange={value => setFilters({ ...filters, orderDirection: value as 'asc' | 'desc' })}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-28 h-9">
+                <SelectValue placeholder="Dirección" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Descendente</SelectItem>
+                <SelectItem value="asc">Ascendente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {activeSection === "ventas" && (
             <Button
               variant="default"

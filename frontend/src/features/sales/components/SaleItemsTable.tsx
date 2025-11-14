@@ -13,23 +13,26 @@ import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
 import CustomDialog from "@/shared/components/CustomDialog";
 import { ShoppingCart, Trash2, Plus, Minus, Info } from "lucide-react";
-import type { CartSaleItem } from "@/shared/types/modelTypes/Sale";
+import type { CartSaleItem, SaleState } from "@/shared/types/modelTypes/Sale";
+import useGlobalStates from "@/shared/hooks/useGlobalStates";
 
 interface SaleItemsTableProps {
   items: CartSaleItem[];
   onUpdateQuantity: (purchaseBoxId: string, quantity: number) => void;
   onRemoveItem: (purchaseBoxId: string) => void;
   disabled?: boolean;
+  saleState?: SaleState;
 }
 
 const SaleItemsTable = memo(({
   items,
   onUpdateQuantity,
   onRemoveItem,
-  disabled = false
+  disabled = false,
+  saleState,
 }: SaleItemsTableProps) => {
   const [showClearDialog, setShowClearDialog] = useState(false);
-
+  const {currency} = useGlobalStates();
   const handleIncrement = useCallback((item: CartSaleItem) => {
     if (item.quantity < item.availableStock) {
       onUpdateQuantity(item.purchaseBoxId, item.quantity + 1);
@@ -150,14 +153,17 @@ const SaleItemsTable = memo(({
 
                   <TableCell className="text-right">
                     <div className="font-medium text-green-600">
-                      Bs {item.unitPrice.toFixed(2)}
+                       {saleState?.paymentCurrency === 'arg' ? 'ARS ' : 'Bs '}
+
+                       {saleState?.paymentCurrency === 'arg' ? (item.unitPrice / (currency?.equivalenceToBs || 1)).toFixed(2) : item.unitPrice.toFixed(2)}
                     </div>
                     
                   </TableCell>
 
                   <TableCell className="text-right">
                     <div className="font-bold text-blue-600">
-                      Bs {item.total.toFixed(2)}
+                      {saleState?.paymentCurrency === 'arg' ? 'ARS ' : 'Bs '}
+                      {saleState?.paymentCurrency === 'arg' ? (item.total / (currency?.equivalenceToBs || 1)).toFixed(2) : item.total.toFixed(2)}
                     </div>
                   </TableCell>
 
