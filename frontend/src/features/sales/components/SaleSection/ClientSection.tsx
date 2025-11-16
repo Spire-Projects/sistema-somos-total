@@ -5,9 +5,9 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/components/ui/collapsible";
 import { User, Plus, X, ChevronDown, ChevronRight } from "lucide-react";
 import CreatableSelect from "@/shared/components/CreatableSelect";
-import { getAllClientsPaginated } from "@/shared/services/ClientService";
 import type { Client } from "@/shared/types/Client";
 import { ClientFormDialog } from "./ClientFormDialog";
+import { clientService } from "@/shared/services";
 
 
 interface ClientSectionProps {
@@ -32,7 +32,7 @@ const ClientSection = memo(({
   useEffect(() => {
     const fetchInitialClients = async () => {
       try {
-        const response = await getAllClientsPaginated(1, 10);
+        const response = await clientService.getAllView(1, 10);
         setInitialClients(response.items);
       } catch (error) {
         console.error("Error cargando clientes iniciales:", error);
@@ -47,7 +47,7 @@ const ClientSection = memo(({
       return [];
     }
     try {
-      const response = await getAllClientsPaginated(1, 10, query);
+      const response = await clientService.getAllView(1, 10, query);
       return response.items;
     } catch (error) {
       console.error("Error buscando clientes:", error);

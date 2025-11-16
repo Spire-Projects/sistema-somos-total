@@ -2,6 +2,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../shared/components/ui/table';
 import { Button } from '../../../shared/components/ui/button';
 import { Badge } from '../../../shared/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card';
 import { formatDate, formatDateTime } from '@/shared/utils/date.utils';
 import { getRoleBadgeVariant, getRoleLabel } from '@/shared/utils/role.utils';
 import type { UserDocument } from '@/shared/db/models/user.model';
@@ -32,7 +33,13 @@ export const UserTable: React.FC<UserTableProps> = ({
   return (
     <div className="border rounded-lg overflow-hidden">
       <div className="hidden md:block">
-        <Table>
+        <Card className="border-none shadow-none">
+          <CardHeader>
+            <CardTitle>Lista de Usuarios</CardTitle>
+            <CardDescription>Administra tu lista de usuarios</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
           <TableHeader>
             <TableRow>
               <TableHead>USUARIO</TableHead>
@@ -93,7 +100,9 @@ export const UserTable: React.FC<UserTableProps> = ({
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Vista de tarjetas para móvil */}

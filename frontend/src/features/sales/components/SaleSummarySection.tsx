@@ -1,5 +1,4 @@
 import { memo, useEffect, useState } from "react";
-import Decimal from "decimal.js";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import {
@@ -19,6 +18,8 @@ import { Separator } from "@/shared/components/ui/separator";
 import { DollarSign, CheckCircle2, X, Boxes } from "lucide-react";
 import type { SaleState } from "@/shared/types/modelTypes/Sale";
 import useGlobalStates from "@/shared/hooks/useGlobalStates";
+ import { formatCurrency, canConfirmSale } from "../utils/SaleUtils";
+import Decimal from "decimal.js";
 
 interface SaleSummarySectionProps {
   saleState: SaleState;
@@ -74,14 +75,8 @@ const SaleSummarySection = memo(
       setDiscountEditMode(false);
     };
 
-    // Formatear moneda con precisión decimal
-    const formatCurrency = (value: number | string, currency: "bs" | "arg") => {
-      const symbol = currency === "bs" ? "Bs" : "ARS";
-      return `${symbol} ${new Decimal(value).toFixed(2)}`;
-    };
-
-    // Validar si se puede confirmar la venta
-    const canConfirmSale = saleState.items.length > 0 && !isProcessing;
+    // Utilidades externas
+   
 
 
     useEffect(() => {

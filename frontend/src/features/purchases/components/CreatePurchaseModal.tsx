@@ -30,6 +30,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Textarea } from '@/shared/components/ui/textarea';
+import useGlobalStates from '@/shared/hooks/useGlobalStates';
 
 /**
  * Schema de validación para crear una compra
@@ -114,6 +115,7 @@ const CreatePurchaseModalComponent = ({
     const [selectedManufacturer, setSelectedManufacturer] = useState<Manufacturer | null>(null);
     const [priceMode, setPriceMode] = useState<'auto' | 'manual'>('auto');
     const [manualPrice, setManualPrice] = useState<number>(0);
+    const {currency} = useGlobalStates();
 
     // Configurar form con validación
     const form = useForm<CreatePurchaseFormDisplay>({
@@ -395,7 +397,7 @@ const CreatePurchaseModalComponent = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl min-w-[50vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                         <span>{purchaseToEdit ? 'Editar Compra' : 'Registrar Nueva Compra'}</span>
@@ -561,12 +563,16 @@ const CreatePurchaseModalComponent = ({
                                     <FormItem>
                                         <FormLabel>Costo Total (Bs)</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="number"
-                                                disabled={true}
-                                                {...field}
-                                                className="bg-gray-50 font-semibold"
-                                            />
+                                                <Input
+                                                    type="text"
+                                                    disabled={true}
+                                                    value={
+                                                        typeof field.value === 'number'
+                                                            ? field.value.toFixed(2)
+                                                            : (parseFloat(field.value) || 0).toFixed(2)
+                                                    }
+                                                    className="bg-gray-50 font-semibold"
+                                                />
                                         </FormControl>
                                         <FormDescription>
                                             Calculado automáticamente
@@ -678,7 +684,7 @@ const CreatePurchaseModalComponent = ({
                                     }
 
                                     // Precio de venta unitario en ARS
-                                    const priceArs = priceBs / 0.0047;
+                                    const priceArs = priceBs / (currency?.equivalenceToBs || 1);
 
                                     if (!unitCost || unitCost <= 0) return null;
 
@@ -740,7 +746,7 @@ const CreatePurchaseModalComponent = ({
                                             </div>
 
                                             <div className="mt-3 text-xs text-gray-500 text-center">
-                                                Tasa de cambio: 1 ARS = 0.0047 Bs
+                                                Tasa de cambio: 1 ARS = {currency?.equivalenceToBs}
                                             </div>
 
                                             {margin > 0 && (

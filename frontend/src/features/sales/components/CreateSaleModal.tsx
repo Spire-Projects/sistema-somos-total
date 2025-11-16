@@ -30,10 +30,10 @@ import SaleSuccessDialog from "./SaleSuccessDialog";
 import { purchaseService } from "@/shared/services/PurchaseService";
 import { Button } from "@/shared/components/ui/button";
 import { Printer } from "lucide-react";
-import { generateSaleData } from "../utils/SaleUtils";
-import { useQuotationPdf } from "../hooks/useQuotationPdf";
+import { generateSaleData, recreateSaleStateItems } from "../utils/SaleUtils";
 import { QuotationPreviewModal } from "./QuotationPreviewModal";
 import useGlobalStates from "@/shared/hooks/useGlobalStates";
+import { set } from "react-hook-form";
 
 interface CreateSaleModalProps {
   open: boolean;
@@ -60,57 +60,27 @@ const CreateSaleModal = memo(
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [completedSale, setCompletedSale] = useState<SaleView | null>(null);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
-    const [showQuotationPreview, setShowQuotationPreview] = useState(false);
-    const { currency } = useGlobalStates();
-    // Hook para manejar la generación de PDF
-    const {
-      generatePdf,
-      downloadPdf,
-      printPdf,
-      getPdfUrl,
-      isGenerating,
-    } = useQuotationPdf({
-      saleState,
-      saleId: initialSaleId || 'NUEVA',
-    });
-
+    const { currency, user } = useGlobalStates();
+    
     useEffect(() => {
       if (initialSaleId) {
         const loadQuotation = async () => {
           try {
             const saleView = await salesService.findById(initialSaleId);
-
+            
             if (saleView) {
-              const items: CartSaleItem[] = await Promise.all(
-                saleView.items.map(async (item) => ({
-                  purchaseBoxId: item.purchaseBoxId,
-                  product: item.product,
-                  productName: item.productName ?? "",
-                  productCode: item.productCode,
-                  purchaseDate: item.purchaseDate ?? "",
-                  receiptNumber: item.receiptNumber,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice,
-                  discount: 0,
-                  total: item.total,
-                  availableStock: await purchaseService
-                    .findById(item.purchaseBoxId)
-                    .then((pb) => pb?.quantityAvailable || 0),
-                  unitCost: 0,
-                  profitMarginPercentage: 0,
-                  originalPrice: item.unitPrice,
-                }))
-              );
-
+              const items = await recreateSaleStateItems(saleView, currency!);
+              console.log("Currency cargado:", currency);
+              console.log("Total", saleView.paymentCurrency === "arg" ? saleView.total * (currency?.equivalenceToBs || 1) : saleView.total);
               setSaleState({
                 items,
                 paymentMethod: saleView.paymentMethod,
                 paymentCurrency: saleView.paymentCurrency,
                 clientDiscountType: "percentage",
                 clientDiscountValue: 0,
-                subtotal: saleView.total,
+                subtotal: saleView.paymentCurrency === "arg" ? saleView.total * (currency?.equivalenceToBs || 1) : saleView.total,
                 totalDiscount: 0,
-                total: saleView.total,
+                total: saleView.paymentCurrency === "arg" ? saleView.total * (currency?.equivalenceToBs || 1) : saleView.total,
                 clientId: undefined,
                 clientName: saleView.client,
                 nitClient: saleView.nitClient,
@@ -354,8 +324,17 @@ const CreateSaleModal = memo(
     const handleSaveQuotation = useCallback(async () => {
       console.log("Guardando cotización con id:", initialSaleId);
       // Generar un id único corto para la cotización si no hay initialSaleId
-      const uniqueQuotationId = initialSaleId || `Q${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-      const saleData = generateSaleData(saleState, "current-user", uniqueQuotationId, true);
+      const uniqueQuotationId = initialSaleId || `Q${Date.now().toString(36)}${Math.random()
+        .toString(36)
+        .slice(2, 7)}`;
+      const saleData = generateSaleData(
+        saleState,
+        user?.id || "current-user",
+        uniqueQuotationId,
+        true,
+        currency?.equivalenceToBs ?? 1
+      );
+      console.log("Datos de la cotización:", saleData);
       if (initialSaleId) {
         await salesService.update(initialSaleId, saleData);
         toast.success("¡Cotización actualizada exitosamente!");
@@ -382,6 +361,9 @@ const CreateSaleModal = memo(
           false,
           currency?.equivalenceToBs ?? 1
         );
+        if (initialSaleId) {
+          await salesService.delete(initialSaleId);
+        }
         const createdSale = await salesService.create(saleData);
 
         for (const item of saleState.items) {
@@ -389,17 +371,18 @@ const CreateSaleModal = memo(
             item.purchaseBoxId
           );
           if (purchaseBox) {
-            console.log('Updating purchase box:', purchaseBox.id);
+            console.log("Updating purchase box:", purchaseBox.id);
             const newQuantity = purchaseBox.quantityAvailable - item.quantity;
-           const pw = await purchaseService.update(purchaseBox.id, {
+            const pw = await purchaseService.update(purchaseBox.id, {
               quantityAvailable: Math.max(0, newQuantity),
               updatedBy: "current-user", // TODO: Get from auth context
             });
-            console.log('Purchase box updated new quantity:',newQuantity);
-            console.log('Update result:', pw);
-          }else
-          {
-            console.warn(`No se encontró el PurchaseBox con id: ${item.purchaseBoxId}`);
+            console.log("Purchase box updated new quantity:", newQuantity);
+            console.log("Update result:", pw);
+          } else {
+            console.warn(
+              `No se encontró el PurchaseBox con id: ${item.purchaseBoxId}`
+            );
           }
         }
 
@@ -451,7 +434,6 @@ const CreateSaleModal = memo(
         onClose();
         handleReset();
       }
-      
     }, [saleState.items, onClose]);
 
     // Confirmar cancelación de venta
@@ -460,22 +442,6 @@ const CreateSaleModal = memo(
       setShowCancelDialog(false);
       onClose();
     }, [onClose, handleReset]);
-
-    // Manejar vista previa de cotización
-    const handleShowQuotationPreview = useCallback(async () => {
-      if (saleState.items.length === 0) {
-        toast.warning('Agrega al menos un producto para generar la cotización');
-        return;
-      }
-      
-      await generatePdf();
-      setShowQuotationPreview(true);
-    }, [saleState.items, generatePdf]);
-
-    // Cerrar modal de cotización
-    const handleCloseQuotationPreview = useCallback(() => {
-      setShowQuotationPreview(false);
-    }, []);
 
     // Cerrar modal de éxito
     const handleCloseSuccessModal = useCallback(() => {
@@ -490,15 +456,6 @@ const CreateSaleModal = memo(
           <DialogContent className="max-w-[95vw] h-[95vh] p-0 min-w-[85vw]!">
             <DialogHeader className="p-6 pb-4">
               <DialogTitle className="text-2xl">Nueva Venta</DialogTitle>
-              <Button
-                variant="secondary"
-                onClick={handleShowQuotationPreview}
-                className="absolute top-4 right-12 rounded-xl p-2 hover:bg-gray-200"
-                disabled={isProcessing || saleState.items.length === 0}
-              >
-                <Printer className="h-5 w-5 mr-2" />
-                Imprimir Cotización
-              </Button>
             </DialogHeader>
 
             <div className="flex-1 overflow-hidden px-6 pb-6">
@@ -573,9 +530,6 @@ const CreateSaleModal = memo(
             </div>
           </DialogContent>
         </Dialog>
-
-        {/* Modal de confirmación de cancelación */}
-        {/* Modal de confirmación de cancelación */}
         <CustomDialog
           isOpen={showCancelDialog}
           onConfirm={handleConfirmCancel}
@@ -586,21 +540,10 @@ const CreateSaleModal = memo(
           textCancel="No, continuar"
         />
 
-        {/* Modal de venta exitosa */}
         <SaleSuccessDialog
           open={showSuccessModal}
           onClose={handleCloseSuccessModal}
           sale={completedSale}
-        />
-
-        {/* Modal de vista previa de cotización */}
-        <QuotationPreviewModal
-          open={showQuotationPreview}
-          onClose={handleCloseQuotationPreview}
-          pdfUrl={getPdfUrl()}
-          onDownload={downloadPdf}
-          onPrint={printPdf}
-          isGenerating={isGenerating}
         />
       </>
     );

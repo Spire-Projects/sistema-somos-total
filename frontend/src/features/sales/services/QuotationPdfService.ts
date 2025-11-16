@@ -1,16 +1,14 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { SaleState } from '@/shared/types/modelTypes/Sale';
+import type { SaleView } from '@/shared/types/modelTypes/Sale';
 import { logoBase64 } from '@/assets/logoBase64';
 
 interface QuotationPdfOptions {
-  saleState: SaleState;
-  quotationNumber?: string;
+  sale: SaleView;
   sellerName?: string;
 }
 
 export class QuotationPdfService {
-  private static readonly COMPANY_NAME = 'Sistema SOMOS Total';
   private static readonly COLORS = {
     primary: '#016c72',
     secondary: '#64748b',
@@ -19,10 +17,10 @@ export class QuotationPdfService {
   };
 
   /**
-   * Genera un PDF de cotización
+   * Genera un PDF de cotización a partir de un SaleView
    */
   static generateQuotationPdf(options: QuotationPdfOptions): jsPDF {
-    const { saleState, quotationNumber = 'COTIZ-001', sellerName = 'Vendedor' } = options;
+    const { sale, sellerName = 'Vendedor' } = options;
     const doc = new jsPDF();
 
     // Configuración del documento
@@ -30,17 +28,17 @@ export class QuotationPdfService {
     const margin = 15;
 
     // Header - Información de la empresa y cotización
-    this.addHeaderWithQuotationInfo(doc, pageWidth, margin, quotationNumber, saleState, sellerName);
+    this.addHeaderWithQuotationInfo(doc, pageWidth, margin, sale, sellerName);
 
     // Tabla de productos
-    this.addProductsTable(doc, saleState);
+    this.addProductsTable(doc, sale);
 
     // Resumen de totales
-    this.addTotalsSummary(doc, saleState, pageWidth, margin);
+    this.addTotalsSummary(doc, sale, pageWidth, margin);
 
     // Notas
-    if (saleState.saleNotes) {
-      this.addNotes(doc, saleState.saleNotes, margin);
+    if (sale.saleNotes) {
+      this.addNotes(doc, sale.saleNotes, margin);
     }
 
     // Footer
@@ -56,8 +54,7 @@ export class QuotationPdfService {
     doc: jsPDF,
     pageWidth: number,
     margin: number,
-    quotationNumber: string,
-    saleState: SaleState,
+    sale: SaleView,
     sellerName: string
   ): void {
     // Título "COTIZACIÓN" en la parte superior izquierda
@@ -70,7 +67,7 @@ export class QuotationPdfService {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
     doc.setTextColor(this.COLORS.text);
-    doc.text(`${quotationNumber}`, pageWidth - margin, 12, { align: 'right' });
+    doc.text(`${sale.numberInvoice || 'COTIZ-001'}`, pageWidth - margin, 12, { align: 'right' });
 
     // Logo debajo del número de cotización en la parte superior derecha
     doc.addImage(logoBase64, 'PNG', pageWidth - margin - 42, 16, 40, 20);
@@ -86,7 +83,7 @@ export class QuotationPdfService {
       day: '2-digit',
     });
     const vendedor = sellerName || 'Vendedor';
-    const cliente = saleState.clientName || 'Cliente General';
+    const cliente = sale.client || sale.clientView?.name || 'Cliente General';
 
     let infoY = 34;
     doc.text(`FECHA:      ${currentDate}`, margin, infoY);
@@ -99,18 +96,17 @@ export class QuotationPdfService {
   /**
    * Agrega la tabla de productos
    */
-  private static addProductsTable(doc: jsPDF, saleState: SaleState): void {
-    const tableData = saleState.items.map((item, index) => [
+  private static addProductsTable(doc: jsPDF, sale: SaleView): void {
+    const tableData = sale.items.map((item, index) => [
       (index + 1).toString(),
       item.productName,
-     
       item.quantity.toString(),
-      this.formatCurrency(item.unitPrice, saleState.paymentCurrency),
-      this.formatCurrency(item.total, saleState.paymentCurrency),
+      this.formatCurrency(item.unitPrice, sale.paymentCurrency),
+      this.formatCurrency(item.total, sale.paymentCurrency),
     ]);
 
     autoTable(doc, {
-      startY: saleState.nitClient || saleState.socialReasonClient ? 70 : 60,
+      startY: sale.nitClient || sale.socialReasonClient ? 70 : 60,
       head: [['#', 'Producto', 'Cant.', 'Precio Unit.', 'Total']],
       body: tableData,
       theme: 'grid',
@@ -145,7 +141,7 @@ export class QuotationPdfService {
    */
   private static addTotalsSummary(
     doc: jsPDF,
-    saleState: SaleState,
+    sale: SaleView,
     pageWidth: number,
     margin: number
   ): void {
@@ -163,19 +159,19 @@ export class QuotationPdfService {
     doc.setTextColor(this.COLORS.secondary);
     doc.text('Subtotal:', labelX, yPosition, { align: 'right' });
     doc.text(
-      this.formatCurrency(saleState.subtotal, saleState.paymentCurrency),
+      this.formatCurrency(sale.total, sale.paymentCurrency),
       valueX,
       yPosition,
       { align: 'right' }
     );
 
     // Descuentos
-    if (saleState.totalDiscount > 0) {
+    if (sale.totalDiscount && sale.totalDiscount > 0) {
       yPosition += 6;
       doc.text('Descuentos:', labelX, yPosition, { align: 'right' });
       doc.setTextColor('#dc2626');
       doc.text(
-        `- ${this.formatCurrency(saleState.totalDiscount, saleState.paymentCurrency)}`,
+        `- ${this.formatCurrency(sale.totalDiscount, sale.paymentCurrency)}`,
         valueX,
         yPosition,
         { align: 'right' }
@@ -190,7 +186,7 @@ export class QuotationPdfService {
     doc.setTextColor(this.COLORS.primary);
     doc.text('TOTAL:', labelX, yPosition, { align: 'right' });
     doc.text(
-      this.formatCurrency(saleState.total, saleState.paymentCurrency),
+      this.formatCurrency(sale.total, sale.paymentCurrency),
       valueX,
       yPosition,
       { align: 'right' }

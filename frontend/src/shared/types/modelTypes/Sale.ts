@@ -1,3 +1,4 @@
+import type { Client } from "../Client";
 import type { IEntity } from "../UtilTypes";
 
 export interface SaleItem {
@@ -73,7 +74,7 @@ export interface SaleItemView extends SaleItem {
 }
 
 export interface SaleView extends Sale {
-  clientName?: string; // Name of the client, if applicable
+  clientView: Client | null; // Populated client object, can be null
   items: SaleItemView[]; // Array of items with extended view information
 
 }

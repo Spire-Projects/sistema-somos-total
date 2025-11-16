@@ -12,7 +12,7 @@ import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDateTime } from '@/shared/utils/date.utils';
 import type { SaleView } from '@/shared/types/modelTypes/Sale';
 import type { Client } from '@/shared/types/Client';
-import { getClientById } from '@/shared/services';
+import { clientService } from '@/shared/services';
 
 
 interface SaleSuccessDialogProps {
@@ -32,7 +32,7 @@ const SaleSuccessDialog = memo(({
   const [client, setClient] = useState<Client | null>(null);
   useEffect(() => {
     if (sale && sale.client) {
-      getClientById(sale.client).then(setClient).catch(() => setClient(null));
+      clientService.findById(sale.client).then(setClient).catch(() => setClient(null));
     } else {
       setClient(null);
     }

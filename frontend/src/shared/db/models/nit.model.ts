@@ -23,7 +23,7 @@ export const nitSchema: RxJsonSchema<NIT> = {
       type: 'boolean',
       default: false
     },
-    _deleted: {
+    isDeleted: {
       type: 'boolean',
       default: false
     },
@@ -32,10 +32,6 @@ export const nitSchema: RxJsonSchema<NIT> = {
       maxLength: 100
     },
     updatedBy: {
-      type: 'string',
-      maxLength: 100
-    },
-    deletedBy: {
       type: 'string',
       maxLength: 100
     },
@@ -49,14 +45,9 @@ export const nitSchema: RxJsonSchema<NIT> = {
       format: 'date-time',
       maxLength: 50
     },
-    deletedAt: {
-      type: 'string',
-      format: 'date-time',
-      maxLength: 50
-    }
   },
-  required: ['id', 'numberNit', 'socialReason', 'sincronized', '_deleted', 'createdAt', 'updatedAt'],
-  indexes: ['numberNit', 'socialReason', '_deleted', 'createdAt']
+  required: ['id', 'numberNit', 'socialReason', 'sincronized','isDeleted' , 'createdAt', 'updatedAt'],
+  indexes: ['numberNit', 'socialReason', 'isDeleted', 'createdAt', 'updatedAt', 'isDeleted'],
 };
 
 export const nitMigrationStrategies = {

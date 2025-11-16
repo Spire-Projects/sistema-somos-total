@@ -1,15 +1,13 @@
 import { useCallback, useState } from 'react';
-import type { SaleState } from '@/shared/types/modelTypes/Sale';
+import type { SaleView } from '@/shared/types/modelTypes/Sale';
 import { QuotationPdfService } from '../services/QuotationPdfService';
 import { toast } from 'sonner';
-import { salesService } from '@/shared/services/SalesService';
 
 interface UseQuotationPdfOptions {
-  saleState: SaleState;
-  saleId: string;
+  sale: SaleView;
 }
 
-export const useQuotationPdf = ({ saleState, saleId }: UseQuotationPdfOptions) => {
+export const useQuotationPdf = ({ sale }: UseQuotationPdfOptions) => {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -19,10 +17,8 @@ export const useQuotationPdf = ({ saleState, saleId }: UseQuotationPdfOptions) =
   const generatePdf = useCallback(async (): Promise<Blob | null> => {
     setIsGenerating(true);
     try {
-      const saleDoc = await salesService.findById(saleId);
       const doc = QuotationPdfService.generateQuotationPdf({
-        saleState,
-        quotationNumber: saleDoc?.numberInvoice || 'COTIZ-001',
+        sale,
       });
 
       const blob = doc.output('blob');
@@ -35,27 +31,27 @@ export const useQuotationPdf = ({ saleState, saleId }: UseQuotationPdfOptions) =
     } finally {
       setIsGenerating(false);
     }
-  }, [saleState, saleId]);
+  }, [sale]);
 
   /**
    * Descarga el PDF
    */
   const downloadPdf = useCallback(async () => {
     try {
-      const saleDoc = await salesService.findById(saleId);
       const doc = QuotationPdfService.generateQuotationPdf({
-        saleState,
-        quotationNumber: saleDoc?.numberInvoice || 'COTIZ-001',
+        sale,
       });
 
-      const fileName = QuotationPdfService.generateFileName(saleState.clientName);
+      const fileName = QuotationPdfService.generateFileName(
+        sale.clientView?.name || sale.client
+      );
       doc.save(fileName);
       toast.success('Cotización descargada exitosamente');
     } catch (error) {
       console.error('Error descargando PDF:', error);
       toast.error('Error al descargar la cotización');
     }
-  }, [saleState, saleId]);
+  }, [sale]);
 
   /**
    * Imprime el PDF

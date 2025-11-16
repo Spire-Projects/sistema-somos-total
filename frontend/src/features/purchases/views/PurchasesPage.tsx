@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from "react";
-import { ShoppingCart, Plus, X, MoreVertical, Download } from "lucide-react";
+import { ShoppingCart, Plus, X, MoreVertical, Download, Upload } from "lucide-react";
 
 import { DataPagination } from "@/shared/components/DataPagination";
 import { useEntityData } from "@/shared/hooks";
@@ -24,9 +24,10 @@ import {
   DropdownMenuItem,
 } from "@/shared/components/ui/dropdown-menu";
 import CustomDialog from "@/shared/components/CustomDialog";
-import TablePurchaseDesktop from "./Tables/TablePurchaseDesktop";
-import TablePurchaseMobile from "./Tables/TablePurchaseMobile";
-import { CreatePurchaseModal } from "./CreatePurchaseModal";
+import TablePurchaseDesktop from "../components/Tables/TablePurchaseDesktop";
+import TablePurchaseMobile from "../components/Tables/TablePurchaseMobile";
+import { CreatePurchaseModal } from "../components/CreatePurchaseModal";
+import { UploadExcelPurchaseModal } from "../components/UploadExcelPurchaseModal";
 import StartAppText from "@/shared/components/StartAppText";
 import PageHeader from "@/shared/components/PageHeader";
 import SearchInput from "@/shared/components/SearchInput";
@@ -35,6 +36,7 @@ import type { Subscription } from "rxjs";
 
 const PurchasesPageComponent = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUploadExcelModalOpen, setIsUploadExcelModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState<PurchaseView | null>(null);
   const [purchaseToEdit, setPurchaseToEdit] = useState<PurchaseView | null>(null);
@@ -111,6 +113,12 @@ const PurchasesPageComponent = () => {
   const handlePurchaseCreated = async () => {
     setIsCreateModalOpen(false);
     setPurchaseToEdit(null);
+  };
+
+  // Handler para manejar éxito de importación
+  const handleImportSuccess = async () => {
+    setIsUploadExcelModalOpen(false);
+    await refresh();
   };
 
   // Handler para cambiar filtro de producto
@@ -279,6 +287,11 @@ const PurchasesPageComponent = () => {
             >
               <Download className="h-4 w-4 mr-2" /> Exportar
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setIsUploadExcelModalOpen(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" /> Importar
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -359,6 +372,14 @@ const PurchasesPageComponent = () => {
         description={`¿Estás seguro de que deseas eliminar esta compra? Esta acción no se puede deshacer.`}
         textConfirm="Eliminar"
         textCancel="Cancelar"
+      />
+
+      {/* Modal de Importación desde Excel */}
+      <UploadExcelPurchaseModal
+        isOpen={isUploadExcelModalOpen}
+        onClose={() => setIsUploadExcelModalOpen(false)}
+        onSuccess={handleImportSuccess}
+        createdBy="current-user" // TODO: Obtener del contexto de autenticación
       />
     </div>
   );

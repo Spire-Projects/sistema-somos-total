@@ -1,26 +1,13 @@
-import type { Client } from '../../types/Client';
-import type { ClientStatistics } from '../models/client.model';
+import type { Client, ClientFilter, CreateClientData, UpdateClientData } from '../../types/Client';
 import type { ItemsResponse } from '../../types/UtilTypes';
 import { initDatabase } from '../database';
 import { config } from '@/shared/config/config';
 import { BaseRepository } from './BaseRepository';
 import type { RxCollection } from 'rxdb';
+import type { ICrudBaseRepository } from './interfaces/IRepository';
+import { Observable, map } from 'rxjs';
 
-export interface IClientRepository {
-  create(clientData: Omit<Client, 'id'>): Promise<Client>;
-  findById(id: string): Promise<Client | null>;
-  findByEmail(email: string): Promise<Client | null>;
-  findAll(): Promise<Client[]>;
-  findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Client>>;
-  update(id: string, updateData: Partial<Client>): Promise<Client | null>;
-  delete(id: string): Promise<boolean>;
-  addSaleToHistory(clientId: string, saleId: string): Promise<Client | null>;
-  getClientSales(clientId: string): Promise<string[]>;
-  getStatistics(): Promise<ClientStatistics>;
-  getActiveClients(): Promise<Client[]>;
-  getDeletedClients(): Promise<Client[]>;
-  softDelete(id: string, deletedBy: string): Promise<boolean>;
-  restore(id: string): Promise<boolean>;
+export interface IClientRepository extends ICrudBaseRepository<Client, CreateClientData, UpdateClientData, ClientFilter> {
 }
 
 export class LocalClientRepository extends BaseRepository<Client> implements IClientRepository {
@@ -30,25 +17,33 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
     return db.clients;
   }
 
-  async create(clientData: Omit<Client, 'id'>): Promise<Client> {
+  async create(data: Omit<Client, 'id' | 'createdAt' | 'updatedAt' | 'isDeleted' | 'sincronized'>): Promise<Client> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    
-    const fullClientData = { 
-      id, 
-      ...clientData,
+
+    const collection = await this.getCollection();
+
+    // If email provided, prevent duplicates
+    if (data.email) {
+      const existing = await collection.findOne({ selector: { email: data.email } }).exec();
+      if (existing) {
+        throw new Error(`Ya existe un cliente con el correo: ${data.email}`);
+      }
+    }
+
+    const fullData: Client = {
+      id,
+      ...data,
       createdAt: now,
       updatedAt: now,
+      isDeleted: false,
       sincronized: false,
-      isDeleted: false
-    };
-    
-    console.log(`🔄 ClientRepository: Creando cliente con prioridad`, { id });
-    return await this.createWithPriority(fullClientData as Client);
+    } as Client;
+
+    return await this.createWithPriority(fullData);
   }
 
-  async update(id: string, updateData: Partial<Client>): Promise<Client | null> {
-    console.log(`🔄 ClientRepository: Actualizando cliente ${id} con prioridad`, updateData);
+  async update(id: string, updateData: UpdateClientData): Promise<Client | null> {
     try {
       return await this.updateWithPriority(id, updateData);
     } catch (error) {
@@ -57,80 +52,63 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
     }
   }
 
-  async delete(id: string): Promise<boolean> {
-    console.log(`🗑️ ClientRepository: Eliminando cliente ${id} con prioridad`);
+  async softDelete(id: string): Promise<boolean> {
     return await this.deleteWithPriority(id);
   }
 
-  async findById(id: string): Promise<Client | null> {
-    return await super.findById(id);
-  }
+  async getAll(
+    page: number,
+    size: number,
+    searchQuery?: string,
+    dateFrom?: string,
+    dateTo?: string,
+    _filter?: ClientFilter
+  ): Promise<ItemsResponse<Client>> {
+    const collection = await this.getCollection();
 
-  async findAll(): Promise<Client[]> {
-    return await super.findAll();
-  }
+    const selector: any = { isDeleted: false };
 
-  async findByEmail(email: string): Promise<Client | null> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne({ 
-      selector: { 
-        isDeleted: false,
-        email
-      },
-      sort: [{ isDeleted: 'asc', email: 'asc' }]
-    }).exec();
-    return client ? JSON.parse(JSON.stringify(client.toJSON())) as Client : null;
-  }
-
-  async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<Client>> {
-    const db = await initDatabase();
-    
-    const selector = { isDeleted: false };
-    
     if (searchQuery && searchQuery.trim() !== "") {
       const normalizedText = searchQuery.trim().toLowerCase();
-      Object.assign(selector, {
-        $or: [
-          { name: { $regex: normalizedText, $options: 'i' } },
-          { email: { $regex: normalizedText, $options: 'i' } },
-          { phone: { $regex: normalizedText, $options: 'i' } },
-          { address: { $regex: normalizedText, $options: 'i' } }
-        ]
-      });
+      selector.$or = [
+        { name: { $regex: normalizedText, $options: 'i' } },
+        { email: { $regex: normalizedText, $options: 'i' } },
+        { phone: { $regex: normalizedText, $options: 'i' } },
+        { address: { $regex: normalizedText, $options: 'i' } },
+      ];
     }
 
-    // Estrategia optimizada: obtener solo los datos necesarios para paginación
+    if (dateFrom || dateTo) {
+      selector.createdAt = {};
+      if (dateFrom) selector.createdAt.$gte = dateFrom;
+      if (dateTo) selector.createdAt.$lte = dateTo;
+    }
+
     const skip = (page - 1) * size;
-    const limit = size + 1; // +1 para saber si hay más páginas
-    
-    const clients = await db.clients.find({
+    const limit = size + 1;
+
+    const docs = await collection.find({
       selector,
       sort: [{ isDeleted: 'asc', createdAt: 'desc' }],
       skip,
-      limit
+      limit,
     }).exec();
 
-    const items = clients.slice(0, size).map((client) => 
-      JSON.parse(JSON.stringify(client.toJSON())) as Client
-    );
-    
-    const hasMore = clients.length > size;
-    
-    // Estimación inteligente del total sin usar count()
+    const items = docs.slice(0, size).map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Client);
+    const hasMore = docs.length > size;
+
+    // Estimación del total similar al producto
     let totalItems: number;
     let totalPages: number;
-    
+
     if (page === 1 && !hasMore) {
-      // Primera página y no hay más: el total es exacto
       totalItems = items.length;
       totalPages = 1;
     } else if (page === 1 && hasMore) {
-      // Primera página con más datos: estimamos basado en el patrón
-      totalItems = Math.max(size * 3, skip + size + 10); // Estimación conservadora
-      totalPages = Math.ceil(totalItems / size);
+      totalItems = size * 2;
+      totalPages = 2;
     } else {
-      // Páginas posteriores: estimamos basado en la posición actual
-      totalItems = hasMore ? skip + size + 10 : skip + items.length;
+      totalItems = (page - 1) * size + items.length + (hasMore ? size : 0);
       totalPages = Math.ceil(totalItems / size);
     }
 
@@ -139,154 +117,126 @@ export class LocalClientRepository extends BaseRepository<Client> implements ICl
       page,
       size,
       totalItems,
-      totalPages
+      totalPages,
     };
   }
 
-  async addSaleToHistory(clientId: string, saleId: string): Promise<Client | null> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(clientId).exec();
-    if (!client) return null;
-    
-    const clientData = client.toJSON();
-    const salesHistory = clientData.salesHistory || [];
-    
-    await client.update({ 
-      $set: { 
-        salesHistory: [...salesHistory, saleId],
-        lastPurchaseDate: new Date().toISOString(),
-        updatedAt: new Date().toISOString() 
-      } 
+  async findById(id: string): Promise<Client | null> {
+    return await super.findById(id);
+  }
+
+  listen$(
+    page: number,
+    size: number,
+    searchQuery?: string,
+    dateFrom?: string,
+    dateTo?: string,
+    _filter?: ClientFilter
+  ): Observable<Client[]> {
+    return new Observable<Client[]>(subscriber => {
+      let subscription: any;
+
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+
+          const selector: any = { isDeleted: false };
+
+          if (searchQuery && searchQuery.trim() !== "") {
+            const normalizedText = searchQuery.trim().toLowerCase();
+            selector.$or = [
+              { name: { $regex: normalizedText, $options: 'i' } },
+              { email: { $regex: normalizedText, $options: 'i' } },
+              { phone: { $regex: normalizedText, $options: 'i' } },
+              { address: { $regex: normalizedText, $options: 'i' } },
+            ];
+          }
+
+          if (dateFrom || dateTo) {
+            selector.createdAt = {};
+            if (dateFrom) selector.createdAt.$gte = dateFrom;
+            if (dateTo) selector.createdAt.$lte = dateTo;
+          }
+
+          const skip = (page - 1) * size;
+
+          subscription = collection.find({
+            selector,
+            sort: [{ isDeleted: 'asc', createdAt: 'desc' }],
+            skip,
+            limit: size,
+          }).$.pipe(
+            map(docs => docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as Client))
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err),
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
     });
-    
-    return JSON.parse(JSON.stringify(client.toJSON())) as Client;
   }
 
+  lisntenById$(id: string): Observable<Client | null> {
+    return new Observable<Client | null>(subscriber => {
+      let subscription: any;
 
+      (async () => {
+        try {
+          const collection = await this.getCollection();
 
-  async getClientSales(clientId: string): Promise<string[]> {
-    const client = await this.findById(clientId);
-    return client?.salesHistory || [];
-  }
+          subscription = collection.findOne(id).$.pipe(
+            map(doc => doc ? JSON.parse(JSON.stringify(doc.toJSON())) as Client : null)
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err),
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
 
-  async getStatistics(): Promise<ClientStatistics> {
-    const db = await initDatabase();
-    // Total de clientes
-    const totalClients = await db.clients.find().exec();
-    // Activos
-    const activeClientsDocs = await db.clients.find({ selector: { isDeleted: false } }).exec();
-    // Eliminados
-    const deletedClientsDocs = await db.clients.find({ selector: { isDeleted: true } }).exec();
-
-    const activeClients = activeClientsDocs.map((c) => JSON.parse(JSON.stringify(c.toJSON())) as Client);
-    const deletedClients = deletedClientsDocs.map((c) => JSON.parse(JSON.stringify(c.toJSON())) as Client);
-
-    // Clientes de los últimos 30 días
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentClients = activeClients.filter(c => new Date(c.createdAt) >= thirtyDaysAgo).length;
-
-    return {
-      totalClients: totalClients.length,
-      activeClients: activeClients.length,
-      deletedClients: deletedClients.length,
-      recentClients
-    };
-  }
-
-  async getActiveClients(): Promise<Client[]> {
-    const db = await initDatabase();
-    const clients = await db.clients.find({
-      selector: {
-        isDeleted: false
-      },
-      sort: [{ isDeleted: 'asc', name: 'asc' }]
-    }).exec();
-    return clients.map((client) => JSON.parse(JSON.stringify(client.toJSON())) as Client);
-  }
-
-  async getDeletedClients(): Promise<Client[]> {
-    const db = await initDatabase();
-    const clients = await db.clients.find({
-      selector: {
-        isDeleted: true
-      },
-      sort: [{ isDeleted: 'asc', updatedAt: 'desc' }]
-    }).exec();
-    return clients.map((client) => JSON.parse(JSON.stringify(client.toJSON())) as Client);
-  }
-
-  async softDelete(id: string, deletedBy: string): Promise<boolean> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(id).exec();
-    if (!client) return false;
-    
-    await client.update({ 
-      $set: { 
-        isDeleted: true, 
-        updatedBy: deletedBy,
-        updatedAt: new Date().toISOString() 
-      } 
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
     });
-    return true;
   }
 
-  async restore(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const client = await db.clients.findOne(id).exec();
-    if (!client) return false;
-    
-    await client.update({ 
-      $set: { 
-        isDeleted: false,
-        updatedAt: new Date().toISOString() 
-      } 
-    });
-    return true;
-  }
+  
 }
 
 export class FirestoreClientRepository implements IClientRepository {
   async create(_clientData: Omit<Client, 'id'>): Promise<Client> {
     throw new Error('Firestore implementation not yet available');
   }
+  async update(_id: string, _updateData: Partial<Client>): Promise<Client | null> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async softDelete(_id: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async getAll(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string, _filter?: ClientFilter): Promise<ItemsResponse<Client>> {
+    throw new Error('Firestore implementation not yet available');
+  }
   async findById(_id: string): Promise<Client | null> {
     throw new Error('Firestore implementation not yet available');
   }
+  listen$(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string, _filter?: ClientFilter): Observable<Client[]> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  lisntenById$(_id: string): Observable<Client | null> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  // Additional helper stubs (optional)
   async findByEmail(_email: string): Promise<Client | null> {
     throw new Error('Firestore implementation not yet available');
   }
   async findAll(): Promise<Client[]> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async findAllPaginated(_page: number, _size: number, _searchQuery?: string): Promise<ItemsResponse<Client>> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async update(_id: string, _updateData: Partial<Client>): Promise<Client | null> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async delete(_id: string): Promise<boolean> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async addSaleToHistory(_clientId: string, _saleId: string): Promise<Client | null> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async getClientSales(_clientId: string): Promise<string[]> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async getStatistics(): Promise<ClientStatistics> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async getActiveClients(): Promise<Client[]> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async getDeletedClients(): Promise<Client[]> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async softDelete(_id: string, _deletedBy: string): Promise<boolean> {
-    throw new Error('Firestore implementation not yet available');
-  }
-  async restore(_id: string): Promise<boolean> {
     throw new Error('Firestore implementation not yet available');
   }
 }

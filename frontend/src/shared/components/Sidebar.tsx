@@ -91,13 +91,7 @@ const menuItems: MenuItem[] = [
     color: "text-white/90",
     roles: ["admin"],
   },
-  {
-    title: "Configuración",
-    icon: Settings,
-    href: "/settings",
-    color: "text-white/90",
-    roles: ["admin"],
-  },
+ 
 ];
 
 export const Sidebar = memo(({ className, isOpen = true, onClose }: SidebarProps) => {

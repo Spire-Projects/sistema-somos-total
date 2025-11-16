@@ -1,1 +1,1 @@
-export * from './components/PurchasesPage';
+export * from './views/PurchasesPage';

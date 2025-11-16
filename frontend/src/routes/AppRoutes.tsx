@@ -11,10 +11,10 @@ import { InventoryPage } from '@/features/inventory/views/InventoryPage';
 
 // Lazy loading solo para páginas menos críticas
 const UserManager = lazy(() => import('../features/users/views/UserManager').then(module => ({ default: module.UserManager })));
-const PurchasesPage = lazy(() => import('../features/purchases/components/PurchasesPage').then(module => ({ default: module.PurchasesPage })));
-const ReportsPage = lazy(() => import('../features/reports/components/ReportsPage').then(module => ({ default: module.ReportsPage })));
+const PurchasesPage = lazy(() => import('../features/purchases/views/PurchasesPage').then(module => ({ default: module.PurchasesPage })));
+const ReportsPage = lazy(() => import('../features/reports/views/ReportsPage').then(module => ({ default: module.ReportsPage })));
 const SettingsPage = lazy(() => import('../features/settings/components/SettingsPage').then(module => ({ default: module.SettingsPage })));
-const DailyCashClosuresPage = lazy(() => import('@/features/dailyCashClosure/DayliCashClosurePage').then(module => ({ default: module.DailyCashClosuresPage })));
+const DailyCashClosuresPage = lazy(() => import('@/features/dailyCashClosure/views/DayliCashClosurePage').then(module => ({ default: module.DailyCashClosuresPage })));
 
 // Componente de carga más simple
 const PageLoader = () => (

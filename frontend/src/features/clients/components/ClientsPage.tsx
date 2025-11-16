@@ -8,10 +8,11 @@ import { ClientMobileList } from "./ClientMobileList";
 import { ClientTableSkeleton } from "./ClientTableSkeleton";
 import { DataPagination } from "@/shared/components/DataPagination";
 import CustomDialog from "@/shared/components/CustomDialog";
-import { getAllClientsPaginated, deleteClient } from "@/shared/services/ClientService";
 import { useDebounce } from "../hooks/useDebounce";
 import type { Client } from "@/shared/types/Client";
 import { Button } from "@/shared/components/ui/button";
+import { clientService } from "@/shared/services";
+import PageHeader from "@/shared/components/PageHeader";
 
 interface PaginationData {
   startIndex: number;
@@ -36,30 +37,35 @@ export const ClientsPage = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 400); // Reducido de 500ms a 400ms
 
   // Memoizar la función de carga para evitar recreaciones innecesarias
-  const loadClients = useCallback(async (page: number, size: number, search: string) => {
-    setLoading(true);
-    try {
-      const result = await getAllClientsPaginated(page, size, search || undefined);
-      setClients(result.items);
-      setTotalClients(result.totalItems);
-      setTotalPages(result.totalPages);
-    } catch (error) {
-      console.error("Error loading clients:", error);
-      setClients([]);
-      setTotalClients(0);
-      setTotalPages(0);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Sin dependencias porque getAllClientsPaginated es estable
+  const loadClients = useCallback(
+    async (page: number, size: number, search: string) => {
+      setLoading(true);
+      try {
+        const result = await clientService.getAllView(
+          page,
+          size,
+          search || undefined
+        );
+        setClients(result.items);
+        setTotalClients(result.totalItems);
+        setTotalPages(result.totalPages);
+      } catch (error) {
+        console.error("Error loading clients:", error);
+        setClients([]);
+        setTotalClients(0);
+        setTotalPages(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  // Cargar clientes cuando cambie la página, tamaño o búsqueda
   useEffect(() => {
     loadClients(currentPage, itemsPerPage, debouncedSearchQuery);
   }, [currentPage, itemsPerPage, debouncedSearchQuery, loadClients]);
 
   const handleClientCreated = useCallback(() => {
-    // Volver a la primera página y recargar
     setCurrentPage(1);
     loadClients(1, itemsPerPage, debouncedSearchQuery);
   }, [loadClients, itemsPerPage, debouncedSearchQuery]);
@@ -79,12 +85,12 @@ export const ClientsPage = () => {
 
     setIsDeleting(true);
     try {
-      await deleteClient(clientToDelete.id);
+      await clientService.delete(clientToDelete.id);
       toast.success("Cliente eliminado exitosamente");
-      
+
       // Recargar la lista
       loadClients(currentPage, itemsPerPage, debouncedSearchQuery);
-      
+
       // Cerrar el diálogo
       setIsDeleteDialogOpen(false);
       setClientToDelete(null);
@@ -94,7 +100,13 @@ export const ClientsPage = () => {
     } finally {
       setIsDeleting(false);
     }
-  }, [clientToDelete, currentPage, itemsPerPage, debouncedSearchQuery, loadClients]);
+  }, [
+    clientToDelete,
+    currentPage,
+    itemsPerPage,
+    debouncedSearchQuery,
+    loadClients,
+  ]);
 
   const handleCancelDelete = useCallback(() => {
     setIsDeleteDialogOpen(false);
@@ -133,20 +145,10 @@ export const ClientsPage = () => {
   }, [currentPage, itemsPerPage, totalClients]);
 
   return (
-    <div className="space-y-6">
-      <div className="m-0 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <UserCog className="w-6 h-6 text-blue-600" />
-          <div>
-            <p className="text-3xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
-              Gestión de Clientes
-            </p>
-            <p className="text-gray-600">
-              Administra los clientes y su información de contacto
-            </p>
-          </div>
-        </div>
-      </div>
+  <div className="p-0 xs:p-1 sm:p-2 md:p-4 lg:p-6 space-y-6">
+      
+        <PageHeader title="Clientes" subtitle="Gestión de clientes" icon={<UserCog className="w-6 h-6 text-blue-600" />} />
+      
 
       <div className="">
         <div className="mt-5">
@@ -164,13 +166,14 @@ export const ClientsPage = () => {
             <div className="text-center py-12">
               <UserCog className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? "No se encontraron clientes" : "No hay clientes registrados"}
+                {searchQuery
+                  ? "No se encontraron clientes"
+                  : "No hay clientes registrados"}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchQuery 
+                {searchQuery
                   ? `No hay resultados para "${searchQuery}"`
-                  : "Comienza agregando tu primer cliente."
-                }
+                  : "Comienza agregando tu primer cliente."}
               </p>
               {!searchQuery && (
                 <Button
@@ -185,14 +188,14 @@ export const ClientsPage = () => {
           ) : (
             <>
               {/* Tabla para desktop/tablet */}
-              <ClientTable 
-                clients={clients} 
+              <ClientTable
+                clients={clients}
                 onEdit={handleEditClient}
                 onDelete={handleDeleteClient}
               />
 
               {/* Lista para móvil */}
-              <ClientMobileList 
+              <ClientMobileList
                 clients={clients}
                 onEdit={handleEditClient}
                 onDelete={handleDeleteClient}
@@ -236,7 +239,7 @@ export const ClientsPage = () => {
         loading={isDeleting}
         title="Eliminar Cliente"
         description={
-          clientToDelete 
+          clientToDelete
             ? `¿Estás seguro de que deseas eliminar a "${clientToDelete.name}"? Esta acción no se puede deshacer.`
             : "¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer."
         }

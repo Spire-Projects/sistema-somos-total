@@ -6,9 +6,9 @@ import {
 } from "@/shared/components/ui/card";
 import { formatCurrency } from "@/shared/services/BatchService";
 import type { TopProductItem } from "./types/Types";
-import { getMedicationViewById } from "@/shared/services";
+import { productService } from "@/shared/services/ProductService";
 import { useEffect, useState } from "react";
-import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
+import type { ProductView } from "@/shared/types/modelTypes/Product";
 
 interface TopProductsTableProps {
   topProducts: TopProductItem[];
@@ -16,13 +16,13 @@ interface TopProductsTableProps {
 
 export const TopProductsTable = ({ topProducts }: TopProductsTableProps) => {
   if (topProducts.length === 0) return null;
-  const [productDataMap, setProductDataMap] = useState<Record<string, MedicationCatalogView>>({});
+  const [productDataMap, setProductDataMap] = useState<Record<string, ProductView>>({});
 
   useEffect(() => {
     const fetchData = async () => {
-      const ids = topProducts.map((p) => p.medicationId);
-      const views = await Promise.all(ids.map((id) => getMedicationViewById(id)));
-      const data: Record<string, MedicationCatalogView> = {};
+      const ids = topProducts.map((p) => p.productId);
+      const views = await Promise.all(ids.map((id) => productService.findById(id)));
+      const data: Record<string, ProductView> = {};
       ids.forEach((id, idx) => {
         if (views[idx]) data[id] = views[idx];
       });
@@ -52,11 +52,11 @@ export const TopProductsTable = ({ topProducts }: TopProductsTableProps) => {
             <tbody>
               {topProducts.map((product, index) => (
                 <tr
-                  key={product.medicationId}
+                  key={product.productId}
                   className="border-b hover:bg-gray-50"
                 >
                   <td className="py-2 px-2">{index + 1}</td>
-                  <td className="py-2 px-2">{productDataMap[product.medicationId]?.comercialName}</td>
+                  <td className="py-2 px-2">{productDataMap[product.productId]?.name || product.name}</td>
                   <td className="py-2 px-2 text-right">{product.quantity}</td>
                   <td className="py-2 px-2 text-right">
                     {formatCurrency(product.revenue)}

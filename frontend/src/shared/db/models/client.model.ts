@@ -37,18 +37,9 @@ export const clientSchema: RxJsonSchema<Client> = {
     isDeleted: {
       type: 'boolean'
     },
-    salesHistory: {
-      type: 'array',
-      items: {
-        type: 'string'
-      }
-    },
+    
    
-    lastPurchaseDate: {
-      type: 'string',
-      format: 'date-time',
-      maxLength: 50
-    },
+   
     createdBy: {
       type: 'string',
       maxLength: 100
@@ -91,28 +82,3 @@ export const clientMigrationStrategies = {
   },
 };
 
-// Datos para crear un cliente
-export interface CreateClientData {
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  createdBy?: string;
-}
-
-// Datos para actualizar un cliente
-export interface UpdateClientData {
-  name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  updatedBy?: string;
-}
-
-// Estadísticas de clientes
-export interface ClientStatistics {
-  totalClients: number;
-  activeClients: number;
-  deletedClients: number;
-  recentClients: number; // últimos 30 días
-}

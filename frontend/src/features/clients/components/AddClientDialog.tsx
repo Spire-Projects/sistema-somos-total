@@ -11,10 +11,10 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "sonner";
-import { createClient, updateClient } from "@/shared/services/ClientService";
-import type { CreateClientData, UpdateClientData } from "@/shared/db/models/client.model";
-import type { Client } from "@/shared/types/Client";
+import type { Client, CreateClientData, UpdateClientData } from "@/shared/types/Client";
 import { ClientForm } from "./ClientForm";
+import useGlobalStates from "@/shared/hooks/useGlobalStates";
+import { clientService } from "@/shared/services";
 
 // Schema de validación - Solo nombre es obligatorio
 const clientSchema = z.object({
@@ -43,6 +43,7 @@ export const AddClientDialog = ({
 }: AddClientDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const isEditMode = mode === "edit" && client;
+  const {user} = useGlobalStates();
 
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
@@ -83,9 +84,10 @@ export const AddClientDialog = ({
           email: data.email?.trim() || "",
           phone: data.phone?.trim() || "",
           address: data.address?.trim() || "",
+          updatedBy: user?.id || ""
         };
 
-        await updateClient(client.id, updateData);
+        await clientService.update(client.id, updateData);
         toast.success("Cliente actualizado exitosamente");
       } else {
         // Modo creación
@@ -94,9 +96,10 @@ export const AddClientDialog = ({
           email: data.email?.trim() || "",
           phone: data.phone?.trim() || "",
           address: data.address?.trim() || "",
+          createdBy: user?.id || ""
         };
 
-        await createClient(clientData);
+        await clientService.create(clientData);
         toast.success("Cliente creado exitosamente");
       }
       

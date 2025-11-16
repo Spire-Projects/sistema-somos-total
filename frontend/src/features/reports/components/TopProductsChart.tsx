@@ -9,8 +9,8 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Bar } from "react-chartjs-2";
 import { useEffect, useState } from "react";
 import type { TopProductItem } from "./types/Types";
-import { getMedicationViewById } from "@/shared/services";
-import type { MedicationCatalogView } from "@/shared/types/MedicationViewTypes";
+import { productService } from "@/shared/services/ProductService";
+import type { ProductView } from "@/shared/types/modelTypes/Product";
 
 interface TopProductsChartProps {
   isLoading: boolean;
@@ -23,13 +23,13 @@ export const TopProductsChart = ({
   hasData,
   topProducts,
 }: TopProductsChartProps) => {
-  const [productDataMap, setProductDataMap] = useState<Record<string, MedicationCatalogView>>({});
+  const [productDataMap, setProductDataMap] = useState<Record<string, ProductView>>({});
 
   useEffect(() => {
     const fetchData = async () => {
-      const ids = topProducts.map((p) => p.medicationId);
-      const views = await Promise.all(ids.map((id) => getMedicationViewById(id)));
-      const data: Record<string, MedicationCatalogView> = {};
+      const ids = topProducts.map((p) => p.productId);
+      const views = await Promise.all(ids.map((id) => productService.findById(id)));
+      const data: Record<string, ProductView> = {};
       ids.forEach((id, idx) => {
         if (views[idx]) data[id] = views[idx];
       });
@@ -40,7 +40,7 @@ export const TopProductsChart = ({
 
   const chartData = {
     labels: topProducts.map((p) => {
-      const name = productDataMap[p.medicationId]?.comercialName ?? p.name;
+      const name = productDataMap[p.productId]?.name ?? p.name;
       return name.length > 15 ? name.substring(0, 15) + "..." : name;
     }),
     datasets: [

@@ -21,14 +21,19 @@ export const DailySalesChart = ({
   hasData,
   dailySales,
 }: DailySalesChartProps) => {
- 
-
   const chartData = {
     labels: dailySales.map((d) => formatDateSafe(d.date)),
     datasets: [
       {
-        label: "Total de ventas",
-        data: dailySales.map((d) => d.total),
+        label: "Ventas en BS",
+        data: dailySales.map((d) => d.totalBs),
+        borderColor: "rgb(53, 162, 235)",
+        backgroundColor: "rgba(53, 162, 235, 0.5)",
+        tension: 0.3,
+      },
+      {
+        label: "Ventas en ARS",
+        data: dailySales.map((d) => d.totalArg),
         borderColor: "rgb(255, 99, 132)",
         backgroundColor: "rgba(255, 99, 132, 0.5)",
         tension: 0.3,
@@ -41,7 +46,7 @@ export const DailySalesChart = ({
       <CardHeader>
         <CardTitle>Evolución de ventas diarias</CardTitle>
         <CardDescription>
-          Total de ventas por día en el período seleccionado
+          Total de ventas por día separadas por moneda
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -62,13 +67,14 @@ export const DailySalesChart = ({
                 maintainAspectRatio: false,
                 plugins: {
                   tooltip: { mode: "index" },
+                  legend: { display: true },
                 },
                 scales: {
                   y: {
                     beginAtZero: true,
                     title: {
                       display: true,
-                      text: "Ventas ($)",
+                      text: "Monto de ventas",
                     },
                   },
                 },
@@ -80,3 +86,4 @@ export const DailySalesChart = ({
     </Card>
   );
 };
+

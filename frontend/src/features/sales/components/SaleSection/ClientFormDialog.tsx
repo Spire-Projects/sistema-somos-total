@@ -8,8 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { createClient } from "@/shared/services/ClientService";
 import type { Client } from "@/shared/types/Client";
+import { clientService } from "@/shared/services";
 
 
 const clientSchema = z.object({
@@ -61,7 +61,7 @@ const ClientFormDialog = memo(({ open, onOpenChange, onClientCreated }: ClientFo
         address: data.address?.trim() || undefined,
         createdBy: "current-user", // TODO: Get from auth context
       };
-      const newClient = await createClient(clientData);
+      const newClient = await clientService.create(clientData);
       onClientCreated(newClient);
       clearForm();
       onOpenChange(false);

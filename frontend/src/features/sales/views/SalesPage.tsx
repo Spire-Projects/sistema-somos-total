@@ -15,7 +15,7 @@ import type {
   SaleFilter,
 } from "@/shared/types/modelTypes/Sale";
 import { TableSalesDesktop } from "../components/Tables/TableSalesDesktop";
-import { TableSalesMobile } from "../components/Tables/TableSalesMobile";
+
 import { FilterTabs } from "@/shared/components/FilterTabs";
 import CreateSaleModal from "../components/CreateSaleModal";
 import { ResolvingTemporaryNumbersModal } from "../components/SolverNumberModal";
@@ -183,7 +183,7 @@ export const SalesPage = () => {
           />
           {/* Select de ordenamiento y filtros con shadcn/ui */}
           <div className="flex gap-2 items-center">
-            <span className="text-xs text-muted-foreground">Ordenar por:</span>
+            
             <Select
               value={filters?.orderBy || "createdAt"}
               onValueChange={value => setFilters({ ...filters, orderBy: value as 'createdAt' | 'numberInvoice' })}
@@ -232,25 +232,13 @@ export const SalesPage = () => {
             setSaleIdSelected(sale.id);
             setCreateSaleModalOpen(true);
           }}
-          onDelete={(sale) => {
-            toast.info("Eliminación de venta próximamente");
+          onDelete={ async (sale) => {
+            await salesService.delete(sale.id);
+            toast.info("Cotización eliminada correctamente");
           }}
         />
 
-        {/* Tabla Mobile */}
-        {activeSection === "ventas" ? (
-          <TableSalesMobile
-            sales={sales}
-            loading={loading}
-            searchQuery={searchQuery}
-            onEdit={(sale) => {
-              toast.info("Edición de venta próximamente");
-            }}
-            onDelete={(sale) => {
-              toast.info("Eliminación de venta próximamente");
-            }}
-          />
-        ) : null}
+        
 
         {/* Paginación */}
         {!loading && totalItems > 0 && (

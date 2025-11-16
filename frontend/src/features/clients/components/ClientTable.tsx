@@ -10,6 +10,7 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Mail, Phone, MapPin, Edit, Trash2 } from "lucide-react";
 import type { Client } from "@/shared/types/Client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 
 interface ClientTableProps {
   clients: Client[];
@@ -24,7 +25,13 @@ interface ClientTableProps {
 export const ClientTable = memo<ClientTableProps>(({ clients, onEdit, onDelete }) => {
   return (
     <div className="hidden md:block w-full">
-      <div className="rounded-md border">
+      <Card className="hidden md:block">
+		<CardHeader>
+			<CardTitle>Lista de Clientes</CardTitle>
+			<CardDescription>Administra tu lista de clientes</CardDescription>
+		</CardHeader>
+		<CardContent>
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -96,7 +103,8 @@ export const ClientTable = memo<ClientTableProps>(({ clients, onEdit, onDelete }
             ))}
           </TableBody>
         </Table>
-      </div>
+         </CardContent>         
+      </Card>
     </div>
   );
 });

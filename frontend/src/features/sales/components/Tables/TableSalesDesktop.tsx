@@ -1,4 +1,11 @@
 import { memo, useEffect, useState } from "react";
+import {
+  formatDate,
+  formatCurrency,
+  getPaymentMethodBadge,
+  getClientInfo,
+  getNitInfo,
+} from "../../utils/SaleUtils";
 import { toast } from "sonner";
 
 import { SaleNotePreviewModal } from "../SaleNotePreviewModal";
@@ -30,7 +37,6 @@ import {
 import type { SaleView } from "@/shared/types/modelTypes/Sale";
 import type { Client } from "@/shared/types/Client";
 import { productService } from "@/shared/services/ProductService";
-import { getClientById } from "@/shared/services/ClientService";
 import {
   Card,
   CardContent,
@@ -41,6 +47,10 @@ import {
 import { getPurchaseBoxRepository } from "@/shared/db/repositories/purchase.repository";
 import { SaleNotePdfService } from "../../services/SaleNotePdfService";
 import { salesService } from "@/shared/services/SalesService";
+import ProductPurchasedList from "./ProductPurchasedList";
+import ClientInfoSection from "./ClientInfoSection";
+import NitInfoSection from "./NitInfoSection";
+import { useQuotationPdf } from "../../hooks";
 
 interface TableSalesDesktopProps {
   sales: SaleView[];
@@ -58,13 +68,20 @@ const TableSalesDesktopComponent = ({
   onDelete,
 }: TableSalesDesktopProps) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [productNames, setProductNames] = useState<Record<string, string>>({});
-  const [purchaseBoxReceipts, setPurchaseBoxReceipts] = useState<
-    Record<string, string>
-  >({});
-  const [clientsData, setClientsData] = useState<Record<string, Client>>({});
   const [isDraft, setIsDraft] = useState<boolean>(false);
 
+  // Nota de venta
+  const [showSaleNoteModal, setShowSaleNoteModal] = useState(false);
+  const [saleNotePdfUrl, setSaleNotePdfUrl] = useState<string | null>(null);
+  const [isGeneratingSaleNote, setIsGeneratingSaleNote] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<SaleView | null>(null);
+
+  // Cotización
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
+  const [quotationPdfUrl, setQuotationPdfUrl] = useState<string | null>(null);
+  const [isGeneratingQuotation, setIsGeneratingQuotation] = useState(false);
+  const [selectedQuotationSale, setSelectedQuotationSale] = useState<SaleView | null>(null);
+ 
   useEffect(() => {
     setIsDraft(!sales.some((sale) => sale.isDraft));
   }, [sales]);
@@ -81,85 +98,6 @@ const TableSalesDesktopComponent = ({
     });
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-BO", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatCurrency = (amount: number, currency: "bs" | "arg") => {
-    return `${amount.toFixed(2)} ${currency === "bs" ? "Bs" : "ARS"}`;
-  };
-
-  const getPaymentMethodBadge = (method: "efectivo" | "qr") => {
-    const variants = {
-      efectivo: "default",
-      qr: "secondary",
-    } as const;
-
-    const labels = {
-      efectivo: "Efectivo",
-      qr: "QR",
-    };
-
-    return <Badge variant={variants[method]}>{labels[method]}</Badge>;
-  };
-
-  useEffect(() => {
-    const ids = Array.from(
-      new Set(sales.flatMap((sale) => sale.items.map((item) => item.product)))
-    );
-    if (ids.length === 0) return;
-    Promise.all(ids.map((id) => productService.findById(id))).then(
-      (products) => {
-        const mapping: Record<string, string> = {};
-        products.forEach((prod, idx) => {
-          if (prod) mapping[ids[idx]] = prod.name;
-        });
-        setProductNames(mapping);
-      }
-    );
-  }, [sales]);
-
-  useEffect(() => {
-    const ids = Array.from(
-      new Set(
-        sales.flatMap((sale) => sale.items.map((item) => item.purchaseBoxId))
-      )
-    );
-    if (ids.length === 0) return;
-    const repo = getPurchaseBoxRepository();
-    Promise.all(ids.map((id) => repo.findById(id))).then((boxes) => {
-      const mapping: Record<string, string> = {};
-      boxes.forEach((box, idx) => {
-        if (box) mapping[ids[idx]] = box.receiptNumber || ids[idx];
-      });
-      setPurchaseBoxReceipts(mapping);
-    });
-  }, [sales]);
-
-  // Cargar datos de clientes
-  useEffect(() => {
-    const clientIds = Array.from(
-      new Set(
-        sales.filter((sale) => sale.client).map((sale) => sale.client as string)
-      )
-    );
-    if (clientIds.length === 0) return;
-
-    Promise.all(clientIds.map((id) => getClientById(id))).then((clients) => {
-      const mapping: Record<string, Client> = {};
-      clients.forEach((client, idx) => {
-        if (client) mapping[clientIds[idx]] = client;
-      });
-      setClientsData(mapping);
-    });
-  }, [sales]);
-
   const handleInvoice = async (sale: SaleView) => {
     try {
       await salesService.update(sale.id, { factured: true });
@@ -169,11 +107,65 @@ const TableSalesDesktopComponent = ({
     }
   };
 
-  // Estado para la previsualización de nota de venta
-  const [showSaleNoteModal, setShowSaleNoteModal] = useState(false);
-  const [saleNotePdfUrl, setSaleNotePdfUrl] = useState<string | null>(null);
-  const [isGeneratingSaleNote, setIsGeneratingSaleNote] = useState(false);
-  const [selectedSale, setSelectedSale] = useState<SaleView | null>(null);
+  // Handler para cotización
+  const handlePrintQuotationNote = async (sale: SaleView) => {
+    setIsGeneratingQuotation(true);
+    setSelectedQuotationSale(sale);
+    try {
+      // Generar PDF de cotización
+      const pdf = await import("../../services/QuotationPdfService").then(m => m.QuotationPdfService.generateQuotationPdf({ sale }));
+      const pdfBlob = pdf.output("blob");
+      const url = URL.createObjectURL(pdfBlob);
+      setQuotationPdfUrl(url);
+      setShowQuotationModal(true);
+      toast.success("Cotización generada correctamente.");
+    } catch (err) {
+      toast.error("Error al generar la cotización.");
+    } finally {
+      setIsGeneratingQuotation(false);
+    }
+  } 
+
+  const handleCloseQuotationModal = () => {
+    setShowQuotationModal(false);
+    if (quotationPdfUrl) {
+      URL.revokeObjectURL(quotationPdfUrl);
+      setQuotationPdfUrl(null);
+    }
+    setSelectedQuotationSale(null);
+  };
+
+  const handleDownloadQuotationPdf = () => {
+    if (!quotationPdfUrl || !selectedQuotationSale) {
+      toast.error("No se pudo descargar el PDF de cotización.");
+      return;
+    }
+    const link = document.createElement("a");
+    link.href = quotationPdfUrl;
+    link.download = require("../../services/QuotationPdfService").QuotationPdfService.generateFileName(
+      selectedQuotationSale.clientView?.name || "Sin cliente"
+    );
+    link.click();
+    toast.success("Descarga de cotización iniciada.");
+  };
+
+  const handlePrintQuotationPdf = () => {
+    if (!quotationPdfUrl) {
+      toast.error("No se pudo imprimir la cotización.");
+      return;
+    }
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = quotationPdfUrl;
+    document.body.appendChild(iframe);
+    iframe.onload = function () {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        document.body.removeChild(iframe);
+        toast.success("Cotización enviada a impresión.");
+      }, 100);
+    };
+  };
 
   const handlePrintSaleNote = async (sale: SaleView) => {
     setIsGeneratingSaleNote(true);
@@ -213,7 +205,7 @@ const TableSalesDesktopComponent = ({
     const link = document.createElement("a");
     link.href = saleNotePdfUrl;
     link.download = SaleNotePdfService.generateFileName(
-      selectedSale.clientName
+      selectedSale.clientView?.name || "Sin cliente"
     );
     link.click();
     toast.success("Descarga iniciada.");
@@ -234,31 +226,6 @@ const TableSalesDesktopComponent = ({
         document.body.removeChild(iframe);
         toast.success("Enviado a impresión.");
       }, 100);
-    };
-  };
-
-  const getClientInfo = (sale: SaleView) => {
-    if (!sale.client) {
-      return {
-        name: "Sin cliente",
-        email: "-",
-        phone: "-",
-      };
-    }
-
-    const client = clientsData[sale.client];
-    return {
-      name: client?.name || sale.clientName || "Sin cliente",
-      email: client?.email || "-",
-      phone: client?.phone || "-",
-    };
-  };
-
-  const getNitInfo = (sale: SaleView) => {
-    return {
-      nit: sale.nitClient || "-",
-      socialReason: sale.socialReasonClient || "-",
-      invoiceNumber: sale.numberInvoice || "-",
     };
   };
 
@@ -353,12 +320,21 @@ const TableSalesDesktopComponent = ({
 
                           <TableCell>
                             <span className="text-sm">
-                              {sale.clientName || "Sin cliente"}
+                              {sale.clientView?.name || "Sin cliente"}
                             </span>
                           </TableCell>
                           {isDraft && (
                             <TableCell>
-                              {getPaymentMethodBadge(sale.paymentMethod)}
+                              {(() => {
+                                const badge = getPaymentMethodBadge(
+                                  sale.paymentMethod
+                                );
+                                return (
+                                  <Badge variant={badge.variant}>
+                                    {badge.label}
+                                  </Badge>
+                                );
+                              })()}
                             </TableCell>
                           )}
                           <TableCell>
@@ -368,9 +344,7 @@ const TableSalesDesktopComponent = ({
                           </TableCell>
                           <TableCell className="text-right font-semibold">
                             {formatCurrency(
-                              sale.paymentCurrency === "arg"
-                                ? sale.total * 200
-                                : sale.total,
+                              sale.total,
                               sale.paymentCurrency
                             )}
                           </TableCell>
@@ -427,182 +401,59 @@ const TableSalesDesktopComponent = ({
                               <div className="p-4 space-y-4">
                                 {/* Sección de información del cliente */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-lg border">
-                                  <div>
-                                    <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                                      Información del Cliente
-                                    </h3>
-                                    <div className="space-y-1 text-sm">
-                                      <div>
-                                        <span className="text-gray-600">
-                                          Nombre:
-                                        </span>{" "}
-                                        <span className="font-medium">
-                                          {getClientInfo(sale).name}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-gray-600">
-                                          Correo:
-                                        </span>{" "}
-                                        <span className="font-medium">
-                                          {getClientInfo(sale).email}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-gray-600">
-                                          Teléfono:
-                                        </span>{" "}
-                                        <span className="font-medium">
-                                          {getClientInfo(sale).phone}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
+                                  
+                                  <ClientInfoSection sale={sale} />
+                                  <NitInfoSection sale={sale} />
 
-                                  <div>
-                                    <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                                      Información de Facturación
-                                    </h3>
-                                    <div className="space-y-1 text-sm">
-                                      <div>
-                                        <span className="text-gray-600">
-                                          NIT:
-                                        </span>{" "}
-                                        <span className="font-medium">
-                                          {getNitInfo(sale).nit}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-gray-600">
-                                          Razón Social:
-                                        </span>{" "}
-                                        <span className="font-medium">
-                                          {getNitInfo(sale).socialReason}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <span className="text-gray-600">
-                                          N° Venta:
-                                        </span>{" "}
-                                        <span className="font-medium font-mono">
-                                          {getNitInfo(sale).invoiceNumber}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  {isDraft && (
                                   <div>
                                     <h3 className="text-sm font-semibold text-gray-700 mb-2">
                                       Acciones
                                     </h3>
-                                    <div className="flex flex-col gap-2">
+                                    {isDraft ? (
+                                      <div className="flex flex-col gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full justify-start"
+                                          onClick={() => handleInvoice(sale)}
+                                          disabled={sale.factured}
+                                        >
+                                          <FileCheck className="h-4 w-4 mr-2" />
+                                          {sale.factured
+                                            ? "Facturado"
+                                            : "Facturar Venta"}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full justify-start"
+                                          onClick={() => {
+                                            handlePrintSaleNote(sale);
+                                          }}
+                                        >
+                                          <Printer className="h-4 w-4 mr-2" />
+                                          Imprimir Nota de Venta
+                                        </Button>
+                                      </div>
+                                    ) : (
                                       <Button
                                         variant="outline"
                                         size="sm"
                                         className="w-full justify-start"
-                                        onClick={() => handleInvoice(sale)}
-                                        disabled={sale.factured}
-                                      >
-                                        <FileCheck className="h-4 w-4 mr-2" />
-                                        {sale.factured
-                                          ? "Facturado"
-                                          : "Facturar Venta"}
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                        onClick={() => {
-                                          handlePrintSaleNote(sale);
-                                        }}
+                                        onClick={() => handlePrintQuotationNote(sale)}
                                       >
                                         <Printer className="h-4 w-4 mr-2" />
-                                        Imprimir Nota de Venta
+                                        Imprimir Cotización
                                       </Button>
-                                    </div>
+                                    )}
                                   </div>
-                                  )}
                                 </div>
-                            
 
                                 {/* Sección de productos vendidos */}
-                                <div>
-                                  <div className="font-semibold text-sm text-gray-700 mb-2">
-                                    Productos vendidos ({sale.items.length})
-                                  </div>
-                                  {/* Tabla de items */}
-                                  <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                      <thead>
-                                        <tr className="border-b">
-                                          <th className="text-left py-2 px-3 font-medium text-gray-600">
-                                            Producto
-                                          </th>
-                                          <th className="text-left py-2 px-3 font-medium text-gray-600">
-                                            Lote
-                                          </th>
-                                          <th className="text-right py-2 px-3 font-medium text-gray-600">
-                                            Cantidad
-                                          </th>
-                                          <th className="text-right py-2 px-3 font-medium text-gray-600">
-                                            Precio Unit.
-                                          </th>
-                                          {isDraft && (
-                                            <th className="text-right py-2 px-3 font-medium text-gray-600">
-                                              Descuento
-                                            </th>
-                                          )}
-                                          <th className="text-right py-2 px-3 font-medium text-gray-600">
-                                            Total
-                                          </th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {sale.items.map((item, idx) => (
-                                          <tr
-                                            key={idx}
-                                            className="border-b last:border-0"
-                                          >
-                                            <td className="py-2 px-3">
-                                              {productNames[item.product] ||
-                                                item.product}
-                                            </td>
-                                            <td className="py-2 px-3 font-mono text-xs">
-                                              {purchaseBoxReceipts[
-                                                item.purchaseBoxId
-                                              ] || item.purchaseBoxId}
-                                            </td>
-                                            <td className="py-2 px-3 text-right">
-                                              {item.quantity}
-                                            </td>
-                                            <td className="py-2 px-3 text-right">
-                                              {formatCurrency(
-                                                item.unitPrice,
-                                                sale.paymentCurrency
-                                              )}
-                                            </td>
-                                            {isDraft && (
-                                              <td className="py-2 px-3 text-right text-red-600">
-                                                {item.discount > 0
-                                                  ? `-${formatCurrency(
-                                                    item.discount,
-                                                      sale.paymentCurrency
-                                                    )}`
-                                                  : "-"}
-                                              </td>
-                                            )}
-                                            <td className="py-2 px-3 text-right font-semibold">
-                                              {formatCurrency(
-                                                sale.total,
-                                                sale.paymentCurrency
-                                              )}
-                                            </td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
+                                <ProductPurchasedList
+                                  sale={sale}
+                                  isDraft={isDraft}
+                                />
 
                                 {/* Información adicional (notas) */}
                                 {sale.saleNotes && (
@@ -638,6 +489,15 @@ const TableSalesDesktopComponent = ({
         onDownload={handleDownloadSaleNotePdf}
         onPrint={handlePrintSaleNotePdf}
         isGenerating={isGeneratingSaleNote}
+      />
+      {/* Modal de previsualización de cotización */}
+      <SaleNotePreviewModal
+        open={showQuotationModal}
+        onClose={handleCloseQuotationModal}
+        pdfUrl={quotationPdfUrl}
+        onDownload={handleDownloadQuotationPdf}
+        onPrint={handlePrintQuotationPdf}
+        isGenerating={isGeneratingQuotation}
       />
     </Card>
   );

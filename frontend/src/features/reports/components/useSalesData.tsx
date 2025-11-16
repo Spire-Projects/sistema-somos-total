@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { findSalesByDateRange } from "@/shared/services/SalesService";
+import { salesService } from "@/shared/services/SalesService";
 import type { Sale } from "@/shared/types/modelTypes/Sale";
 
 export function useSalesData(dateFrom: string, dateTo: string) {
@@ -12,14 +12,18 @@ export function useSalesData(dateFrom: string, dateTo: string) {
       setIsLoading(true);
       setError(null);
       try {
-        // Asegurar formato completo ISO para ambas fechas
         const dateFromFormatted = dateFrom + "T00:00:00.000Z";
         const dateToFormatted = dateTo + "T23:59:59.999Z";
-        const salesData = await findSalesByDateRange(
+        
+        const result = await salesService.getAllView(
+          1,
+          10000,
+          undefined,
           dateFromFormatted,
           dateToFormatted
         );
-        setSales(salesData);
+        
+        setSales(result.items);
       } catch (err) {
         console.error("Error al cargar ventas:", err);
         setError("Error al cargar los datos de ventas");
@@ -28,7 +32,6 @@ export function useSalesData(dateFrom: string, dateTo: string) {
       }
     };
 
-    // Solo cargar si tenemos fechas válidas
     if (dateFrom && dateTo) {
       loadSales();
     }
@@ -36,3 +39,4 @@ export function useSalesData(dateFrom: string, dateTo: string) {
 
   return { sales, isLoading, error };
 }
+

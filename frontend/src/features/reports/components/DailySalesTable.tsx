@@ -26,9 +26,9 @@ export const DailySalesTable = ({ dailySales }: DailySalesTableProps) => {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-2 px-2">Fecha</th>
-                <th className="text-right py-2 px-2">Ventas</th>
+                <th className="text-right py-2 px-2">Ventas BS</th>
+                <th className="text-right py-2 px-2">Ventas ARS</th>
                 <th className="text-right py-2 px-2">Transacciones</th>
-                <th className="text-right py-2 px-2">Promedio</th>
               </tr>
             </thead>
             <tbody>
@@ -38,12 +38,12 @@ export const DailySalesTable = ({ dailySales }: DailySalesTableProps) => {
                     {formatDateSafe(day.date)}
                   </td>
                   <td className="py-2 px-2 text-right">
-                    {formatCurrency(day.total)}
+                    {formatCurrency(day.totalBs)} Bs
+                  </td>
+                  <td className="py-2 px-2 text-right">
+                    {formatCurrency(day.totalArg)} ARS
                   </td>
                   <td className="py-2 px-2 text-right">{day.count}</td>
-                  <td className="py-2 px-2 text-right">
-                    {formatCurrency(day.total / day.count)}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -53,3 +53,4 @@ export const DailySalesTable = ({ dailySales }: DailySalesTableProps) => {
     </Card>
   );
 };
+
