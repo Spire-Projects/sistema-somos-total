@@ -30,6 +30,7 @@ import type { Manufacturer } from "../types/modelTypes/Manufacturer";
 import type { Sale } from "../types/modelTypes/Sale";
 import { currencySchema } from "./models/currency.model";
 import type { Currency } from "../types/modelTypes/Currency";
+import { createLocalPriorityConflictHandler } from "./replication/conflictHandler";
 
 
 const setupRxDBPlugins = async () => {
@@ -88,46 +89,57 @@ export async function initDatabase(): Promise<RxDatabase<DatabaseCollections>> {
         users: {
           schema: userSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         clients: {
           schema: clientSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         categories: {
           schema: categorySchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         daily_cash_closures: {
           schema: dailyCashClosureSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         sales: {
           schema: salesSchema,
           migrationStrategies: salesMigrationStrategies,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         products: {
           schema: productSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         purchases: {
           schema: purchaseBoxSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },   
         nits: {
           schema: nitSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         number_invoice_ranges: {
           schema: numberInvoiceRangeSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         manufacturers: {
           schema: manufacturerSchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
         currency: {
           schema: currencySchema,
           autoMigrate: true,
+          conflictHandler: createLocalPriorityConflictHandler(),
         },
       });
 

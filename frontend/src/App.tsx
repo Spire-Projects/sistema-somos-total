@@ -2,25 +2,32 @@ import { useEffect, useCallback, useRef } from "react";
 import { Toaster, toast } from "sonner";
 import { AppRoutes } from "./routes/AppRoutes";
 import { useAppDispatch, useAppSelector } from "./shared/store/hooks";
-import { loadAndValidateUser, validateUserFromDB, loadUserFromStorage } from "./shared/store/authSlice";
+import {
+  loadAndValidateUser,
+  validateUserFromDB,
+  loadUserFromStorage,
+} from "./shared/store/authSlice";
 import { initDatabase } from "./shared/db/database";
-import { startAllReplications } from "./shared/db/replication/startReplications";
+import {
+  startAllReplications,
+  startDebugReplication,
+} from "./shared/db/replication/startReplications";
 
 import { syncService } from "./shared/services/SyncService";
 import { checkAndInitializeData } from "./shared/utils/init-data.utils";
 
-
 function App() {
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated, isValidating } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, isValidating } = useAppSelector(
+    (state) => state.auth
+  );
   const isInitialized = useRef(false);
   const lastValidationTime = useRef<number>(0);
   const handleVisibilityChange = useCallback(() => {
-    if (document.visibilityState === 'visible' && isAuthenticated && user) {
-    
+    if (document.visibilityState === "visible" && isAuthenticated && user) {
       const now = Date.now();
       if (now - lastValidationTime.current > 20000) {
-        console.log('🔍 Validando usuario al regresar a la pestaña...');
+        console.log("🔍 Validando usuario al regresar a la pestaña...");
         dispatch(validateUserFromDB(user.id));
         lastValidationTime.current = now;
       }
@@ -30,15 +37,17 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        const db = await initDatabase();
         //await syncService.initialize();
-        //startAllReplications(db);
-        
+
+        await startDebugReplication();
+
         // Inicializar el servicio de números de factura
-        const { InvoiceNumberService } = await import('./shared/services/InvoiceNumberService');
+        const { InvoiceNumberService } = await import(
+          "./shared/services/InvoiceNumberService"
+        );
         await InvoiceNumberService.initialize();
         await checkAndInitializeData();
-        
+
         console.log("✅ Aplicación inicializada correctamente");
         isInitialized.current = true;
         dispatch(loadAndValidateUser());
@@ -49,20 +58,25 @@ function App() {
     init();
   }, [dispatch]);
 
- 
   useEffect(() => {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const startReplications = async () => {
+      const db = await initDatabase();
+      startAllReplications(db);
+    };
+    startReplications();
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [handleVisibilityChange]);
 
- 
   const wasAuthenticated = useRef(isAuthenticated);
   useEffect(() => {
-    
     if (wasAuthenticated.current && !isAuthenticated && !isValidating) {
-      toast.warning('Sesión cerrada', {
+      toast.warning("Sesión cerrada", {
         duration: 5000,
       });
     }

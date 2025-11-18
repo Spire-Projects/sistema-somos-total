@@ -7,6 +7,7 @@ import {
 import { firestore } from "@/shared/config/firebase";
 import { config } from "@/shared/config/config";
 import { syncService } from "../../services/SyncService";
+import { createConflictHandler } from "./conflictHandler.clean";
 
 /**
  * Configura la replicación de una colección RxDB con Firestore
@@ -20,6 +21,7 @@ export const replicateCollection = <T extends { [key: string]: any }>(
     return null;
   }
 
+  // Converter para transformar datos entre RxDB y Firestore
   const converter: FirestoreDataConverter<T> = {
     toFirestore: (data: T) => {
       const cleanData: any = {};
@@ -91,8 +93,8 @@ export const replicateCollection = <T extends { [key: string]: any }>(
         };
       },
     },
-    live: true,
-    serverTimestampField: "updatedAt",
+    live: true, // Sincronización en tiempo real
+    serverTimestampField: "updatedAt", // Campo de timestamp del servidor
     waitForLeadership: false,
     retryTime: 5000,
   });

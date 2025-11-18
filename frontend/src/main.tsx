@@ -48,8 +48,7 @@ async function initializeApp() {
     console.log("🔄 Inicializando aplicación...");
     await initDatabaseAndModels();
 
-    // 2. Inicializar datos por defecto (usuario admin y datos de catálogo)
-    //await checkAndInitializeData();
+  
 
     console.log("✅ Aplicación inicializada correctamente");
     return true;

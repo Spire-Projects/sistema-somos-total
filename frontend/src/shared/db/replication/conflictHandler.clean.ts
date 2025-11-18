@@ -2,13 +2,13 @@
  * Conflict Handler optimizado para RxDB + Firestore
  * 
  * Estrategia: Last Write Wins (LWW) basado en updatedAt
- * - Simple y predecible
- * - Sin bloqueos manuales
+ * - Más simple y predecible
+ * - Sin necesidad de bloqueos manuales
  * - Sin flags temporales
  * - Previene bucles infinitos naturalmente
  */
 
-export const createLocalPriorityConflictHandler = <T extends { [key: string]: any }>() => {
+export const createConflictHandler = <T extends { [key: string]: any }>() => {
   return async (input: { 
     realMasterState: T; 
     newDocumentState: T 
@@ -42,7 +42,8 @@ export const createLocalPriorityConflictHandler = <T extends { [key: string]: an
         documentData: localDoc
       };
     } else {
-      // Timestamps iguales: preferir remoto para evitar bucles
+      // Timestamps iguales: usar _rev para desempate (RxDB ya lo maneja)
+      // Preferir remoto para evitar bucles
       return {
         isEqual: false,
         documentData: remoteDoc

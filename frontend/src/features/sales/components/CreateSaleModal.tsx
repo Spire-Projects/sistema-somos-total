@@ -33,7 +33,11 @@ import { Printer } from "lucide-react";
 import { generateSaleData, recreateSaleStateItems } from "../utils/SaleUtils";
 import { QuotationPreviewModal } from "./QuotationPreviewModal";
 import useGlobalStates from "@/shared/hooks/useGlobalStates";
-import { set } from "react-hook-form";
+import VerifyStockQuotationModal from "./VerifyStockQuotationModal";
+import { 
+  quotationStockVerificationService,
+  type StockIssue 
+} from "../services/QuotationStockVerificationService";
 
 interface CreateSaleModalProps {
   open: boolean;
@@ -60,33 +64,74 @@ const CreateSaleModal = memo(
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [completedSale, setCompletedSale] = useState<SaleView | null>(null);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [showStockVerificationModal, setShowStockVerificationModal] = useState(false);
+    const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
     const { currency, user } = useGlobalStates();
     
     useEffect(() => {
-      if (initialSaleId) {
+      if (initialSaleId && open) {
         const loadQuotation = async () => {
           try {
             const saleView = await salesService.findById(initialSaleId);
             
             if (saleView) {
-              const items = await recreateSaleStateItems(saleView, currency!);
-              console.log("Currency cargado:", currency);
-              console.log("Total :: ", saleView.total);
-              setSaleState({
-                items,
-                paymentMethod: saleView.paymentMethod,
-                paymentCurrency: saleView.paymentCurrency,
-                clientDiscountType: "percentage",
-                clientDiscountValue: 0,
-                subtotal: saleView.paymentCurrency === "arg" ? saleView.total * (currency?.equivalenceToBs || 1) : saleView.total,
-                totalDiscount: 0,
-                total: saleView.paymentCurrency === "arg" ? saleView.total * (currency?.equivalenceToBs || 1) : saleView.total,
-                clientId: undefined,
-                clientName: saleView.client,
-                nitClient: saleView.nitClient,
-                socialReasonClient: saleView.socialReasonClient,
-                saleNotes: saleView.saleNotes,
-              });
+              // Verificar stock de la cotización
+              const verification = await quotationStockVerificationService.verifyQuotationStock(saleView);
+              
+              if (verification.hasIssues) {
+                // Hay problemas de stock
+                setStockIssues(verification.issues);
+                setShowStockVerificationModal(true);
+                
+                // Cargar solo los items válidos
+                const validItems = await recreateSaleStateItems(
+                  { ...saleView, items: verification.validItems },
+                  currency!
+                );
+                
+                setSaleState({
+                  items: validItems,
+                  paymentMethod: saleView.paymentMethod,
+                  paymentCurrency: saleView.paymentCurrency,
+                  clientDiscountType: "percentage",
+                  clientDiscountValue: 0,
+                  subtotal: saleView.paymentCurrency === "arg" 
+                    ? saleView.total * (currency?.equivalenceToBs || 1) 
+                    : saleView.total,
+                  totalDiscount: 0,
+                  total: saleView.paymentCurrency === "arg" 
+                    ? saleView.total * (currency?.equivalenceToBs || 1) 
+                    : saleView.total,
+                  clientId: undefined,
+                  clientName: saleView.client,
+                  nitClient: saleView.nitClient,
+                  socialReasonClient: saleView.socialReasonClient,
+                  saleNotes: saleView.saleNotes,
+                });
+              } else {
+                // Todo está bien, cargar normalmente
+                const items = await recreateSaleStateItems(saleView, currency!);
+                
+                setSaleState({
+                  items,
+                  paymentMethod: saleView.paymentMethod,
+                  paymentCurrency: saleView.paymentCurrency,
+                  clientDiscountType: "percentage",
+                  clientDiscountValue: 0,
+                  subtotal: saleView.paymentCurrency === "arg" 
+                    ? saleView.total * (currency?.equivalenceToBs || 1) 
+                    : saleView.total,
+                  totalDiscount: 0,
+                  total: saleView.paymentCurrency === "arg" 
+                    ? saleView.total * (currency?.equivalenceToBs || 1) 
+                    : saleView.total,
+                  clientId: undefined,
+                  clientName: saleView.client,
+                  nitClient: saleView.nitClient,
+                  socialReasonClient: saleView.socialReasonClient,
+                  saleNotes: saleView.saleNotes,
+                });
+              }
             }
           } catch (error) {
             console.error("Error al cargar la cotización:", error);
@@ -96,7 +141,7 @@ const CreateSaleModal = memo(
 
         loadQuotation();
       }
-    }, [initialSaleId]);
+    }, [initialSaleId, open, currency]);
 
     const calculateTotals = useCallback(
       (
@@ -453,6 +498,19 @@ const CreateSaleModal = memo(
       onClose();
     }, [onClose]);
 
+    // Manejar continuación sin productos con problemas de stock
+    const handleContinueWithoutStockIssues = useCallback(() => {
+      setShowStockVerificationModal(false);
+      toast.info(`Se eliminaron ${stockIssues.length} producto(s) sin stock disponible`);
+    }, [stockIssues.length]);
+
+    // Manejar cancelación de verificación de stock
+    const handleCancelStockVerification = useCallback(() => {
+      setShowStockVerificationModal(false);
+      handleReset();
+      onClose();
+    }, [onClose, handleReset]);
+
     useEffect(() => {
           console.log("Modal: SaleState total changed:", saleState.total);
           console.log("Modal: Currency equivalence:", currency?.equivalenceToBs);
@@ -552,6 +610,13 @@ const CreateSaleModal = memo(
           open={showSuccessModal}
           onClose={handleCloseSuccessModal}
           sale={completedSale}
+        />
+
+        <VerifyStockQuotationModal
+          open={showStockVerificationModal}
+          issues={stockIssues}
+          onContinueWithoutIssues={handleContinueWithoutStockIssues}
+          onCancel={handleCancelStockVerification}
         />
       </>
     );
