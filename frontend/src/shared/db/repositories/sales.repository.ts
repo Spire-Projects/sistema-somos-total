@@ -59,9 +59,9 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
   ): Promise<ItemsResponse<Sale>> {
     const collection = await this.getCollection();
 
+    // --- Filtros igual que listen$ ---
     const selector: MangoQuerySelector<Sale> = { isDeleted: false };
 
-    // Filtro de búsqueda
     if (searchQuery && searchQuery.trim() !== "") {
       const normalizedText = searchQuery.trim().toLowerCase();
       selector.$or = [
@@ -73,25 +73,17 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
       ];
     }
 
-    // Filtro por cliente
     if (filter?.clientId) {
       selector.client = filter.clientId;
     }
-
-    // Filtro por facturado
     if (filter?.factured !== undefined) {
       selector.factured = filter.factured;
     }
-
-    // Filtro por borrador (isDraft) - siempre excluir borradores
     if (filter?.isDraft !== undefined) {
       selector.isDraft = filter.isDraft;
     } else {
-      // Por defecto, no mostrar borradores
       selector.isDraft = false;
     }
-
-    // Filtro de fechas
     if (dateFrom || dateTo) {
       selector.createdAt = {};
       if (dateFrom) selector.createdAt.$gte = dateFrom;
@@ -100,11 +92,21 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
 
     const skip = (page - 1) * size;
     const limit = size + 1;
-    console.log("Selector:", selector);
-    
+
+    // --- Ordenamiento igual que listen$ ---
+    let sort: any[] = [];
+    if (filter?.orderBy) {
+      const direction = filter.orderDirection === 'asc' ? 'asc' : 'desc';
+      sort.push({ [filter.orderBy]: direction });
+    }
+    sort.unshift({ isDeleted: 'asc' });
+    if (sort.length === 1) {
+      sort.push({ createdAt: 'desc' });
+    }
+
     const docs = await collection.find({
       selector,
-      sort: [{ isDeleted: 'asc', createdAt: 'desc' }],
+      sort,
       skip,
       limit
     }).exec();
@@ -112,13 +114,10 @@ export class LocalSalesRepository extends BaseRepository<Sale> implements ISales
     const items = docs.slice(0, size).map(doc => 
       JSON.parse(JSON.stringify(doc.toJSON())) as Sale
     );
-    
+
     const hasMore = docs.length > size;
-    
-    // Estimación del total
     let totalItems: number;
     let totalPages: number;
-    
     if (page === 1 && !hasMore) {
       totalItems = items.length;
       totalPages = 1;

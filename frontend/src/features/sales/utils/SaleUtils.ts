@@ -149,7 +149,7 @@ export const recreateSaleStateItems = async (
         .then((pb) => pb?.quantityAvailable || 0),
       unitCost: 0,
       profitMarginPercentage: 0,
-      originalPrice: item.unitPrice,
+      originalPrice: saleView.paymentCurrency === "arg" ? item.unitPrice * (currency.equivalenceToBs || 1) : item.unitPrice,
     }))
   );
   return items;

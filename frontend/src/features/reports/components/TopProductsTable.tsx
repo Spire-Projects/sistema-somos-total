@@ -4,7 +4,6 @@ import {
   CardTitle,
   CardContent,
 } from "@/shared/components/ui/card";
-import { formatCurrency } from "@/shared/services/BatchService";
 import type { TopProductItem } from "./types/Types";
 import { productService } from "@/shared/services/ProductService";
 import { useEffect, useState } from "react";
@@ -46,7 +45,7 @@ export const TopProductsTable = ({ topProducts }: TopProductsTableProps) => {
                 <th className="text-left py-2 px-2">#</th>
                 <th className="text-left py-2 px-2">Producto</th>
                 <th className="text-right py-2 px-2">Cantidad</th>
-                <th className="text-right py-2 px-2">Ingresos</th>
+              
               </tr>
             </thead>
             <tbody>
@@ -58,9 +57,7 @@ export const TopProductsTable = ({ topProducts }: TopProductsTableProps) => {
                   <td className="py-2 px-2">{index + 1}</td>
                   <td className="py-2 px-2">{productDataMap[product.productId]?.name || product.name}</td>
                   <td className="py-2 px-2 text-right">{product.quantity}</td>
-                  <td className="py-2 px-2 text-right">
-                    {formatCurrency(product.revenue)}
-                  </td>
+                  
                 </tr>
               ))}
             </tbody>

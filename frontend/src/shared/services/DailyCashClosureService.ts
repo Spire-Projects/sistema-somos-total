@@ -1,29 +1,21 @@
 import { getDailyCashClosureRepository } from "../db/repositories/dailyCashClosure.repository";
-import type { DailyCashClosure } from "../types/DailyCashClosure";
+import type { CreateDaylyCashClosure, DailyCashClosure, DailyCashClosureFilter, UpdateDailyCashClosure } from "../types/DailyCashClosure";
+import { BaseService } from "./BaseService";
 
-const getRepository = () => getDailyCashClosureRepository();
-
-export const createDailyCashClosure = async (
-  data: Omit<DailyCashClosure, "id">
-): Promise<DailyCashClosure> => {
-  const repo = getRepository();
-
-  // Validación básica: evitar duplicados por fecha y usuario
-  const existing = await repo.findByDate(data.date);
-  const exists = existing.find((c) => c.userId === data.userId);
-
-  if (exists) {
-    alert("Ya existe un arqueo de caja para ese día y usuario.");
+class DailyCashClosureService extends BaseService<
+  DailyCashClosure,
+  DailyCashClosure,
+  CreateDaylyCashClosure,
+  UpdateDailyCashClosure,
+  DailyCashClosureFilter
+>  {
+  constructor() {
+    super(getDailyCashClosureRepository());
   }
 
-  return await repo.create(data);
-};
+  protected async toView(entity: DailyCashClosure): Promise<DailyCashClosure> {
+    return entity;
+  }
+}
 
-export const getDailyCashClosuresPaginated = async (
-  page: number,
-  size: number,
-  searchQuery?: string
-) => {
-  const repo = getRepository();
-  return await repo.findAllPaginated(page, size, searchQuery);
-};
+export const dailyCashClosureService = new DailyCashClosureService();

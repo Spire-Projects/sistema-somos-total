@@ -18,7 +18,7 @@ export const config = {
   
   // Configuración de base de datos local
   DB: {
-    NAME: 'somostotal_db_v14',
+    NAME: 'somostotal_db_v15',
     PATH: './data/rxdb',
     VERSION: 1,
   },

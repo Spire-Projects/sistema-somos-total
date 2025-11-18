@@ -1,12 +1,23 @@
 import { memo, useState, useEffect } from "react";
-import { ShoppingCart, Plus, X, MoreVertical, Download, Upload } from "lucide-react";
+import {
+  ShoppingCart,
+  Plus,
+  X,
+  MoreVertical,
+  Download,
+  Upload,
+} from "lucide-react";
 
 import { DataPagination } from "@/shared/components/DataPagination";
 import { useEntityData } from "@/shared/hooks";
 import { purchaseService } from "@/shared/services/PurchaseService";
 import { productService } from "@/shared/services/ProductService";
 import { manufacturerService } from "@/shared/services/ManufacturerService";
-import type { PurchaseView, PurchaseFilter, PurchaseBox } from "@/shared/types/modelTypes/PurchaseBox";
+import type {
+  PurchaseView,
+  PurchaseFilter,
+  PurchaseBox,
+} from "@/shared/types/modelTypes/PurchaseBox";
 import type { Product } from "@/shared/types/modelTypes/Product";
 import type { Manufacturer } from "@/shared/types/modelTypes/Manufacturer";
 import { Button } from "@/shared/components/ui/button";
@@ -33,17 +44,24 @@ import PageHeader from "@/shared/components/PageHeader";
 import SearchInput from "@/shared/components/SearchInput";
 import { toast } from "sonner";
 import type { Subscription } from "rxjs";
+import { excelExportService } from "@/shared/services/ExcelExportService";
+import useGlobalStates from "@/shared/hooks/useGlobalStates";
 
 const PurchasesPageComponent = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUploadExcelModalOpen, setIsUploadExcelModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [purchaseToDelete, setPurchaseToDelete] = useState<PurchaseView | null>(null);
-  const [purchaseToEdit, setPurchaseToEdit] = useState<PurchaseView | null>(null);
+  const [purchaseToDelete, setPurchaseToDelete] = useState<PurchaseView | null>(
+    null
+  );
+  const [purchaseToEdit, setPurchaseToEdit] = useState<PurchaseView | null>(
+    null
+  );
   const [products, setProducts] = useState<Product[]>([]);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [selectedManufacturerId, setSelectedManufacturerId] = useState<string>("");
+  const [selectedManufacturerId, setSelectedManufacturerId] =
+    useState<string>("");
 
   // Cargar productos y proveedores para filtros
   useEffect(() => {
@@ -53,23 +71,25 @@ const PurchasesPageComponent = () => {
     if (productService.listen$) {
       productSubscription = productService.listen$(1, 100).subscribe({
         next: (items) => setProducts(items),
-        error: (err) => console.error('Error loading products:', err),
+        error: (err) => console.error("Error loading products:", err),
       });
     } else {
-      productService.getAllView(1, 100)
-        .then(response => setProducts(response.items))
-        .catch(error => console.error('Error loading products:', error));
+      productService
+        .getAllView(1, 100)
+        .then((response) => setProducts(response.items))
+        .catch((error) => console.error("Error loading products:", error));
     }
 
     if (manufacturerService.listen$) {
       manufacturerSubscription = manufacturerService.listen$(1, 100).subscribe({
         next: (items) => setManufacturers(items),
-        error: (err) => console.error('Error loading manufacturers:', err),
+        error: (err) => console.error("Error loading manufacturers:", err),
       });
     } else {
-      manufacturerService.getAllView(1, 100)
-        .then(response => setManufacturers(response.items))
-        .catch(error => console.error('Error loading manufacturers:', error));
+      manufacturerService
+        .getAllView(1, 100)
+        .then((response) => setManufacturers(response.items))
+        .catch((error) => console.error("Error loading manufacturers:", error));
     }
 
     return () => {
@@ -105,10 +125,13 @@ const PurchasesPageComponent = () => {
 
     // Actions - General
     refresh,
-  } = useEntityData<PurchaseBox, PurchaseView, PurchaseFilter>(purchaseService, {
-    initialPageSize: 10,
-    enableRealtime: true,
-  });
+  } = useEntityData<PurchaseBox, PurchaseView, PurchaseFilter>(
+    purchaseService,
+    {
+      initialPageSize: 10,
+      enableRealtime: true,
+    }
+  );
 
   const handlePurchaseCreated = async () => {
     setIsCreateModalOpen(false);
@@ -170,7 +193,7 @@ const PurchasesPageComponent = () => {
       await refresh();
       toast.success("Compra eliminada exitosamente");
     } catch (error) {
-      console.error('Error deleting purchase:', error);
+      console.error("Error deleting purchase:", error);
       toast.error("Error al eliminar la compra. Intenta nuevamente");
     }
   };
@@ -180,6 +203,33 @@ const PurchasesPageComponent = () => {
     setDeleteDialogOpen(false);
     setPurchaseToDelete(null);
   };
+  const {user} = useGlobalStates();
+  const handleExportTable = async () => {
+    toast.info("Generando reporte de compras...");
+    const allPurchases = await purchaseService.getAllView(1, 90000, searchQuery, undefined, undefined, filters);
+    
+    await excelExportService.exportToExcel(allPurchases.items, {
+      title: 'Reporte de Compras',
+      fileName: 'reporte_compras',
+      exportedBy: user?.fullName || user?.email || 'Desconocido', 
+      columnMapping: {
+        receiptNumber: 'Número de Comprobante',
+        productName: 'Producto',
+        notes: 'Notas',
+        quantityPurchased: 'Cantidad Comprada',
+        quantityAvailable: 'Cantidad Disponible',
+        profitMarginPercentage: 'Margen de Ganancia (%)',
+        supplierName: 'Proveedor',
+        unitCost: 'Precio Unitario',
+        totalCost: 'Precio Total',
+        createdAt: 'Fecha de Compra',
+      
+      },
+      excludeColumns: ['_lastModifiedAt', 'product', 'supplierId', 'productCategory', 'supplierName', 'purchaseDate', 'productId'],
+    });
+    toast.success("Reporte de compras generado exitosamente");
+
+  }
 
   // Manejo de errores
   if (error) {
@@ -190,9 +240,7 @@ const PurchasesPageComponent = () => {
     return (
       <div className="p-2 xs:p-3 sm:p-4 md:p-6 lg:p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-medium">
-            Error al cargar compras
-          </h3>
+          <h3 className="text-red-800 font-medium">Error al cargar compras</h3>
           <p className="text-red-600 text-sm mt-1">{error}</p>
           <Button
             onClick={refresh}
@@ -224,6 +272,55 @@ const PurchasesPageComponent = () => {
           isLoading={loading}
         />
 
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => {
+            setPurchaseToEdit(null);
+            setIsCreateModalOpen(true);
+          }}
+          disabled={loading}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nueva Compra
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={loading}
+              aria-label="Más opciones"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => handleExportTable()}
+            >
+              <Download className="h-4 w-4 mr-2" /> Exportar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsUploadExcelModalOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" /> Importar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="flex flex-row gap-2">
+        {/* Botón limpiar filtros */}
+        {Object.keys(filters).length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearFilters}
+            disabled={loading}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Limpiar filtros
+          </Button>
+        )}
         {/* Filtro por Producto */}
         <Select
           value={selectedProductId}
@@ -261,53 +358,7 @@ const PurchasesPageComponent = () => {
             ))}
           </SelectContent>
         </Select>
-
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => {
-            setPurchaseToEdit(null);
-            setIsCreateModalOpen(true);
-          }}
-          disabled={loading}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Compra
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" disabled={loading} aria-label="Más opciones">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => toast.info("Exportación pendiente de implementar")}
-            >
-              <Download className="h-4 w-4 mr-2" /> Exportar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setIsUploadExcelModalOpen(true)}
-            >
-              <Upload className="h-4 w-4 mr-2" /> Importar
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
-
-      {/* Botón limpiar filtros */}
-      {Object.keys(filters).length > 0 && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleClearFilters}
-          disabled={loading}
-        >
-          <X className="h-4 w-4 mr-2" />
-          Limpiar filtros
-        </Button>
-      )}
 
       {/* Table - Desktop */}
       <TablePurchaseDesktop
@@ -358,7 +409,7 @@ const PurchasesPageComponent = () => {
           setPurchaseToEdit(null);
         }}
         onSuccess={handlePurchaseCreated}
-        createdBy="current-user" // TODO: Obtener del contexto de autenticación
+        createdBy={user?.id ?? 'unknown-user'}
         purchaseToEdit={purchaseToEdit}
       />
 
@@ -385,6 +436,6 @@ const PurchasesPageComponent = () => {
   );
 };
 
-PurchasesPageComponent.displayName = 'PurchasesPage';
+PurchasesPageComponent.displayName = "PurchasesPage";
 
 export const PurchasesPage = memo(PurchasesPageComponent);

@@ -1,18 +1,51 @@
-export interface DailyCashClosure {
-  id: string;
+import type { IEntity } from "./UtilTypes";
+
+export interface DailyCashClosure extends IEntity {
   userId: string;
   date: string;
   openingAmount: number;
-  closingAmount: number;
+  closingAmountBs: {
+    amountQr: number;
+    amountCash: number;
+  };
+  closingAmountArg: {
+    amountQr: number;
+    amountCash: number;
+  };
   notes?: string;
+}
 
-  createdAt?: string;
-  createdBy?: string;
-  updatedAt?: string;
-  updatedBy?: string;
-  sincronized?: boolean;
-  isDeleted?: boolean;
-  deletedBy?: string;
+export interface CreateDaylyCashClosure{
+  userId: string;
+  date: string;
+  openingAmount: number;
+  closingAmountBs: {
+    amountQr: number;
+    amountCash: number;
+  };
+  closingAmountArg: {
+    amountQr: number;
+    amountCash: number;
+  };
+  notes?: string;
+  createdBy: string;
+}
+
+export interface UpdateDailyCashClosure{
+  closingAmountBs: {
+    amountQr: number;
+    amountCash: number;
+  };
+  closingAmountArg: {
+    amountQr: number;
+    amountCash: number;
+  };
+  notes?: string;
+  updatedBy: string;
+}
+
+export interface DailyCashClosureFilter {
+  currency?: 'bs' | 'arg';
 }
 
 export type Denomination = {

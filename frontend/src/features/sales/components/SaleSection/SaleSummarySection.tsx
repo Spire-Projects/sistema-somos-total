@@ -18,7 +18,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { DollarSign, CheckCircle2, X, Boxes } from "lucide-react";
 import type { SaleState } from "@/shared/types/modelTypes/Sale";
 import useGlobalStates from "@/shared/hooks/useGlobalStates";
- import { formatCurrency, canConfirmSale } from "../utils/SaleUtils";
+ import { formatCurrency, canConfirmSale } from "../../utils/SaleUtils";
 import Decimal from "decimal.js";
 
 interface SaleSummarySectionProps {
@@ -79,10 +79,10 @@ const SaleSummarySection = memo(
    
 
 
-    useEffect(() => {
-      console.log("SaleState total changed:", saleState.total);
-      console.log("Currency equivalence:", currency?.equivalenceToBs);
-    }, [saleState.total]);
+    const printSaleState = () => {
+      console.log("SaleState printed:", saleState);
+      return "";
+    };
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -141,11 +141,11 @@ const SaleSummarySection = memo(
                       )}
                 </span>
                 <span>
+                  {printSaleState()}
                   -
                   {formatCurrency(
                     saleState.clientDiscountType === "percentage"
-                      ? (saleState.subtotal - saleState.totalDiscount) *
-                          (saleState.clientDiscountValue / 100)
+                      ? new Decimal(saleState.totalDiscount).div(currency?.equivalenceToBs || 1).toNumber()
                       : saleState.paymentCurrency === "arg" ? saleState.clientDiscountValue / currency?.equivalenceToBs! : saleState.clientDiscountValue,
                     saleState.paymentCurrency
                   )}
@@ -273,7 +273,7 @@ const SaleSummarySection = memo(
                   onSaveQuotation();
                 }
               }}
-              disabled={isProcessing}
+              disabled={isProcessing || saleState.items.length === 0 || !onSaveQuotation}
               variant="outline"
               className="w-full"
             >

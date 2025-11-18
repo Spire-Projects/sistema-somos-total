@@ -1,174 +1,209 @@
-import type { DailyCashClosure } from "@/shared/types/DailyCashClosure";
-import type { ItemsResponse } from "@/shared/types/UtilTypes";
-import { initDatabase } from "../database";
+import type { DailyCashClosure, CreateDaylyCashClosure, UpdateDailyCashClosure, DailyCashClosureFilter } from '@/shared/types/DailyCashClosure';
+import type { ItemsResponse } from '@/shared/types/UtilTypes';
+import { initDatabase } from '../database';
+import { config } from '@/shared/config/config';
+import { BaseRepository } from './BaseRepository';
+import type { RxCollection } from 'rxdb';
+import type { ICrudBaseRepository } from './interfaces/IRepository';
+import { Observable, map } from 'rxjs';
 
-export interface IDailyCashClosureRepository {
-  create(data: Omit<DailyCashClosure, "id">): Promise<DailyCashClosure>;
-  findById(id: string): Promise<DailyCashClosure | null>;
-  findByDate(date: string): Promise<DailyCashClosure[]>;
-  findAll(): Promise<DailyCashClosure[]>;
-  findAllPaginated(
-    page: number,
-    size: number,
-    searchQuery?: string
-  ): Promise<ItemsResponse<DailyCashClosure>>;
-  update(
-    id: string,
-    updateData: Partial<DailyCashClosure>
-  ): Promise<DailyCashClosure | null>;
-  delete(id: string): Promise<boolean>;
-  softDelete(id: string, deletedBy: string): Promise<boolean>;
-  restore(id: string): Promise<boolean>;
-}
+export interface IDailyCashClosureRepository extends ICrudBaseRepository<DailyCashClosure, CreateDaylyCashClosure, UpdateDailyCashClosure, DailyCashClosureFilter> {}
 
-export class LocalDailyCashClosureRepository
-  implements IDailyCashClosureRepository
-{
-  async create(data: Omit<DailyCashClosure, "id">): Promise<DailyCashClosure> {
+export class LocalDailyCashClosureRepository extends BaseRepository<DailyCashClosure> implements IDailyCashClosureRepository {
+  protected async getCollection(): Promise<RxCollection<DailyCashClosure>> {
     const db = await initDatabase();
+    return db.daily_cash_closures;
+  }
+
+  async create(data: CreateDaylyCashClosure): Promise<DailyCashClosure> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    const inserted = await db.daily_cash_closures.insert({
+    const fullData: DailyCashClosure = {
       id,
       ...data,
       createdAt: now,
       updatedAt: now,
-      sincronized: false,
       isDeleted: false,
-    });
+      sincronized: false,
+    };
 
-    return JSON.parse(JSON.stringify(inserted.toJSON())) as DailyCashClosure;
+    return await this.createWithPriority(fullData);
   }
 
-  async findById(id: string): Promise<DailyCashClosure | null> {
-    const db = await initDatabase();
-    const item = await db.daily_cash_closures.findOne({
-      selector: {
-        id,
-        isDeleted: { $ne: true }
-      }
-    }).exec();
-    return item
-      ? (JSON.parse(JSON.stringify(item.toJSON())) as DailyCashClosure)
-      : null;
+  async update(id: string, updateData: UpdateDailyCashClosure): Promise<DailyCashClosure | null> {
+    try {
+      return await this.updateWithPriority(id, updateData as any);
+    } catch (error) {
+      console.error(`❌ Error al actualizar cierre diario ${id}:`, error);
+      return null;
+    }
   }
 
-  async findByDate(date: string): Promise<DailyCashClosure[]> {
-    const db = await initDatabase();
-    const items = await db.daily_cash_closures
-      .find({
-        selector: {
-          date,
-          isDeleted: { $ne: true }
-        }
-      })
-      .exec();
-    return items.map((i) => i.toJSON());
+  async softDelete(id: string): Promise<boolean> {
+    return await this.deleteWithPriority(id);
   }
 
-  async findAll(): Promise<DailyCashClosure[]> {
-    const db = await initDatabase();
-    const all = await db.daily_cash_closures.find({
-      selector: {
-        isDeleted: { $ne: true }
-      }
-    }).exec();
-    return all.map((i) => i.toJSON());
-  }
-
-  async findAllPaginated(
+  async getAll(
     page: number,
     size: number,
-    searchQuery?: string
+    _searchQuery?: string,
+    dateFrom?: string,
+    dateTo?: string,
+    _filter?: DailyCashClosureFilter
   ): Promise<ItemsResponse<DailyCashClosure>> {
-    const db = await initDatabase();
+    const collection = await this.getCollection();
 
-    let query = db.daily_cash_closures
-      .find()
-      .where("isDeleted")
-      .eq(false)
-      .sort({ date: "desc" });
+    const selector: any = { isDeleted: false };
 
-    if (searchQuery) {
-      // Opcional: filtrar por notas, userId, etc
-      // query = query.where("notes").regex(new RegExp(searchQuery, "i"));
+    // Filtrado por fechas (campo `date` que representa la fecha del cierre)
+    if (dateFrom || dateTo) {
+      selector.date = {};
+      if (dateFrom) selector.date.$gte = dateFrom;
+      if (dateTo) selector.date.$lte = dateTo;
     }
 
     const skip = (page - 1) * size;
+    const limit = size + 1;
 
-    const totalItems = await db.daily_cash_closures
-      .find()
-      .where("isDeleted")
-      .eq(false)
-      .exec();
+    const docs = await collection.find({
+      selector,
+      sort: [{ isDeleted: 'asc' }, { date: 'desc' }],
+      skip,
+      limit
+    }).exec();
 
-    const items = await query.skip(skip).limit(size).exec();
+    const items = docs.slice(0, size).map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as DailyCashClosure);
+    const hasMore = docs.length > size;
 
-    const total = totalItems.length;
-    const totalPages = Math.ceil(total / size);
+    let totalItems: number;
+    let totalPages: number;
+
+    if (page === 1 && !hasMore) {
+      totalItems = items.length;
+      totalPages = 1;
+    } else if (page === 1 && hasMore) {
+      totalItems = size * 2;
+      totalPages = 2;
+    } else {
+      totalItems = (page - 1) * size + items.length + (hasMore ? size : 0);
+      totalPages = Math.ceil(totalItems / size);
+    }
 
     return {
-      items: items.map((i) => i.toJSON()),
+      items,
       page,
       size,
-      totalItems: total,
-      totalPages,
+      totalItems,
+      totalPages
     };
   }
 
-  async update(
-    id: string,
-    updateData: Partial<DailyCashClosure>
-  ): Promise<DailyCashClosure | null> {
-    const db = await initDatabase();
-    const doc = await db.daily_cash_closures.findOne(id).exec();
-    if (!doc) return null;
-
-    await doc.update({
-      $set: { ...updateData, updatedAt: new Date().toISOString() },
-    });
-    return JSON.parse(JSON.stringify(doc.toJSON())) as DailyCashClosure;
+  async findById(id: string): Promise<DailyCashClosure | null> {
+    return await super.findById(id);
   }
 
-  async delete(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const doc = await db.daily_cash_closures.findOne(id).exec();
-    if (!doc) return false;
-    
-    // Soft delete - marcar como eliminado en lugar de borrar permanentemente
-    await doc.update({
-      $set: { 
-        isDeleted: true, 
-        updatedAt: new Date().toISOString() 
-      },
+  listen$(
+    page: number,
+    size: number,
+    _searchQuery?: string,
+    dateFrom?: string,
+    dateTo?: string,
+    _filter?: DailyCashClosureFilter
+  ): Observable<DailyCashClosure[]> {
+    return new Observable<DailyCashClosure[]>(subscriber => {
+      let subscription: any;
+
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+
+          const selector: any = { isDeleted: false };
+
+          if (dateFrom || dateTo) {
+            selector.date = {};
+            if (dateFrom) selector.date.$gte = dateFrom;
+            if (dateTo) selector.date.$lte = dateTo;
+          }
+
+          const skip = (page - 1) * size;
+
+          subscription = collection.find({
+            selector,
+            sort: [{ isDeleted: 'asc' }, { date: 'desc' }],
+            skip,
+            limit: size
+          }).$.pipe(
+            map(docs => docs.map(doc => JSON.parse(JSON.stringify(doc.toJSON())) as DailyCashClosure))
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err),
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
     });
-    return true;
   }
 
-  async softDelete(id: string, deletedBy: string): Promise<boolean> {
-    const db = await initDatabase();
-    const doc = await db.daily_cash_closures.findOne(id).exec();
-    if (!doc) return false;
+  lisntenById$(id: string): Observable<DailyCashClosure | null> {
+    return new Observable<DailyCashClosure | null>(subscriber => {
+      let subscription: any;
 
-    await doc.update({
-      $set: { isDeleted: true, deletedBy, updatedAt: new Date().toISOString() },
+      (async () => {
+        try {
+          const collection = await this.getCollection();
+
+          subscription = collection.findOne(id).$.pipe(
+            map(doc => doc ? JSON.parse(JSON.stringify(doc.toJSON())) as DailyCashClosure : null)
+          ).subscribe({
+            next: (data) => subscriber.next(data),
+            error: (err) => subscriber.error(err),
+          });
+        } catch (error) {
+          subscriber.error(error);
+        }
+      })();
+
+      return () => {
+        if (subscription) subscription.unsubscribe();
+      };
     });
-    return true;
-  }
-
-  async restore(id: string): Promise<boolean> {
-    const db = await initDatabase();
-    const doc = await db.daily_cash_closures.findOne(id).exec();
-    if (!doc) return false;
-
-    await doc.update({
-      $set: { isDeleted: false, updatedAt: new Date().toISOString() },
-    });
-    return true;
   }
 }
 
-export const localRepository = new LocalDailyCashClosureRepository();
+export class FirestoreDailyCashClosureRepository implements IDailyCashClosureRepository {
+  async create(_data: CreateDaylyCashClosure): Promise<DailyCashClosure> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async update(_id: string, _updateData: UpdateDailyCashClosure): Promise<DailyCashClosure | null> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async softDelete(_id: string): Promise<boolean> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async getAll(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string, _filter?: DailyCashClosureFilter): Promise<ItemsResponse<DailyCashClosure>> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  async findById(_id: string): Promise<DailyCashClosure | null> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  listen$(_page: number, _size: number, _searchQuery?: string, _dateFrom?: string, _dateTo?: string, _filter?: DailyCashClosureFilter): Observable<DailyCashClosure[]> {
+    throw new Error('Firestore implementation not yet available');
+  }
+  lisntenById$(_id: string): Observable<DailyCashClosure | null> {
+    throw new Error('Firestore implementation not yet available');
+  }
+}
 
-export const getDailyCashClosureRepository = () => localRepository;
+export const localDailyCashClosureRepository = new LocalDailyCashClosureRepository();
+export const firestoreDailyCashClosureRepository = new FirestoreDailyCashClosureRepository();
+
+export const getDailyCashClosureRepository = (): IDailyCashClosureRepository => {
+  return config.APP_MODE === 'local' ? localDailyCashClosureRepository : firestoreDailyCashClosureRepository;
+};
+

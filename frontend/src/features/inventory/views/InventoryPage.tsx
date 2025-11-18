@@ -34,6 +34,8 @@ import { Button } from "@/shared/components/ui/button";
 import TableProductDesktop from "../components/Tables/TableProductDesktop";
 import TableProductMobile from "../components/Tables/TableProductMobile";
 import { CreateProductModal } from "../components/CreateProductModal";
+import { excelExportService } from "@/shared/services/ExcelExportService";
+import useGlobalStates from "@/shared/hooks/useGlobalStates";
 
 
 const InventoryPageComponent = () => {
@@ -143,6 +145,30 @@ const InventoryPageComponent = () => {
     setProductToDelete(null);
   };
 
+  const {user} = useGlobalStates();
+ 
+  const handleExportTable = async () => {
+   
+    toast.info("Generando reporte de productos...");
+    const allProducts = await productService.getAllView(1, 10000);
+
+    await excelExportService.exportToExcel(allProducts.items, {
+      title: 'Reporte de Productos',
+      fileName: 'reporte_productos',
+      exportedBy: user?.fullName || user?.email || 'Desconocido', // TODO: Reemplazar con el nombre del usuario autenticado
+      sheetName: 'Productos',
+      columnMapping: {
+        name: 'Nombre',
+        categoryName: 'Categoría',
+        stock: 'Stock',
+       
+        createdAt: 'Fecha de Creación',
+      },
+      excludeColumns: ['_lastModifiedAt'],
+    });
+    toast.success("Reporte de productos generado exitosamente");
+  }
+
 
 
   if (error) {
@@ -230,7 +256,7 @@ const InventoryPageComponent = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => console.log('TODO: Implementar exportación')}
+              onClick={() => handleExportTable()}
             >
               <Download className="h-4 w-4 mr-2" /> Exportar
             </DropdownMenuItem>

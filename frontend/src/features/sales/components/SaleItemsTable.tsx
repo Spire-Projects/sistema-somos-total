@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from "react";
+import ProductInfoModal from "./ProductInfoModal";
 import {
   Table,
   TableBody,
@@ -32,6 +33,8 @@ const SaleItemsTable = memo(({
   saleState,
 }: SaleItemsTableProps) => {
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const {currency} = useGlobalStates();
   const handleIncrement = useCallback((item: CartSaleItem) => {
     if (item.quantity < item.availableStock) {
@@ -169,7 +172,17 @@ const SaleItemsTable = memo(({
 
                   <TableCell>
                     <div className="flex justify-center">
-                      <Info className="text-secondary h-5" />
+                      <button
+                        type="button"
+                        className="p-0 m-0 bg-transparent border-none cursor-pointer"
+                        aria-label="Ver detalles del producto"
+                        onClick={() => {
+                          setSelectedProductId(item.product);
+                          setInfoModalOpen(true);
+                        }}
+                      >
+                        <Info className="text-secondary h-5" />
+                      </button>
                     </div>
                   </TableCell>
 
@@ -214,6 +227,18 @@ const SaleItemsTable = memo(({
         textConfirm="Sí, limpiar"
         textCancel="Cancelar"
       />
+
+      {/* Modal de información de producto */}
+      {selectedProductId && (
+        <ProductInfoModal
+          productId={selectedProductId}
+          open={infoModalOpen}
+          onOpenChange={(open) => {
+            setInfoModalOpen(open);
+            if (!open) setSelectedProductId(null);
+          }}
+        />
+      )}
     </Card>
   );
 });

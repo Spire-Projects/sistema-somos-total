@@ -3,7 +3,8 @@ export interface TopProductItem {
   name: string;
   code?: string;
   quantity: number;
-  revenue: number;
+  revenueBs: number;
+  revenueArg: number;
 }
 
 export interface DailySales {
@@ -15,7 +16,8 @@ export interface DailySales {
 
 export interface PaymentMethodSummary {
   method: string;
-  total: number;
+  totalBs: number;
+  totalArg: number;
   count: number;
   percentage: number;
 }

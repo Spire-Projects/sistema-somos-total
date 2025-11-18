@@ -11,15 +11,30 @@ export const dailyCashClosureSchema: RxJsonSchema<DailyCashClosure> = {
     userId: { type: "string" },
     date: { type: "string", format: "date-time" },
     openingAmount: { type: "number" },
-    closingAmount: { type: "number" },
+    closingAmountBs: {
+      type: "object",
+      properties: {
+        amountQr: { type: "number" },
+        amountCash: { type: "number" }
+      },
+      required: ["amountQr", "amountCash"]
+    },
+    closingAmountArg: {
+      type: "object",
+      properties: {
+        amountQr: { type: "number" },
+        amountCash: { type: "number" }
+      },
+      required: ["amountQr", "amountCash"]
+    },
     notes: { type: "string" },
     createdAt: { type: "string" },
     createdBy: { type: "string" },
     updatedAt: { type: "string" },
     updatedBy: { type: "string" },
-    sincronized: { type: "string" },
+    sincronized: { type: "boolean" },
     isDeleted: { type: "boolean" },
-    deletedBy: { type: "boolean" },
+    deletedBy: { type: "string" },
   },
-  required: ["id", "userId", "date", "openingAmount", "closingAmount"],
+  required: ["id", "userId", "date", "openingAmount", "closingAmountBs", "closingAmountArg"],
 };

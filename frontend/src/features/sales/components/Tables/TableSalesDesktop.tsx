@@ -80,8 +80,9 @@ const TableSalesDesktopComponent = ({
   const [showQuotationModal, setShowQuotationModal] = useState(false);
   const [quotationPdfUrl, setQuotationPdfUrl] = useState<string | null>(null);
   const [isGeneratingQuotation, setIsGeneratingQuotation] = useState(false);
-  const [selectedQuotationSale, setSelectedQuotationSale] = useState<SaleView | null>(null);
- 
+  const [selectedQuotationSale, setSelectedQuotationSale] =
+    useState<SaleView | null>(null);
+
   useEffect(() => {
     setIsDraft(!sales.some((sale) => sale.isDraft));
   }, [sales]);
@@ -113,7 +114,9 @@ const TableSalesDesktopComponent = ({
     setSelectedQuotationSale(sale);
     try {
       // Generar PDF de cotización
-      const pdf = await import("../../services/QuotationPdfService").then(m => m.QuotationPdfService.generateQuotationPdf({ sale }));
+      const pdf = await import("../../services/QuotationPdfService").then((m) =>
+        m.QuotationPdfService.generateQuotationPdf({ sale })
+      );
       const pdfBlob = pdf.output("blob");
       const url = URL.createObjectURL(pdfBlob);
       setQuotationPdfUrl(url);
@@ -124,7 +127,7 @@ const TableSalesDesktopComponent = ({
     } finally {
       setIsGeneratingQuotation(false);
     }
-  } 
+  };
 
   const handleCloseQuotationModal = () => {
     setShowQuotationModal(false);
@@ -142,9 +145,10 @@ const TableSalesDesktopComponent = ({
     }
     const link = document.createElement("a");
     link.href = quotationPdfUrl;
-    link.download = require("../../services/QuotationPdfService").QuotationPdfService.generateFileName(
-      selectedQuotationSale.clientView?.name || "Sin cliente"
-    );
+    link.download =
+      require("../../services/QuotationPdfService").QuotationPdfService.generateFileName(
+        selectedQuotationSale.clientView?.name || "Sin cliente"
+      );
     link.click();
     toast.success("Descarga de cotización iniciada.");
   };
@@ -343,10 +347,7 @@ const TableSalesDesktopComponent = ({
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-semibold">
-                            {formatCurrency(
-                              sale.total,
-                              sale.paymentCurrency
-                            )}
+                            {formatCurrency(sale.total, sale.paymentCurrency)}
                           </TableCell>
                           {isDraft && (
                             <TableCell>
@@ -401,7 +402,6 @@ const TableSalesDesktopComponent = ({
                               <div className="p-4 space-y-4">
                                 {/* Sección de información del cliente */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white rounded-lg border">
-                                  
                                   <ClientInfoSection sale={sale} />
                                   <NitInfoSection sale={sale} />
 
@@ -440,7 +440,9 @@ const TableSalesDesktopComponent = ({
                                         variant="outline"
                                         size="sm"
                                         className="w-full justify-start"
-                                        onClick={() => handlePrintQuotationNote(sale)}
+                                        onClick={() =>
+                                          handlePrintQuotationNote(sale)
+                                        }
                                       >
                                         <Printer className="h-4 w-4 mr-2" />
                                         Imprimir Cotización
@@ -450,11 +452,49 @@ const TableSalesDesktopComponent = ({
                                 </div>
 
                                 {/* Sección de productos vendidos */}
-                                <ProductPurchasedList
-                                  sale={sale}
-                                  isDraft={isDraft}
-                                />
+                                <ProductPurchasedList sale={sale} />
+                                <div className="flex flex-col w-full justify-end items-end">
+                                  <div className="font-semibold text-sm text-gray-700 mb-2">
+                                    Resumen
+                                  </div>
 
+                                  <div>
+                                    <span className="text-gray-600">
+                                      Subtotal:
+                                    </span>{" "}
+                                    <span className="font-medium">
+                                      {formatCurrency(
+                                        sale.totalWithoutDiscount ?? 0,
+                                        sale.paymentCurrency
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600">
+                                      Descuento:
+                                    </span>{" "}
+                                    <span className="font-medium">
+                                      {formatCurrency(
+                                        sale.totalDiscount
+                                          ? sale.totalDiscount
+                                          : 0,
+                                        sale.paymentCurrency
+                                      )}
+                                    </span>
+                                  </div>
+
+                                  <div>
+                                    <span className="text-gray-600">
+                                      Total:
+                                    </span>{" "}
+                                    <span className="font-bold text-blue-600">
+                                      {formatCurrency(
+                                        sale.total,
+                                        sale.paymentCurrency
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
                                 {/* Información adicional (notas) */}
                                 {sale.saleNotes && (
                                   <div className="pt-3 border-t">

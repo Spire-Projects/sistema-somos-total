@@ -14,7 +14,7 @@ import NitSection from "./SaleSection/NitSection";
 import SaleNotes from "./SaleSection/SaleNotesSection";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import CurrencySelector from "./CurrencySelector";
-import SaleSummarySection from "./SaleSummarySection";
+import SaleSummarySection from "./SaleSection/SaleSummarySection";
 import type {
   SaleState,
   CartSaleItem,
@@ -71,7 +71,7 @@ const CreateSaleModal = memo(
             if (saleView) {
               const items = await recreateSaleStateItems(saleView, currency!);
               console.log("Currency cargado:", currency);
-              console.log("Total", saleView.paymentCurrency === "arg" ? saleView.total * (currency?.equivalenceToBs || 1) : saleView.total);
+              console.log("Total :: ", saleView.total);
               setSaleState({
                 items,
                 paymentMethod: saleView.paymentMethod,
@@ -104,6 +104,7 @@ const CreateSaleModal = memo(
         clientDiscountType: "percentage" | "fixed",
         clientDiscountValue: number
       ) => {
+        console.log("Modal:Items in calculateTotals:", items);
         const subtotal = items.reduce(
           (acc, item) => acc + item.originalPrice * item.quantity,
           0
@@ -310,7 +311,7 @@ const CreateSaleModal = memo(
       (type: "percentage" | "fixed", value: number) => {
         let discountValue = value;
         const totals = calculateTotals(saleState.items, type, discountValue);
-
+        console.log("Modal:Calculating totals with discount:", type, discountValue, totals);
         setSaleState((prev) => ({
           ...prev,
           clientDiscountType: type,
@@ -323,8 +324,9 @@ const CreateSaleModal = memo(
 
     const handleSaveQuotation = useCallback(async () => {
       console.log("Guardando cotización con id:", initialSaleId);
-      // Generar un id único corto para la cotización si no hay initialSaleId
-      const uniqueQuotationId = initialSaleId || `Q${Date.now().toString(36)}${Math.random()
+      const sale = await salesService.findById(initialSaleId || "");
+
+      const uniqueQuotationId = sale?.numberInvoice || `Q${Date.now().toString(36)}${Math.random()
         .toString(36)
         .slice(2, 7)}`;
       const saleData = generateSaleData(
@@ -341,6 +343,7 @@ const CreateSaleModal = memo(
       } else {
         await salesService.create(saleData);
       }
+      handleReset();
       onClose();
     }, [saleState, initialSaleId]);
 
@@ -449,6 +452,11 @@ const CreateSaleModal = memo(
       setCompletedSale(null);
       onClose();
     }, [onClose]);
+
+    useEffect(() => {
+          console.log("Modal: SaleState total changed:", saleState.total);
+          console.log("Modal: Currency equivalence:", currency?.equivalenceToBs);
+        }, [saleState.total]);
 
     return (
       <>

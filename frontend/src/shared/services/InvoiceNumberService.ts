@@ -1,10 +1,9 @@
 import { getNumberInvoiceRangeRepository } from "../db/repositories/numberInvoiceRange.repository";
 import type { NumberInvoiceRangeDocument } from "../db/models/numberInvoiceRange.model";
 import { NumberInvoiceStatus } from "../types/NumberInvoice";
-
+import { salesService } from "./SalesService";
 
 export class InvoiceNumberService {
-
   private static readonly EXPIRATION_TIME = 15 * 60 * 1000; // 15 minutos en milliseconds
   private static readonly TEMP_NUMBER_PREFIX = "TEMP-";
   private static tempCounter = 0; // Contador para números temporales
@@ -257,13 +256,14 @@ export class InvoiceNumberService {
       const idTerminal = this.getTerminalId();
       const searchQuery = this.TEMP_NUMBER_PREFIX + idTerminal;
       console.log("Buscando temps para:", searchQuery);
-      const sales = await findSalesByDateRangePaginated(
+      const sales = await salesService.getAllView(
         page,
         size,
+        searchQuery,
         dateFrom,
-        dateTo,
-        searchQuery
+        dateTo
       );
+
       return sales.totalItems;
     } catch (error) {
       console.error("❌ Error obteniendo conteo de números temporales:", error);
@@ -293,17 +293,17 @@ export class InvoiceNumberService {
       const idTerminal = this.getTerminalId();
       const searchQuery = this.TEMP_NUMBER_PREFIX + idTerminal;
       console.log("Buscando temps para:", searchQuery);
-      const sales = await findSalesByDateRangePaginated(
+      const sales = await salesService.getAllView(
         page,
         size,
+        searchQuery,
         dateFrom,
         dateTo,
-        searchQuery
       );
 
       for (const sale of sales.items) {
         try {
-          const current = await findSaleById(sale.id);
+          const current = await salesService.findById(sale.id);
           if (!current) continue;
 
           if (
@@ -315,7 +315,13 @@ export class InvoiceNumberService {
 
           const newInvoiceNumber = await this.getNextInvoiceNumber();
           if (newInvoiceNumber) {
-            await updateSaleNumberInvoice(sale.id, newInvoiceNumber);
+
+            const data = await salesService.findById(sale.id);
+            const newData = {
+              ...data,
+              numberInvoice: newInvoiceNumber,
+            };
+            await salesService.update(sale.id, newData);
           }
         } catch (err) {
           console.error(`❌ Error resolviendo venta ${sale.id}:`, err);

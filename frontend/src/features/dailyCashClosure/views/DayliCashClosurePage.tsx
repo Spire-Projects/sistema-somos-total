@@ -1,10 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import {
-  createDailyCashClosure,
-  getDailyCashClosuresPaginated,
-} from "@/shared/services/DailyCashClosureService";
 import { UserService } from "@/shared/services/UserService";
 import type { DailyCashClosure } from "@/shared/types/DailyCashClosure";
+import { dailyCashClosureService } from "@/shared/services/DailyCashClosureService";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
@@ -27,6 +24,7 @@ import { ArcheoStatus } from "../components/ArcheoStatus";
 import { CashBreakdownTable } from "../components/CashBreakdownTable";
 import { ConfirmArcheoDialog } from "../components/ConfirmArcheoDialog";
 import { ClosureHistoryTable } from "../components/ClosureHistoryTable";
+import { DataPagination } from "@/shared/components/DataPagination";
 
 export const DailyCashClosuresPage = () => {
   const [page, setPage] = useState(1);
@@ -41,6 +39,8 @@ export const DailyCashClosuresPage = () => {
   const [hasEdited, setHasEdited] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [activeCurrency, setActiveCurrency] = useState<'bs' | 'arg'>('bs');
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const evalTimerRef = useRef<number | null>(null);
 
   const { user } = useAppSelector((state) => state.auth);
@@ -80,15 +80,20 @@ export const DailyCashClosuresPage = () => {
 
   const loadClosures = async () => {
     setLoading(true);
-    const res = await getDailyCashClosuresPaginated(page, 10);
-    setItems(res.items);
-    setTotalPages(res.totalPages);
+    try {
+      const res = await dailyCashClosureService.getAllView(page, itemsPerPage);
+      setTotalItems(res.totalItems);
+      setItems(res.items);
+      setTotalPages(res.totalPages);
 
-    for (const item of res.items) {
-      await loadUserName(item.userId);
+      for (const item of res.items) {
+        await loadUserName(item.userId);
+      }
+    } catch (error) {
+      console.error('Error loading closures:', error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleInputChange = () => {
@@ -126,27 +131,40 @@ export const DailyCashClosuresPage = () => {
       ? `BS - QR: ${qrAmountBs}, Efectivo: ${cashBs.calculateTotal()} | ARG - QR: ${qrAmountArg}, Efectivo: ${cashArg.calculateTotal()}`
       : `QR: ${qrAmountBs}, Efectivo: ${cashBs.calculateTotal()}`;
 
-    await createDailyCashClosure({
-      userId: user.id,
-      date,
-      openingAmount: 0,
-      closingAmount: summary.totalClosureBs + summary.totalClosureArg,
-      notes,
-    });
+    try {
+      await dailyCashClosureService.create({
+        userId: user.id,
+        date,
+        openingAmount: 0,
+        closingAmountBs: {
+          amountQr: qrAmountBs,
+          amountCash: cashBs.calculateTotal(),
+        },
+        closingAmountArg: {
+          amountQr: qrAmountArg,
+          amountCash: cashArg.calculateTotal(),
+        },
+        notes,
+        createdBy: user.id,
+      });
 
-    cashBs.reset();
-    cashArg.reset();
-    setQrAmountBsStr('0');
-    setQrAmountArgStr('0');
-    setShowConfirmDialog(false);
-    setHasEdited(false);
-    setIsEvaluating(false);
-    loadClosures();
+      cashBs.reset();
+      cashArg.reset();
+      setQrAmountBsStr('0');
+      setQrAmountArgStr('0');
+      setShowConfirmDialog(false);
+      setHasEdited(false);
+      setIsEvaluating(false);
+      loadClosures();
+    } catch (error) {
+      console.error('Error saving arqueo:', error);
+      alert('Error al guardar el arqueo. Por favor intente nuevamente.');
+    }
   };
 
   useEffect(() => {
     loadClosures();
-  }, [page]);
+  }, [page, itemsPerPage]);
 
   const currencyTabs: FilterOption[] = [
     { value: 'bs', label: 'Bolivianos', icon: '🇧🇴' },
@@ -305,30 +323,20 @@ export const DailyCashClosuresPage = () => {
       <h3 className="text-xl mt-8 font-semibold">Historial</h3>
       <ClosureHistoryTable items={items} userNames={userNames} loading={loading} />
 
-      <Pagination className="mt-4">
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => setPage(Math.max(page - 1, 1))}
+     <DataPagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={10}
+              onPageChange={setPage}
+              onItemsPerPageChange={(newSize) => {
+                setPage(1);
+                setItemsPerPage(newSize);
+              }}
+              startIndex={items.length ? (page - 1) * itemsPerPage + 1 : 0}
+              endIndex={items.length ? (page - 1) * itemsPerPage + items.length : 0}
+              itemName="arqueos"
             />
-          </PaginationItem>
-          {[...Array(totalPages)].map((_, i) => (
-            <PaginationItem key={i}>
-              <PaginationLink
-                isActive={i + 1 === page}
-                onClick={() => setPage(i + 1)}
-              >
-                {i + 1}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => setPage(Math.min(page + 1, totalPages))}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
     </div>
   );
 };

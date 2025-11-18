@@ -20,7 +20,8 @@ export function useSalesData(dateFrom: string, dateTo: string) {
           10000,
           undefined,
           dateFromFormatted,
-          dateToFormatted
+          dateToFormatted,
+          {isDraft: false}
         );
         
         setSales(result.items);

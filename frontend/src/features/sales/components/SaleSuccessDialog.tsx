@@ -8,11 +8,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/shared/components/ui/dialog';
-import { formatCurrency } from '@/shared/services/BatchService';
 import { formatDateTime } from '@/shared/utils/date.utils';
 import type { SaleView } from '@/shared/types/modelTypes/Sale';
 import type { Client } from '@/shared/types/Client';
 import { clientService } from '@/shared/services';
+import { formatCurrency } from '../utils/SaleUtils';
 
 
 interface SaleSuccessDialogProps {
@@ -91,7 +91,7 @@ const SaleSuccessDialog = memo(({
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-green-800">Total pagado:</span>
                 <span className="text-lg font-bold text-green-600">
-                  {formatCurrency(sale.total)}
+                  {formatCurrency(sale.total, sale.paymentCurrency)}
                 </span>
               </div>
               <div className="text-xs text-green-700 mt-1">

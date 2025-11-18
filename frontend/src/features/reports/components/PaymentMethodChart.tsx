@@ -22,11 +22,11 @@ export const PaymentMethodChart = ({
   paymentMethodSummary,
 }: PaymentMethodChartProps) => {
   const chartData = {
-    labels: paymentMethodSummary.map((p) => p.method),
+    labels: paymentMethodSummary.map((p) => `${p.method} (BS + ARG)`),
     datasets: [
       {
         label: "Método de pago",
-        data: paymentMethodSummary.map((p) => p.total),
+        data: paymentMethodSummary.map((p) => p.totalBs + p.totalArg),
         backgroundColor: [
           "rgba(255, 99, 132, 0.7)",
           "rgba(54, 162, 235, 0.7)",
@@ -89,21 +89,44 @@ export const PaymentMethodChart = ({
               <div className="flex flex-col justify-center">
                 <div className="space-y-4">
                   {paymentMethodSummary.map((method) => (
-                    <div key={method.method} className="flex items-center">
-                      <div className="w-3/5">
-                        <div className="text-sm font-medium">
-                          {method.method}
+                    <div key={method.method} className="flex flex-col">
+                      <div className="flex items-center mb-2">
+                        <div className="w-3/5">
+                          <div className="text-sm font-medium">
+                            {method.method}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {method.count} transacciones
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {method.count} transacciones
+                        <div className="w-2/5 text-right">
+                          <div className="text-xs text-gray-500">
+                            {method.percentage.toFixed(1)}%
+                          </div>
                         </div>
                       </div>
-                      <div className="w-2/5 text-right">
-                        <div className="text-sm font-medium">
-                          {formatCurrency(method.total)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {method.percentage.toFixed(1)}%
+                      <div className="text-xs space-y-1 ml-0 pb-2 border-b border-gray-200">
+                        {method.totalBs > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">BS:</span>
+                            <span className="font-medium">
+                              {formatCurrency(method.totalBs)}
+                            </span>
+                          </div>
+                        )}
+                        {method.totalArg > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">ARG:</span>
+                            <span className="font-medium">
+                              {formatCurrency(method.totalArg)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between pt-1 font-medium">
+                          <span className="text-gray-700">Total:</span>
+                          <span>
+                            {formatCurrency(method.totalBs + method.totalArg)}
+                          </span>
                         </div>
                       </div>
                     </div>
