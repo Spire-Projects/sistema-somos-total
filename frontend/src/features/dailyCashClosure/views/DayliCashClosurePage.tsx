@@ -5,14 +5,6 @@ import { dailyCashClosureService } from "@/shared/services/DailyCashClosureServi
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/shared/components/ui/pagination";
 import { FilterTabs } from "@/shared/components/FilterTabs";
 import type { FilterOption } from "@/shared/components/FilterTabs";
 import { useAppSelector } from "@/shared/store/hooks";

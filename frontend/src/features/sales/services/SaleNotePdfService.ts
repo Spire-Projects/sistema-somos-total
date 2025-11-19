@@ -48,23 +48,28 @@ export class SaleNotePdfService {
   }
 
   private static addClientInfo(doc: jsPDF, sale: SaleView, margin: number): void {
-    doc.setFontSize(10);
-    doc.setTextColor(this.COLORS.text);
-    let y = 38;
-    const lineLength = 80;
-    const lineYSpacing = 7;
-    // Etiquetas y líneas en blanco para completar a mano
-    doc.text('Nombre del cliente', margin, y);
-    doc.line(margin + 40, y, margin + 40 + lineLength, y);
-    y += lineYSpacing;
-    doc.text('Email', margin, y);
-    doc.line(margin + 40, y, margin + 40 + lineLength, y);
-    y += lineYSpacing;
-    doc.text('Teléfono', margin, y);
-    doc.line(margin + 40, y, margin + 40 + lineLength, y);
-    y += lineYSpacing;
-    doc.text('Dirección', margin, y);
-    doc.line(margin + 40, y, margin + 40 + lineLength, y);
+  doc.setFontSize(10);
+  doc.setTextColor(this.COLORS.text);
+  let y = 38;
+  const lineYSpacing = 7;
+  // Obtener datos del cliente
+  const client = sale.clientView;
+  const clientName = client?.name || sale.socialReasonClient || 'N/A';
+  const clientEmail = client?.email || 'N/A';
+  const clientPhone = client?.phone || 'N/A';
+  const clientAddress = client?.address || 'N/A';
+  // Etiquetas y datos
+  doc.text('Nombre del cliente:', margin, y);
+  doc.text(clientName, margin + 45, y);
+  y += lineYSpacing;
+  doc.text('Email:', margin, y);
+  doc.text(clientEmail, margin + 45, y);
+  y += lineYSpacing;
+  doc.text('Teléfono:', margin, y);
+  doc.text(clientPhone, margin + 45, y);
+  y += lineYSpacing;
+  doc.text('Dirección:', margin, y);
+  doc.text(clientAddress, margin + 45, y);
   }
 
   private static addProductsTable(doc: jsPDF, sale: SaleView): void {
@@ -131,7 +136,8 @@ export class SaleNotePdfService {
     doc.setFontSize(8);
     doc.setTextColor(this.COLORS.secondary);
     doc.setFont('helvetica', 'italic');
-    doc.text('[DIRECCIÓN, TELÉFONO, EMAIL]', pageWidth / 2, footerY, { align: 'center' });
+    console.log('--- footerY ---', footerY,pageWidth);
+    //doc.text('[DIRECCIÓN, TELÉFONO, EMAIL]', pageWidth / 2, footerY, { align: 'center' });
   }
 
   private static formatCurrency(amount: number, currency: 'bs' | 'arg'): string {

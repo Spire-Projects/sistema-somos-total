@@ -1,5 +1,5 @@
 import { useAppSelector } from "../store/hooks";
-import { ChevronDown, Menu } from "lucide-react";
+import {  Menu } from "lucide-react";
 import { useOptimizedNavigation } from "../hooks/useOptimizedNavigation";
 import { memo, useEffect, useState } from "react";
 import useGlobalStates from "../hooks/useGlobalStates";
@@ -18,10 +18,10 @@ export const Header = memo(({ onToggleSidebar }: HeaderProps) => {
 
   useEffect(() => {
       const listenCurrency = () => {
-        currencyService.listen$(1, 1, "ARG").subscribe((data) => {
-          if (data.length > 0) {
-            const activeCurrency = data[0];
-            setCurrency(activeCurrency);
+        currencyService.listenById$("f39f45dd-49eb-483f-bc53-d9ba61a19662").subscribe((data) => {
+          if (data) {
+            console.log("Moneda actualizada:", data);
+            setCurrency(data);
           }
         });
       };
@@ -97,7 +97,7 @@ export const Header = memo(({ onToggleSidebar }: HeaderProps) => {
                       {user.fullName?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                 
                 </div>
               </div>
             </div>

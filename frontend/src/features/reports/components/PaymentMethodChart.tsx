@@ -7,8 +7,8 @@ import {
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Pie } from "react-chartjs-2";
-import { formatCurrency } from "@/shared/services/BatchService";
 import type { PaymentMethodSummary } from "./types/Types";
+import { formatCurrency } from "@/features/sales/utils/SaleUtils";
 
 interface PaymentMethodChartProps {
   isLoading: boolean;
@@ -21,12 +21,13 @@ export const PaymentMethodChart = ({
   hasData,
   paymentMethodSummary,
 }: PaymentMethodChartProps) => {
+  // Pie chart by transaction count per method
   const chartData = {
-    labels: paymentMethodSummary.map((p) => `${p.method} (BS + ARG)`),
+    labels: paymentMethodSummary.map((p) => `${p.method}`),
     datasets: [
       {
         label: "Método de pago",
-        data: paymentMethodSummary.map((p) => p.totalBs + p.totalArg),
+        data: paymentMethodSummary.map((p) => p.count),
         backgroundColor: [
           "rgba(255, 99, 132, 0.7)",
           "rgba(54, 162, 235, 0.7)",
@@ -71,13 +72,9 @@ export const PaymentMethodChart = ({
                         callbacks: {
                           label: function (context: any) {
                             const value = context.raw as number;
-                            const total =
-                              context.chart.getDatasetMeta(0).total || 0;
-                            const percentage =
-                              total > 0
-                                ? ((value / total) * 100).toFixed(1)
-                                : "0";
-                            return `${formatCurrency(value)} (${percentage}%)`;
+                            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+                            return `${value} transacciones (${percentage}%)`;
                           },
                         },
                       },
@@ -108,9 +105,9 @@ export const PaymentMethodChart = ({
                       <div className="text-xs space-y-1 ml-0 pb-2 border-b border-gray-200">
                         {method.totalBs > 0 && (
                           <div className="flex justify-between">
-                            <span className="text-gray-600">BS:</span>
+                             <span className="text-gray-600">BS:</span>
                             <span className="font-medium">
-                              {formatCurrency(method.totalBs)}
+                              {formatCurrency(method.totalBs, 'bs')}
                             </span>
                           </div>
                         )}
@@ -118,16 +115,11 @@ export const PaymentMethodChart = ({
                           <div className="flex justify-between">
                             <span className="text-gray-600">ARG:</span>
                             <span className="font-medium">
-                              {formatCurrency(method.totalArg)}
+                              {formatCurrency(method.totalArg, 'arg')}
                             </span>
                           </div>
                         )}
-                        <div className="flex justify-between pt-1 font-medium">
-                          <span className="text-gray-700">Total:</span>
-                          <span>
-                            {formatCurrency(method.totalBs + method.totalArg)}
-                          </span>
-                        </div>
+                       
                       </div>
                     </div>
                   ))}

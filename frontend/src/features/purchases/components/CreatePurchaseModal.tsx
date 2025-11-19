@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { CreatePurchaseData, PurchaseView, UpdatePurchaseData } from '@/shared/types/modelTypes/PurchaseBox';
 import type { Product } from '@/shared/types/modelTypes/Product';
 import type { Manufacturer } from '@/shared/types/modelTypes/Manufacturer';
@@ -515,10 +515,22 @@ const CreatePurchaseModalComponent = ({
                                                 type="number"
                                                 min="1"
                                                 step="1"
-                                                placeholder="0"
+                                                placeholder="1"
                                                 disabled={isSubmitting}
-                                                {...field}
-                                                onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                                value={field.value === 0 ? "" : field.value}
+                                                onChange={e => {
+                                                    const value = e.target.value;
+                                                    if (value === "") {
+                                                        field.onChange(0);
+                                                    } else {
+                                                        field.onChange(parseFloat(value) || 0);
+                                                    }
+                                                }}
+                                                onBlur={e => {
+                                                    if (e.target.value === "") {
+                                                        field.onChange(1);
+                                                    }
+                                                }}
                                             />
                                         </FormControl>
                                         <FormDescription>
@@ -541,10 +553,22 @@ const CreatePurchaseModalComponent = ({
                                                 type="number"
                                                 min="0"
                                                 step="0.01"
-                                                placeholder="0.00"
+                                                placeholder="1.00"
                                                 disabled={isSubmitting}
-                                                {...field}
-                                                onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                                value={field.value === 0 ? "" : field.value}
+                                                onChange={e => {
+                                                    const value = e.target.value;
+                                                    if (value === "") {
+                                                        field.onChange(0);
+                                                    } else {
+                                                        field.onChange(parseFloat(value) || 0);
+                                                    }
+                                                }}
+                                                onBlur={e => {
+                                                    if (e.target.value === "") {
+                                                        field.onChange(1);
+                                                    }
+                                                }}
                                             />
                                         </FormControl>
                                         <FormDescription>

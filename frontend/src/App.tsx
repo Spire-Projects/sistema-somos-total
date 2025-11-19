@@ -14,7 +14,6 @@ import {
 } from "./shared/db/replication/startReplications";
 
 import { syncService } from "./shared/services/SyncService";
-import { checkAndInitializeData } from "./shared/utils/init-data.utils";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -37,7 +36,7 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        //await syncService.initialize();
+        await syncService.initialize();
 
         await startDebugReplication();
 
@@ -46,7 +45,7 @@ function App() {
           "./shared/services/InvoiceNumberService"
         );
         await InvoiceNumberService.initialize();
-        await checkAndInitializeData();
+       
 
         console.log("✅ Aplicación inicializada correctamente");
         isInitialized.current = true;

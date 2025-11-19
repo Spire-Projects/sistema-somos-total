@@ -6,7 +6,6 @@ import {
   ShoppingBag,
   Users,
   FileText,
-  Settings,
   LogOut,
   X,
   Book,

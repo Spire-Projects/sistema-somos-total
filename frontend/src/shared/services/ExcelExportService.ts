@@ -32,7 +32,6 @@ class ExcelExportService {
     'createdBy',
     'updatedBy',
     'isDeleted',
-    'deletedBy',
     'sincronized',
     'updatedAt',
  

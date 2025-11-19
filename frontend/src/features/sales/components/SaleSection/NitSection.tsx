@@ -36,6 +36,7 @@ const NitSection = memo(({
     const fetchInitialNits = async () => {
       try {
         const nits = await getAllNits();
+        
         setInitialNits(nits);
       } catch (error) {
         console.error("Error cargando NITs iniciales:", error);

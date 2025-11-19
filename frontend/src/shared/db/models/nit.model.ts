@@ -46,24 +46,10 @@ export const nitSchema: RxJsonSchema<NIT> = {
       maxLength: 50
     },
   },
-  required: ['id', 'numberNit', 'socialReason', 'sincronized','isDeleted' , 'createdAt', 'updatedAt'],
+  required: ['id', 'numberNit', 'socialReason', 'sincronized','isDeleted' , 'createdAt'],
   indexes: ['numberNit', 'socialReason', 'isDeleted', 'createdAt', 'updatedAt', 'isDeleted'],
 };
 
-export const nitMigrationStrategies = {
-  1: (oldDoc: any) => {
-    return {
-      ...oldDoc,
-      sincronized: typeof oldDoc.sincronized === 'boolean' ? oldDoc.sincronized : false,
-      _deleted: typeof oldDoc._deleted === 'boolean' ? oldDoc._deleted : false,
-      createdBy: oldDoc.createdBy || '',
-      updatedBy: oldDoc.updatedBy || '',
-      deletedBy: oldDoc.deletedBy || '',
-      createdAt: oldDoc.createdAt || new Date().toISOString(),
-      updatedAt: oldDoc.updatedAt || new Date().toISOString(),
-      deletedAt: oldDoc.deletedAt || '',
-    };
-  },
-};
+
 
 export type NITCollection = RxCollection<NIT>;

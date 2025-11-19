@@ -7,7 +7,6 @@ import { Button } from "../../../shared/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
 } from "../../../shared/components/ui/card";
 import { Input } from "../../../shared/components/ui/input";
@@ -16,6 +15,7 @@ import { UserService } from "../../../shared/services/UserService";
 import { useAppDispatch, useAppSelector } from "../../../shared/store/hooks";
 import { loginSuccess } from "../../../shared/store/authSlice";
 import type { LoginCredentials } from "../../../shared/db/models/user.model";
+import FirstLoadingModal from "@/shared/components/FirstLoadingModal";
 
 export const LoginPage = () => {
   const [formData, setFormData] = useState<LoginCredentials>({
@@ -151,6 +151,7 @@ export const LoginPage = () => {
           </form>
         </CardContent>
       </Card>
+      <FirstLoadingModal />
     </div>
   );
 };

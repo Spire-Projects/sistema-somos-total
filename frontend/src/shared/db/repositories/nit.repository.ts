@@ -38,7 +38,7 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
       createdAt: now,
       updatedAt: now,
       sincronized: false,
-      _deleted: false
+      isDeleted: false
     };
     
     console.log(`🔄 NitRepository: Creando NIT con prioridad`, { id });
@@ -72,10 +72,10 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     const db = await initDatabase();
     const nit = await db.nits.findOne({ 
       selector: { 
-        _deleted: false,
+        isDeleted: false,
         numberNit
       },
-      sort: [{ _deleted: 'asc', numberNit: 'asc' }]
+      sort: [{ isDeleted: 'asc', numberNit: 'asc' }]
     }).exec();
     return nit ? JSON.parse(JSON.stringify(nit.toJSON())) as NIT : null;
   }
@@ -84,10 +84,10 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     const db = await initDatabase();
     const nit = await db.nits.findOne({ 
       selector: { 
-        _deleted: false,
+        isDeleted: false,
         socialReason
       },
-      sort: [{ _deleted: 'asc', socialReason: 'asc' }]
+      sort: [{ isDeleted: 'asc', socialReason: 'asc' }]
     }).exec();
     return nit ? JSON.parse(JSON.stringify(nit.toJSON())) as NIT : null;
   }
@@ -95,7 +95,7 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
   async findAllPaginated(page: number, size: number, searchQuery?: string): Promise<ItemsResponse<NIT>> {
     const db = await initDatabase();
     
-    const selector = { _deleted: false };
+    const selector = { isDeleted: false };
     
     if (searchQuery && searchQuery.trim() !== "") {
       const normalizedText = searchQuery.trim().toLowerCase();
@@ -113,7 +113,7 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     
     const nits = await db.nits.find({
       selector,
-      sort: [{ _deleted: 'asc', createdAt: 'desc' }],
+      sort: [{ isDeleted: 'asc', createdAt: 'desc' }],
       skip,
       limit
     }).exec();
@@ -159,9 +159,9 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     const db = await initDatabase();
     const nits = await db.nits.find({
       selector: {
-        _deleted: false
+        isDeleted: false
       },
-      sort: [{ _deleted: 'asc', socialReason: 'asc' }]
+      sort: [{ isDeleted: 'asc', socialReason: 'asc' }]
     }).exec();
     return nits.map((nit) => JSON.parse(JSON.stringify(nit.toJSON())) as NIT);
   }
@@ -170,9 +170,9 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     const db = await initDatabase();
     const nits = await db.nits.find({
       selector: {
-        _deleted: true
+        isDeleted: true
       },
-      sort: [{ _deleted: 'asc', updatedAt: 'desc' }]
+      sort: [{ isDeleted: 'asc', updatedAt: 'desc' }]
     }).exec();
     return nits.map((nit) => JSON.parse(JSON.stringify(nit.toJSON())) as NIT);
   }
@@ -184,7 +184,7 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     
     await nit.update({ 
       $set: { 
-        _deleted: true, 
+        isDeleted: true, 
         updatedBy: deletedBy,
         updatedAt: new Date().toISOString() 
       } 
@@ -199,7 +199,7 @@ export class LocalNitRepository extends BaseRepository<NIT> implements INitRepos
     
     await nit.update({ 
       $set: { 
-        _deleted: false,
+        isDeleted: false,
         updatedAt: new Date().toISOString() 
       } 
     });

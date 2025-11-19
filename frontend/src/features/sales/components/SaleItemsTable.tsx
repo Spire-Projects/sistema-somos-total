@@ -131,14 +131,27 @@ const SaleItemsTable = memo(({
                         <Minus className="h-3 w-3" />
                       </Button>
                       <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => handleQuantityChange(item, e.target.value)}
-                        disabled={disabled}
-                        min={1}
-                        max={item.availableStock}
-                        className="h-7 w-16 text-center text-sm"
-                      />
+                          type="number"
+                          value={item.quantity === 0 ? "" : item.quantity}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Permitir vacío temporalmente
+                            if (value === "") {
+                              onUpdateQuantity(item.purchaseBoxId, 0);
+                            } else {
+                              handleQuantityChange(item, value);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === "") {
+                              onUpdateQuantity(item.purchaseBoxId, 1);
+                            }
+                          }}
+                          disabled={disabled}
+                          min={1}
+                          max={item.availableStock}
+                          className="h-7 w-16 text-center text-sm"
+                        />
                       <Button
                         size="sm"
                         variant="outline"

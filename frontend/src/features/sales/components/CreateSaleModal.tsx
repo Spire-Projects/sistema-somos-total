@@ -28,10 +28,7 @@ import { salesService } from "@/shared/services/SalesService";
 import { InvoiceNumberService } from "@/shared/services/InvoiceNumberService";
 import SaleSuccessDialog from "./SaleSuccessDialog";
 import { purchaseService } from "@/shared/services/PurchaseService";
-import { Button } from "@/shared/components/ui/button";
-import { Printer } from "lucide-react";
 import { generateSaleData, recreateSaleStateItems } from "../utils/SaleUtils";
-import { QuotationPreviewModal } from "./QuotationPreviewModal";
 import useGlobalStates from "@/shared/hooks/useGlobalStates";
 import VerifyStockQuotationModal from "./VerifyStockQuotationModal";
 import { 
@@ -404,7 +401,7 @@ const CreateSaleModal = memo(
         const invoiceNumber = await InvoiceNumberService.getNextInvoiceNumber();
         const saleData = generateSaleData(
           saleState,
-          "Current-user",
+          user?.id || "current-user",
           invoiceNumber,
           false,
           currency?.equivalenceToBs ?? 1

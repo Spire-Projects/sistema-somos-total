@@ -26,6 +26,10 @@ const NitInfoSection = ({ sale }: NitSectionProps) => {
             {getNitInfo(sale).invoiceNumber}
           </span>
         </div>
+         <div>
+          <span className="text-gray-600">Creado por:</span>{" "}
+          <span className="font-medium">{sale.userName}</span>
+        </div>
       </div>
     </div>
   );

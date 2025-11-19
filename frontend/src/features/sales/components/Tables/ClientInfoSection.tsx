@@ -30,6 +30,12 @@ const ClientInfoSection = ({ sale }: ClientInfoSectionProps) => {
             {getClientInfo(sale).phone}
           </span>
         </div>
+         <div>
+          <span className="text-gray-600">Dirección:</span>{" "}
+          <span className="font-medium">
+            {sale.clientView?.address || "-"}
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -76,7 +76,7 @@ export interface SaleItemView extends SaleItem {
 export interface SaleView extends Sale {
   clientView: Client | null; // Populated client object, can be null
   items: SaleItemView[]; // Array of items with extended view information
-
+  userName: string; // Name of the user who created the sale
 }
 
 // Filter interfaces

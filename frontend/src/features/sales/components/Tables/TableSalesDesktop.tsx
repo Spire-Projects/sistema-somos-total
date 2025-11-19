@@ -3,8 +3,6 @@ import {
   formatDate,
   formatCurrency,
   getPaymentMethodBadge,
-  getClientInfo,
-  getNitInfo,
 } from "../../utils/SaleUtils";
 import { toast } from "sonner";
 
@@ -27,7 +25,6 @@ import { Button } from "@/shared/components/ui/button";
 import {
   ChevronDown,
   ChevronRight,
-  Edit,
   Trash2,
   FileText,
   FileCheck,
@@ -35,8 +32,6 @@ import {
   Eye,
 } from "lucide-react";
 import type { SaleView } from "@/shared/types/modelTypes/Sale";
-import type { Client } from "@/shared/types/Client";
-import { productService } from "@/shared/services/ProductService";
 import {
   Card,
   CardContent,
@@ -44,13 +39,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import { getPurchaseBoxRepository } from "@/shared/db/repositories/purchase.repository";
 import { SaleNotePdfService } from "../../services/SaleNotePdfService";
 import { salesService } from "@/shared/services/SalesService";
 import ProductPurchasedList from "./ProductPurchasedList";
 import ClientInfoSection from "./ClientInfoSection";
 import NitInfoSection from "./NitInfoSection";
-import { useQuotationPdf } from "../../hooks";
+import { QuotationPdfService } from "../../services/QuotationPdfService";
 
 interface TableSalesDesktopProps {
   sales: SaleView[];
@@ -145,30 +139,11 @@ const TableSalesDesktopComponent = ({
     }
     const link = document.createElement("a");
     link.href = quotationPdfUrl;
-    link.download =
-      require("../../services/QuotationPdfService").QuotationPdfService.generateFileName(
+    link.download = QuotationPdfService.generateFileName(
         selectedQuotationSale.clientView?.name || "Sin cliente"
       );
     link.click();
     toast.success("Descarga de cotización iniciada.");
-  };
-
-  const handlePrintQuotationPdf = () => {
-    if (!quotationPdfUrl) {
-      toast.error("No se pudo imprimir la cotización.");
-      return;
-    }
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    iframe.src = quotationPdfUrl;
-    document.body.appendChild(iframe);
-    iframe.onload = function () {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        document.body.removeChild(iframe);
-        toast.success("Cotización enviada a impresión.");
-      }, 100);
-    };
   };
 
   const handlePrintSaleNote = async (sale: SaleView) => {
@@ -215,23 +190,6 @@ const TableSalesDesktopComponent = ({
     toast.success("Descarga iniciada.");
   };
 
-  const handlePrintSaleNotePdf = () => {
-    if (!saleNotePdfUrl) {
-      toast.error("No se pudo imprimir el PDF.");
-      return;
-    }
-    const iframe = document.createElement("iframe");
-    iframe.style.display = "none";
-    iframe.src = saleNotePdfUrl;
-    document.body.appendChild(iframe);
-    iframe.onload = function () {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        document.body.removeChild(iframe);
-        toast.success("Enviado a impresión.");
-      }, 100);
-    };
-  };
 
   return (
     <Card className="hidden md:block">
@@ -527,7 +485,7 @@ const TableSalesDesktopComponent = ({
         onClose={handleCloseSaleNoteModal}
         pdfUrl={saleNotePdfUrl}
         onDownload={handleDownloadSaleNotePdf}
-        onPrint={handlePrintSaleNotePdf}
+    
         isGenerating={isGeneratingSaleNote}
       />
       {/* Modal de previsualización de cotización */}
@@ -536,7 +494,6 @@ const TableSalesDesktopComponent = ({
         onClose={handleCloseQuotationModal}
         pdfUrl={quotationPdfUrl}
         onDownload={handleDownloadQuotationPdf}
-        onPrint={handlePrintQuotationPdf}
         isGenerating={isGeneratingQuotation}
       />
     </Card>

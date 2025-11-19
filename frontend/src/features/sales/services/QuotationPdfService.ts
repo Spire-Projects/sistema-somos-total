@@ -82,8 +82,8 @@ export class QuotationPdfService {
       month: '2-digit',
       day: '2-digit',
     });
-    const vendedor = sellerName || 'Vendedor';
-    const cliente = sale.client || sale.clientView?.name || 'Cliente General';
+    const vendedor = sale.userName || 'Vendedor';
+    const cliente =  sale.clientView?.name || sellerName || 'Cliente General';
 
     let infoY = 34;
     doc.text(`FECHA:      ${currentDate}`, margin, infoY);
@@ -145,8 +145,8 @@ export class QuotationPdfService {
     pageWidth: number,
     margin: number
   ): void {
-    const finalY = (doc as any).lastAutoTable.finalY || 150;
-    let yPosition = finalY + 10;
+  const finalY = (doc as any).lastAutoTable.finalY || 150;
+  let yPosition = finalY + 2;
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');

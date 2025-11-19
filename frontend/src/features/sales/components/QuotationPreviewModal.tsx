@@ -7,14 +7,13 @@ import {
   DialogFooter,
 } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
-import { Download, Printer, X } from 'lucide-react';
+import { Download} from 'lucide-react';
 
 interface QuotationPreviewModalProps {
   open: boolean;
   onClose: () => void;
   pdfUrl: string | null;
   onDownload: () => void;
-  onPrint: () => void;
   isGenerating?: boolean;
 }
 
@@ -23,7 +22,6 @@ const QuotationPreviewModalComponent = ({
   onClose,
   pdfUrl,
   onDownload,
-  onPrint,
   isGenerating = false,
 }: QuotationPreviewModalProps) => {
   const [iframeKey, setIframeKey] = useState(0);

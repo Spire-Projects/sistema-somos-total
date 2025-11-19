@@ -1,4 +1,4 @@
-import * as React from "react";
+
 import { memo, useState, useEffect } from "react";
 import { Package, Download, X, Plus, MoreVertical } from "lucide-react";
 
@@ -333,7 +333,7 @@ const InventoryPageComponent = () => {
           setProductToEdit(null);
         }}
         onSuccess={handleProductCreated}
-        createdBy="current-user" // TODO: Obtener del contexto de autenticación
+        createdBy={user?.id || "current-user"}
         productToEdit={productToEdit}
       />
 

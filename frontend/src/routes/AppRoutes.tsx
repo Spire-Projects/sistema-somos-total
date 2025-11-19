@@ -13,7 +13,6 @@ import { InventoryPage } from '@/features/inventory/views/InventoryPage';
 const UserManager = lazy(() => import('../features/users/views/UserManager').then(module => ({ default: module.UserManager })));
 const PurchasesPage = lazy(() => import('../features/purchases/views/PurchasesPage').then(module => ({ default: module.PurchasesPage })));
 const ReportsPage = lazy(() => import('../features/reports/views/ReportsPage').then(module => ({ default: module.ReportsPage })));
-const SettingsPage = lazy(() => import('../features/settings/components/SettingsPage').then(module => ({ default: module.SettingsPage })));
 const DailyCashClosuresPage = lazy(() => import('@/features/dailyCashClosure/views/DayliCashClosurePage').then(module => ({ default: module.DailyCashClosuresPage })));
 
 // Componente de carga más simple
@@ -50,7 +49,6 @@ export const AppRoutes = () => {
         <Route path="purchases" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<PageLoader />}><PurchasesPage /></Suspense></ProtectedRoute>} />
         <Route path="reports" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<PageLoader />}><ReportsPage /></Suspense></ProtectedRoute>} />
         <Route path="users" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<PageLoader />}><UserManager /></Suspense></ProtectedRoute>} />
-        <Route path="settings" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<PageLoader />}><SettingsPage /></Suspense></ProtectedRoute>} />
         <Route path="dailyCash" element={<ProtectedRoute allowedRoles={["admin"]}><Suspense fallback={<PageLoader />}><DailyCashClosuresPage /></Suspense></ProtectedRoute>} />
       </Route>
       

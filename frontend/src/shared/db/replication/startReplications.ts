@@ -7,18 +7,18 @@ export const startAllReplications = (collections: DatabaseCollections) => {
 
   // Replicar todas las colecciones
 
-  replicateCollection("number_invoice_ranges", collections.number_invoice_ranges);
-  replicateCollection("users", collections.users);
-  replicateCollection("clients", collections.clients);
-  replicateCollection("categories", collections.categories);
-  replicateCollection("daily_cash_closures", collections.daily_cash_closures);
-  replicateCollection("sales", collections.sales);
-  replicateCollection("purchases", collections.purchases);
-  replicateCollection("nits", collections.nits);
-    replicateCollection("products", collections.products);
+  replicateCollection("number_invoice_ranges-st", collections.number_invoice_ranges);
+  replicateCollection("users-st", collections.users);
+  replicateCollection("clients-st", collections.clients);
+  replicateCollection("categories-st", collections.categories);
+  replicateCollection("daily_cash_closures-st", collections.daily_cash_closures);
+  replicateCollection("sales-st", collections.sales);
+  replicateCollection("purchases-st", collections.purchases);
+  replicateCollection("nits-st", collections.nits);
+  replicateCollection("products-st", collections.products);
 
-  replicateCollection("manufacturers", collections.manufacturers);
-  replicateCollection("currency", collections.currency);
+  replicateCollection("manufacturers-st", collections.manufacturers);
+  replicateCollection("currency-st", collections.currency);
 
   console.log("✅ Todas las replicaciones iniciadas");
 };
@@ -30,3 +30,4 @@ export const startDebugReplication = async () => {
 }
 // Exportar utilidades de debug
 export { debugReplications, checkPendingSync } from "./debugReplications";
+

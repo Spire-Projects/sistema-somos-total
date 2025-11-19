@@ -54,9 +54,10 @@ export const createNit = async (nitData: CreateNitData): Promise<NIT> => {
     numberNit: nitData.numberNit.trim(),
     socialReason: nitData.socialReason.trim(),
     sincronized: false,
-    _deleted: false,
+    isDeleted: false,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
+    createdBy: '',
   });
 };
 

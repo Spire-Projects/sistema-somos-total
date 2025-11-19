@@ -11,7 +11,6 @@ export interface IEntity {
     createdBy: string;         // Usuario que creó el registro
     updatedBy?: string;        // Último usuario que lo modificó
     isDeleted: boolean;        // Borrado lógico
-    deletedBy?: string;        // Usuario que eliminó el registro
     sincronized: boolean;      // Estado de sincronización
     createdAt: string;         // Fecha de creación (ISO)
     updatedAt?: string;        // Fecha de actualización (ISO)

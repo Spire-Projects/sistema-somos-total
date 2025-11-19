@@ -145,7 +145,7 @@ const SaleSummarySection = memo(
                   -
                   {formatCurrency(
                     saleState.clientDiscountType === "percentage"
-                      ? new Decimal(saleState.totalDiscount).div(currency?.equivalenceToBs || 1).toNumber()
+                      ? (saleState.paymentCurrency === "arg" ? saleState.total / (currency?.equivalenceToBs || 1) : saleState.total) * (saleState.clientDiscountValue / 100)
                       : saleState.paymentCurrency === "arg" ? saleState.clientDiscountValue / currency?.equivalenceToBs! : saleState.clientDiscountValue,
                     saleState.paymentCurrency
                   )}
@@ -176,10 +176,20 @@ const SaleSummarySection = memo(
                   </Select>
                   <Input
                     type="number"
-                    value={tempDiscountValue}
-                    onChange={(e) =>
-                      setTempDiscountValue(parseFloat(e.target.value) || 0)
-                    }
+                    value={tempDiscountValue === 0 ? "" : tempDiscountValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") {
+                        setTempDiscountValue(0);
+                      } else {
+                        setTempDiscountValue(parseFloat(value) || 0);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value === "") {
+                        setTempDiscountValue(0);
+                      }
+                    }}
                     disabled={isProcessing}
                     min={0}
                     max={

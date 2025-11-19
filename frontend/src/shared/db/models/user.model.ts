@@ -47,20 +47,14 @@ export const userSchema: RxJsonSchema<UserDocument> = {
     isDeleted: {
       type: 'boolean',
       default: false
+    },
+    sincronized: {
+      type: 'boolean',
+      default: false
     }
   },
-  required: ['id', 'fullName', 'email', 'passwordHash', 'role', 'active', 'createdAt', 'isDeleted'],
-  indexes: ['email', 'role', 'isDeleted']
-};
-
-export const userMigrationStrategies = {
-  1: (oldDoc: any) => {
-    if(oldDoc.isDeleted === undefined) {
-      oldDoc.isDeleted = false;
-    }
-    return oldDoc;
-  },
- 
+  required: ['id', 'fullName', 'email', 'passwordHash', 'role', 'active', 'createdAt', 'isDeleted', 'sincronized'],
+  indexes: ['email', 'role', 'isDeleted', 'sincronized'],
 };
 
 // Tipo del documento como se almacena en RxDB
@@ -73,7 +67,9 @@ export interface UserDocument {
   active: boolean;
   createdAt: string;
   lastSession?: string;
-  isDeleted: boolean; 
+  isDeleted: boolean;
+  sincronized?: boolean;
+
 }
 
 // Datos para crear un usuario

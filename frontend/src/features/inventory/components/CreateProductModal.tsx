@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { CreateProductData } from '@/shared/types/modelTypes/Product';
 import type { Category } from '@/shared/types/modelTypes/Category';
 import { productService } from '@/shared/services/ProductService';

@@ -15,7 +15,7 @@ export const usePrefetchHeavyPages = () => {
         try {
           // Prefetch las páginas más usadas con un delay escalonado
           const heavyImports = [
-            () => import('../../features/inventory/components/InventoryPage'),
+            () => import('../../features/inventory/views/InventoryPage'),
             () => import('../../features/sales/views/SalesPage'),
             () => import('../../features/clients/components/ClientsPage'),
           ];

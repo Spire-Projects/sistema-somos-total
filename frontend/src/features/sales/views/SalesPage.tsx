@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { BriefcaseMedical } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { InvoiceNumberService } from "@/shared/services/InvoiceNumberService";
@@ -64,7 +64,6 @@ export const SalesPage = () => {
     // Actions - Search & Filters
     setSearch,
     setFilters,
-    clearFilters,
     filters,
 
     // Actions - General

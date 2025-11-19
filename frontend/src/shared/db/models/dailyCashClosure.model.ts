@@ -34,7 +34,6 @@ export const dailyCashClosureSchema: RxJsonSchema<DailyCashClosure> = {
     updatedBy: { type: "string" },
     sincronized: { type: "boolean" },
     isDeleted: { type: "boolean" },
-    deletedBy: { type: "string" },
   },
   required: ["id", "userId", "date", "openingAmount", "closingAmountBs", "closingAmountArg"],
 };

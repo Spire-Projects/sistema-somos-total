@@ -36,10 +36,7 @@ export const clientSchema: RxJsonSchema<Client> = {
     },
     isDeleted: {
       type: 'boolean'
-    },
-    
-   
-   
+    },  
     createdBy: {
       type: 'string',
       maxLength: 100
@@ -59,7 +56,7 @@ export const clientSchema: RxJsonSchema<Client> = {
       maxLength: 50
     }
   },
-  required: ['id', 'name', 'createdAt', 'updatedAt', 'isDeleted', 'sincronized'],
+  required: ['id', 'name', 'createdAt', 'isDeleted', 'sincronized'],
   indexes: [
     'name',
     'email', 

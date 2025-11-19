@@ -36,7 +36,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import CustomDialog from "@/shared/components/CustomDialog";
 import TablePurchaseDesktop from "../components/Tables/TablePurchaseDesktop";
-import TablePurchaseMobile from "../components/Tables/TablePurchaseMobile";
 import { CreatePurchaseModal } from "../components/CreatePurchaseModal";
 import { UploadExcelPurchaseModal } from "../components/UploadExcelPurchaseModal";
 import StartAppText from "@/shared/components/StartAppText";
@@ -372,17 +371,7 @@ const PurchasesPageComponent = () => {
         onDelete={handleDeleteClick}
       />
 
-      {/* Mobile View */}
-      <TablePurchaseMobile
-        purchases={purchases}
-        loading={loading}
-        searchQuery={searchQuery}
-        onEdit={(purchase) => {
-          setPurchaseToEdit(purchase);
-          setIsCreateModalOpen(true);
-        }}
-        onDelete={handleDeleteClick}
-      />
+    
 
       {/* Paginación */}
       {!loading && totalItems > 0 && (

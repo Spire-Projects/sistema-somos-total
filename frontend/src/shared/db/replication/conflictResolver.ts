@@ -66,7 +66,9 @@ export const areDocumentsFunctionallyEqual = (doc1: any, doc2: any): boolean => 
     '_meta',
     '_lastSyncedAt',
     '_serverUpdatedAt',
-    '_forceLocalPriority'
+    'serverTimestamp',
+    '_forceLocalPriority',
+    '_attachments'
     // NO ignorar updatedAt, _lastModifiedAt, createdAt - estos son datos importantes
   ];
   

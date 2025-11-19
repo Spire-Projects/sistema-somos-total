@@ -10,8 +10,8 @@ import type {
 import { getSalesRepository } from "../db/repositories/sales.repository";
 import { productService } from "./ProductService";
 import { getPurchaseBoxRepository } from "../db/repositories/purchase.repository";
-import { getUserRepository } from "../db/repositories/user.repository";
 import { getClientRepository } from "../db/repositories/client.repository";
+import { getUserRepository } from "../db/repositories/user.repository";
 
 class SalesService extends BaseService<
   Sale,
@@ -63,13 +63,16 @@ class SalesService extends BaseService<
       purchaseDate: purchaseBoxMap[item.purchaseBoxId]?.purchaseDate || "",
       receiptNumber: purchaseBoxMap[item.purchaseBoxId]?.receiptNumber || "",
     }));
-
+    const userRep = getUserRepository();
     const clientRep = getClientRepository();
     const clientView = await clientRep.findById(entity.client || "");
+    console.log("User :", entity.createdBy);
+    const userView = await userRep.findById(entity.createdBy || "");
     return {
       ...entity,
       items,
       clientView: clientView || null,
+      userName: userView?.fullName || ""
     };
   }
 }

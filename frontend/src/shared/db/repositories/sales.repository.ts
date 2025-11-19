@@ -1,4 +1,4 @@
-import type { MangoQuery, MangoQuerySelector, RxCollection } from 'rxdb';
+import type { MangoQuerySelector, RxCollection } from 'rxdb';
 import { Observable, map } from 'rxjs';
 import { initDatabase } from '../database';
 import type { CreateSaleData, Sale, SaleFilter, UpdateSaleData } from '../../types/modelTypes/Sale';

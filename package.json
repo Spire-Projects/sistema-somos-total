@@ -1,6 +1,6 @@
 {
   "name": "monorepoapp",
-  "version": "1.0.14",
+  "version": "1.0.3",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -36,9 +36,9 @@
     "farmacia",
     "pharmacy"
   ],
-  "author": "FarmaApp Team",
+  "author": "Spire Team",
   "license": "ISC",
-  "description": "Sistema de gestión farmacéutica con Electron, React y RxDB",
+  "description": "Sistema de gestión de productos",
   "dependencies": {
     "@tailwindcss/vite": "^4.1.10",
     "decimal.js": "^10.6.0",
@@ -60,8 +60,8 @@
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "com.farmaapp.monorepo",
-    "productName": "Farmacia_La_Bonita",
+    "appId": "com.somostotal.monorepo",
+    "productName": "Somos_Total_System",
     "directories": {
       "output": "release"
     },
@@ -103,7 +103,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "FarmaApp"
+      "shortcutName": "Somos_Total_System"
     },
     "linux": {
       "target": [

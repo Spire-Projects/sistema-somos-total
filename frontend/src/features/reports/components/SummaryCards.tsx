@@ -5,8 +5,8 @@ import {
   CardContent,
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { formatCurrency } from "@/shared/services/BatchService";
 import type { DailySales, SalesSummary } from "./types/Types";
+import { formatCurrency } from "@/features/sales/utils/SaleUtils";
 
 interface SummaryCardsProps {
   isLoading: boolean;
@@ -39,7 +39,7 @@ export const SummaryCards = ({
             <Skeleton className="h-8 w-40" />
           ) : (
             <div className="text-2xl font-bold">
-              {formatCurrency(salesSummary.totalBs)} Bs
+              {formatCurrency(salesSummary.totalBs, 'bs')} 
             </div>
           )}
           <p className="text-xs text-gray-500 mt-1">
@@ -59,7 +59,7 @@ export const SummaryCards = ({
             <Skeleton className="h-8 w-40" />
           ) : (
             <div className="text-2xl font-bold">
-              {formatCurrency(salesSummary.totalArg)} ARS
+              {formatCurrency(salesSummary.totalArg, 'arg')} 
             </div>
           )}
           <p className="text-xs text-gray-500 mt-1">
@@ -79,7 +79,7 @@ export const SummaryCards = ({
             <Skeleton className="h-8 w-40" />
           ) : (
             <div className="text-2xl font-bold">
-              {formatCurrency(salesSummary.averageBs)} Bs
+              {formatCurrency(salesSummary.averageBs, 'bs')} 
             </div>
           )}
           <p className="text-xs text-gray-500 mt-1">Por transacción</p>
@@ -97,7 +97,7 @@ export const SummaryCards = ({
             <Skeleton className="h-8 w-40" />
           ) : (
             <div className="text-2xl font-bold">
-              {formatCurrency(avgDailyBs)} Bs
+              {formatCurrency(avgDailyBs, 'bs')}
             </div>
           )}
           <p className="text-xs text-gray-500 mt-1">Promedio por día</p>
@@ -115,7 +115,7 @@ export const SummaryCards = ({
             <Skeleton className="h-8 w-40" />
           ) : (
             <div className="text-2xl font-bold">
-              {formatCurrency(avgDailyArg)} ARS
+              {formatCurrency(avgDailyArg, 'arg')}
             </div>
           )}
           <p className="text-xs text-gray-500 mt-1">Promedio por día</p>
